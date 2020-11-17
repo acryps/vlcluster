@@ -2,15 +2,14 @@ import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
 import { RegistryServer } from "./registry/server";
+import { Cluster } from "./cluster";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
-	const root = path.resolve(os.homedir(), ".vlcluster");
+	Cluster.rootDirectory = path.resolve(os.homedir(), ".vlcluster");
 
-	console.log(`[vlc] root ${root}`);
-
-	if (!fs.existsSync(root)) {
-		fs.mkdirSync(root);
+	if (!fs.existsSync(Cluster.rootDirectory)) {
+		fs.mkdirSync(Cluster.rootDirectory);
 	}
 
 	console.log(parameters);
