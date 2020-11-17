@@ -82,6 +82,10 @@ export class RegistryServer {
 		return path.join(this.workerDirectory(hostname), "key");
 	}
 
+	get name() {
+		return fs.readFileSync(RegistryServer.nameFile).toString();
+	}
+
 	register(app) {
 		app.post(Cluster.api.registry.createWorker, (req, res, next) => {
 			try {
@@ -92,7 +96,7 @@ export class RegistryServer {
 				this.createWorker(req.body.host);
 
 				res.json({
-					name: fs.readFileSync(RegistryServer.nameFile).toString()
+					name: this.name
 				});
 			} catch (e) {
 				res.sendStatus(500).json(e.message);

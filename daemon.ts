@@ -1,5 +1,7 @@
 import express from "express";
+import * as fs from "fs";
 import { RegistryServer } from "./registry/registry";
+import { Cluster } from "./cluster";
 
 export class Daemon {
 	server;
@@ -9,7 +11,15 @@ export class Daemon {
 		this.server.use(express.json());
 
 		if (RegistryServer.isInstalled()) {
-			new RegistryServer().register(this.server);
+			const registry = new RegistryServer();
+
+			console.log(`[ daemon ]\tregistry '${fs.readFileSync(registry.name)}' active!`);
+
+			registry.register(this.server);
 		}
+
+		this.server.listen(Cluster.port, () => {
+			console.log(`[ daemon ]\tstarted on :${Cluster.port}`);
+		});
 	}
 }
