@@ -10,6 +10,16 @@ export class Daemon {
 		this.server = express();
 		this.server.use(express.json());
 
+		this.server.use((req, res, next) => {
+			try {
+				next();
+			} catch (e) {
+				console.warn(e);
+
+				res.status(500).json(e.message);
+			}
+		})
+
 		if (RegistryServer.isInstalled()) {
 			const registry = new RegistryServer();
 
