@@ -6,7 +6,7 @@ import { hostname } from "os";
 
 export class WorkerServer {
 	static async create(host: string, key: string) {
-		const result = fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
+		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json"
