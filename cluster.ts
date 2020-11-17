@@ -7,7 +7,8 @@ export class Cluster {
 	static api = {
 		registry: {
 			createWorker: "/reg/worker/init",
-			createClient: "/reg/client/init"
+			createClient: "/reg/client/init",
+			createImage: "/reg/image/create"
 		},
 		worker: {
 			install: "/wok/install"

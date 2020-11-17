@@ -1,7 +1,9 @@
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import * as fetch from "node-fetch";
 import { Client } from "./client/client";
+import { Cluster } from "./cluster";
 
 export class Deployer {
 	package: {
@@ -48,8 +50,22 @@ export class Deployer {
 	}
 
 	async deploy() {
-		console.log(`[ deploy ] building docker image...`);
+		console.log(`[ deploy ] creating image '${this.package.name}' v${this.package.version} in registry...`);
+		const client = new Client(this.clusterName);
 
+		const result = await fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
+			method: "POST",
+			headers: {
+				"content-type": "application/json"
+			},
+			body: JSON.stringify({
+				key: client.key,
+				username: client.username,
+				package: this.package
+			})
+		}).then(r => r.json());
+
+		console.log(`[ deploy ] building docker image...`);
 		const buildProcess = spawn("docker", ["image", "build", "."], {
 			cwd: this.directory,
 			stdio: "pipe"
@@ -60,17 +76,5 @@ export class Deployer {
 				done();
 			})
 		});
-
-		console.log(`[ deploy ] creating image '${this.package.name}' v${this.package.version} in registry...`);
-		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createClient}`, {
-			method: "POST",
-			headers: {
-				"content-type": "application/json"
-			},
-			body: JSON.stringify({
-				key,
-				username
-			})
-		}).then(r => r.json());
 	}
 }

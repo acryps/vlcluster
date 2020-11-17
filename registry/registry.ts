@@ -142,5 +142,19 @@ export class RegistryServer {
 				name: this.name
 			});
 		});
+
+		app.post(Cluster.api.registry.createImage, (req, res) => {
+			const key = fs.readFileSync(RegistryServer.clientKeyFile(req.body.username));
+
+			if (key != req.body.key) {
+				throw new Error(`[ registry ]\tinvalid key login attepted`);
+			}
+
+			console.log(`[ registry ] create '${req.body.package.name}' v${req.body.package.version}`);
+
+			res.json({
+				true: 1
+			});
+		});
 	}
 }

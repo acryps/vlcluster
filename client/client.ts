@@ -4,12 +4,26 @@ import * as path from "path";
 import { Cluster } from "../cluster";
 
 export class Client {
+	host: string;
+	key: string;
+	username: string;
+
+	constructor(public name: string) {
+		if (!Client.hasCluster(name)) {
+			throw new Error(`Cluster '${name}' not found!`);
+		}
+
+		this.host = fs.readFileSync(Client.clusterHostFile(name)).toString();
+		this.key = fs.readFileSync(Client.clusterKeyFile(name)).toString();
+		this.username = fs.readFileSync(Client.clusterUsernameFile(name)).toString();
+	}
+
 	static hasCluster(name: string) {
 		return fs.existsSync(this.clusterDirectory(name));
 	}
 
 	static async create(username: string, host: string, key: string) {
-		console.log(`[ client] logging into ${host}...`);
+		console.log(`[ client ] logging into ${host}...`);
 
 		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createClient}`, {
 			method: "POST",
