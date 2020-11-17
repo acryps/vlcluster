@@ -1,0 +1,31 @@
+{
+	"name": "vlcluster",
+	"version": "1.0.0",
+	"description": "VLCluster",
+	"main": "dist/index.js",
+	"typings": "dist/index.d.ts",
+	"scripts": {
+		"prepare": "tsc"
+	},
+	"bin": {
+		"vlcluster": "bin/index.js"
+	},
+	"author": "Levi Hechenberger",
+	"license": "ISC",
+	"dependencies": {
+		"@types/node": "^14.6.2",
+		"typescript": "^4.0.3"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/levvij/vlcluster.git"
+	},
+	"keywords": [
+		"cluster",
+		"docker"
+	],
+	"bugs": {
+		"url": "https://github.com/levvij/vlcluster/issues"
+	},
+	"homepage": "https://github.com/levvij/vlcluster#readme"
+}
