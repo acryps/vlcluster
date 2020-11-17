@@ -2,6 +2,13 @@ import * as fs from "fs";
 import * as path from "path";
 
 export class Cluster {
+	static port = 9193;
+	static api = {
+		registry: {
+			createWorker: "/reg/worker/init"
+		}
+	}
+
 	static rootDirectory: string;
 
 	static get localDirectory() {
