@@ -20,7 +20,7 @@ export async function main() {
 				case "registry": {
 					const key = await RegistryServer.create();
 
-					console.log(`created registry with key: ${key}. Store this key safely!`);
+					console.log(`created registry!\n\nprivate key: ${key}\nStore this key safely!`);
 					return process.exit(0);
 				}
 			}
