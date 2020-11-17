@@ -88,20 +88,16 @@ export class RegistryServer {
 
 	register(app) {
 		app.post(Cluster.api.registry.createWorker, (req, res) => {
-			try {
-				if (this.key != req.body.key) {
-					throw new Error("[ registry ]\tinvalid key login attepted");
-				}
-
-				const key = this.createWorker(req.body.host);
-
-				res.json({
-					key: key,
-					name: this.name
-				});
-			} catch (e) {
-				res.sendStatus(500).json(e.message);
+			if (this.key != req.body.key) {
+				throw new Error("[ registry ]\tinvalid key login attepted");
 			}
+
+			const key = this.createWorker(req.body.host);
+
+			res.json({
+				key: key,
+				name: this.name
+			});
 		});
 	}
 }
