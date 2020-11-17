@@ -4,6 +4,7 @@ import * as path from "path";
 import * as fetch from "node-fetch";
 import { Client } from "./client/client";
 import { Cluster } from "./cluster";
+import { Crypto } from "./crypto";
 
 export class Deployer {
 	package: {
@@ -50,6 +51,32 @@ export class Deployer {
 	}
 
 	async deploy() {
+		const imageId = Crypto.createKey().substr(0, 16);
+
+		console.log(`[ deploy ] building docker image...`);
+		const buildProcess = spawn("docker", ["build", "-t", imageId, "."], {
+			cwd: this.directory,
+			stdio: "pipe"
+		});
+
+		await new Promise(done => {
+			buildProcess.on("close", () => {
+				done();
+			})
+		});
+
+		console.log(`[ deploy ] exporting docker image...`);
+		const saveProcess = spawn("docker", ["save", "-o", imageId, imageId], {
+			cwd: this.directory,
+			stdio: "pipe"
+		});
+
+		await new Promise(done => {
+			saveProcess.on("close", () => {
+				done();
+			})
+		});
+		
 		console.log(`[ deploy ] creating image '${this.package.name}' v${this.package.version} in registry...`);
 		const client = new Client(this.clusterName);
 
@@ -64,17 +91,5 @@ export class Deployer {
 				package: this.package
 			})
 		}).then(r => r.json());
-
-		console.log(`[ deploy ] building docker image...`);
-		const buildProcess = spawn("docker", ["image", "build", "."], {
-			cwd: this.directory,
-			stdio: "pipe"
-		});
-
-		await new Promise(done => {
-			buildProcess.on("close", () => {
-				done();
-			})
-		});
 	}
 }
