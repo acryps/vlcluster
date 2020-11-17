@@ -150,7 +150,7 @@ export class RegistryServer {
 				throw new Error(`[ registry ]\tinvalid key login attepted`);
 			}
 
-			console.log(`[ registry ] create '${req.body.package.name}' v${req.body.package.version}`);
+			console.log(`[ registry ]\tcreate '${req.body.package.name}' v${req.body.package.version}`);
 
 			res.json({
 				true: 1
