@@ -13,7 +13,7 @@ export class Daemon {
 		if (RegistryServer.isInstalled()) {
 			const registry = new RegistryServer();
 
-			console.log(`[ daemon ]\tregistry '${fs.readFileSync(registry.name)}' active!`);
+			console.log(`[ daemon ]\tregistry '${registry.name}' active!`);
 
 			registry.register(this.server);
 		}
