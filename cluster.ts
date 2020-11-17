@@ -12,14 +12,16 @@ export class Cluster {
 	static rootDirectory: string;
 
 	static get localDirectory() {
-		return this.createIfNotFound(path.join(this.rootDirectory, "local"));
+		return this.joinAndCreate(path.join(this.rootDirectory, "local"));
 	}
 
-	private static createIfNotFound(path) {
-		if (!fs.existsSync(path)) {
-			fs.mkdirSync(path);
+	static joinAndCreate(...components) {
+		const dir = path.join(...components);
+
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir);
 		}
 
-		return path;
+		return dir;
 	}
 }

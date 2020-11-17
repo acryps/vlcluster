@@ -20,7 +20,7 @@ export class RegistryServer {
 	createWorker(hostname: string) {
 		hostname = Crypto.hostIdentifier(hostname);
 
-		console.log(`[ registry ]\tcreate worker on '${hostname}'`);
+		console.log(`[ registry ]\tcreating worker on '${hostname}'`);
 
 		if (fs.existsSync(RegistryServer.workerDirectory(hostname))) {
 			throw new Error("worker already registered");

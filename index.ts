@@ -14,8 +14,6 @@ export async function main() {
 		fs.mkdirSync(Cluster.rootDirectory);
 	}
 
-	console.log(parameters);
-
 	try {
 		switch (parameters.shift()) {
 			case "init": {
@@ -31,6 +29,7 @@ export async function main() {
 						const registry = await WorkerServer.create(parameters[0], parameters[1]);
 						
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
+						return process.exit(0);
 					}
 				}
 			}
