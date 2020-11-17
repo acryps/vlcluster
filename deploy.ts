@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import { Client } from "./client/client";
 
 export class Deployer {
 	package: {
@@ -36,6 +37,10 @@ export class Deployer {
 			throw new Error(`cannot deploy '${directory}'. no version in package.json set!`);
 		}
 
+		if (!Client.hasCluster(clusterName)) {
+			throw new Error(`cannot deploy '${directory}'. cluster '${clusterName}' not found. Did you run 'vlcluster init'?`);
+		}
+
 		this.package = {
 			name: packageConfiguration.name,
 			version: packageConfiguration.version
@@ -57,5 +62,15 @@ export class Deployer {
 		});
 
 		console.log(`[ deploy ] creating image '${this.package.name}' v${this.package.version} in registry...`);
+		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createClient}`, {
+			method: "POST",
+			headers: {
+				"content-type": "application/json"
+			},
+			body: JSON.stringify({
+				key,
+				username
+			})
+		}).then(r => r.json());
 	}
 }

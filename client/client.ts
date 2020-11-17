@@ -4,6 +4,10 @@ import * as path from "path";
 import { Cluster } from "../cluster";
 
 export class Client {
+	static hasCluster(name: string) {
+		return fs.existsSync(this.clusterDirectory(name));
+	}
+
 	static async create(username: string, host: string, key: string) {
 		console.log(`[ client] logging into ${host}...`);
 
@@ -26,6 +30,7 @@ export class Client {
 
 		fs.writeFileSync(Client.clusterKeyFile(result.name), result.key);
 		fs.writeFileSync(Client.clusterUsernameFile(result.name), username);
+		fs.writeFileSync(Client.clusterHostFile(result.name), host);
 
 		return {
 			name: result.name
@@ -42,5 +47,9 @@ export class Client {
 
 	static clusterUsernameFile(name: string) {
 		return path.join(this.clusterDirectory(name), "username");
+	}
+
+	static clusterHostFile(name: string) {
+		return path.join(this.clusterDirectory(name), "host");
 	}
 }
