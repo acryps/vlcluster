@@ -6,4 +6,8 @@ export class Crypto {
 	static hostIdentifier(name: string) {
 		return name.replace(/[^\-\_0-9a-z\.]/g, "");
 	}
+
+	static sanitizeUsername(name: string) {
+		return name.replace(/[^\-\_0-9a-z\.\@]/g, "");
+	}
 }

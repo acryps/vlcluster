@@ -37,6 +37,23 @@ export class RegistryServer {
 		return key;
 	}
 
+	createClient(name: string) {
+		const key = Crypto.createKey();
+
+		if (fs.existsSync(RegistryServer.clientDirectory(name))) {
+			throw new Error(`client '${name}' already exists!`);
+		}
+
+		console.log(`[ registry ]\tcreating client ${name}`);
+
+		fs.mkdirSync(RegistryServer.clientDirectory(name));
+		fs.writeFileSync(RegistryServer.clientKeyFile(name), key);
+
+		console.log(`[ registry ]\tcreated client`);
+
+		return key;
+	}
+
 	static isInstalled() {
 		return fs.existsSync(RegistryServer.rootDirectory);
 	}
@@ -54,6 +71,7 @@ export class RegistryServer {
 
 		// create registry
 		fs.mkdirSync(RegistryServer.workersDirectory);
+		fs.mkdirSync(RegistryServer.clientsDirectory);
 
 		return key;
 	}
@@ -82,6 +100,18 @@ export class RegistryServer {
 		return path.join(this.workerDirectory(hostname), "key");
 	}
 
+	static get clientsDirectory() {
+		return path.join(this.rootDirectory, "clients");
+	}
+
+	static clientDirectory(name: string) {
+		return path.join(this.clientsDirectory, Crypto.sanitizeUsername(name));
+	}
+
+	static clientKeyFile(name: string) {
+		return path.join(this.clientDirectory(name), "key");
+	}
+
 	get name() {
 		return fs.readFileSync(RegistryServer.nameFile).toString();
 	}
@@ -96,6 +126,19 @@ export class RegistryServer {
 
 			res.json({
 				key: key,
+				name: this.name
+			});
+		});
+
+		app.post(Cluster.api.registry.createClient, (req, res) => {
+			if (this.key != req.body.key) {
+				throw new Error(`[ registry ]\tinvalid key login attepted`);
+			}
+
+			const key = this.createClient(req.body.username);
+
+			res.json({
+				key,
 				name: this.name
 			});
 		});

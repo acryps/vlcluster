@@ -1,10 +1,13 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
+import * as readline from "readline";
 import { RegistryServer } from "./registry/registry";
 import { Cluster } from "./cluster";
 import { Daemon } from "./daemon";
 import { WorkerServer } from "./worker/worker";
+import { Deployer } from "./deploy";
+import { Client } from "./client/client";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -14,10 +17,32 @@ export async function main() {
 		fs.mkdirSync(Cluster.rootDirectory);
 	}
 
+	const cli = readline.createInterface({
+		input: process.stdin,
+  		output: process.stdout
+	});
+
 	try {
 		switch (parameters.shift()) {
 			case "init": {
 				switch (parameters.shift()) {
+					case undefined:
+					case "client": {
+						console.log(`welcome to vlcluster!`);
+						
+						cli.question("Enter your email address: ", email => {
+							cli.question("Enter your vlcluster registry hostname: ", hostname => {
+								cli.question("Enter your vlcluster registry key: ", async key => {
+									await Client.create(email, hostname, key);
+
+									process.exit(0);
+								});
+							});
+						});
+
+						break;
+					}
+
 					case "registry": {
 						const key = await RegistryServer.create(parameters[0]);
 
@@ -32,6 +57,17 @@ export async function main() {
 						return process.exit(0);
 					}
 				}
+
+				break;
+			}
+
+			case "deploy": {
+				await (new Deployer(
+					parameters[1] || process.cwd(),
+					parameters[0]
+				)).deploy();
+
+				return process.exit(0);
 			}
 
 			case "daemon": {

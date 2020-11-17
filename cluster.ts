@@ -6,7 +6,8 @@ export class Cluster {
 
 	static api = {
 		registry: {
-			createWorker: "/reg/worker/init"
+			createWorker: "/reg/worker/init",
+			createClient: "/reg/client/init"
 		},
 		worker: {
 			install: "/wok/install"
@@ -16,7 +17,11 @@ export class Cluster {
 	static rootDirectory: string;
 
 	static get localDirectory() {
-		return this.joinAndCreate(path.join(this.rootDirectory, "local"));
+		return this.joinAndCreate(this.rootDirectory, "local");
+	}
+
+	static get clustersDirectory() {
+		return this.joinAndCreate(this.rootDirectory, "clusters");
 	}
 
 	static joinAndCreate(...components) {
