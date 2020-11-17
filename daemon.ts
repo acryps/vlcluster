@@ -1,4 +1,4 @@
-import express from "express";
+import * as express from "express";
 import * as fs from "fs";
 import { RegistryServer } from "./registry/registry";
 import { Cluster } from "./cluster";
