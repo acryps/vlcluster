@@ -1,0 +1,27 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create Version",
+			"detail": "Publish vlquery@dev to npm",
+			"type": "shell",
+			"command": "npm version ${input:version-type}",
+			"problemMatcher": []
+		}
+	],
+	"inputs": [
+		{
+			"id": "version-type",
+			"description": "Version Type",
+			"default": "path",
+			"type": "pickString",
+			"options": [
+				"patch",
+				"minor",
+				"major"
+			]
+		}
+	]
+}
