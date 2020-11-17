@@ -24,6 +24,10 @@ export class WorkerServer {
 		fs.mkdirSync(this.workerDirectory(result.name));
 		fs.writeFileSync(WorkerServer.keyFile(result.name), result.key);
 		fs.writeFileSync(WorkerServer.hostFile(result.name), host);
+
+		return {
+			name: result.name
+		};
 	}
 
 	static get rootDirectory() {
