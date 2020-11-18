@@ -229,7 +229,7 @@ export class RegistryServer {
 			const version = fs.readFileSync(RegistryServer.imageVersion(id));
 
 			console.log(`[registry]\nuploading image '${application}' v${version}`);
-			console.log(req.body);
+			req.pipe(fs.createWriteStream(RegistryServer.imageSource(id)));
 		});
 	}
 }
