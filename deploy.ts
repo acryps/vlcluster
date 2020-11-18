@@ -56,7 +56,7 @@ export class Deployer {
 	}
 
 	async deploy() {
-		const imageId = Crypto.createKey().substr(0, 16);
+		const imageId = Crypto.dockerImageKey();
 
 		console.log(`[ deploy ]\tbuilding docker image...`);
 		const buildProcess = spawn("docker", ["build", "-t", imageId, "."], {

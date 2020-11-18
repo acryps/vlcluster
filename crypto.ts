@@ -9,6 +9,10 @@ export class Crypto {
 		return sha512(`${packageName}${"-".repeat(192)}${version}`).substring(10, 74);
 	}
 
+	static dockerImageKey() {
+		return sha512(Math.random().toString()).substring(0, 32);
+	}
+
 	static hostIdentifier(name: string) {
 		return name.replace(/[^\-\_0-9a-z\.]/g, "");
 	}
