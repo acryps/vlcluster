@@ -87,16 +87,24 @@ export class Deployer {
 		}).then(r => r.json());
 
 		console.log(`[ deploy ]\texporting and uploading docker image...`);
-		const fileStream = fs.createWriteStream("testfile.docker");
-
+		
 		const saveProcess = spawn("docker", ["save", imageId], {
 			cwd: this.directory,
 			stdio: [
-				process.stdin,
-				fileStream,
+				"ignore",
+				"pipe",
 				process.stderr
 			]
 		});
+
+		const uploadResponse = fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
+			method: "POST", 
+			headers: {
+				imageid: uploadRequestResult.id,
+				imagekey: uploadRequestResult.key
+			},
+			body: saveProcess.stdout
+		}).then(r => r.json());
 
 		await new Promise(done => {
 			saveProcess.on("close", () => {
@@ -105,5 +113,7 @@ export class Deployer {
 				done();
 			})
 		});
+
+		console.log(uploadResponse);
 	}
 }
