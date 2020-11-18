@@ -63,8 +63,9 @@ export async function main() {
 
 			case "deploy": {
 				await (new Deployer(
-					parameters[1] || process.cwd(),
-					parameters[0]
+					parameters[2] || process.cwd(),
+					parameters[0],
+					parameters[1]
 				)).deploy();
 
 				return process.exit(0);

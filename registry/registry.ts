@@ -72,6 +72,7 @@ export class RegistryServer {
 		// create registry
 		fs.mkdirSync(RegistryServer.workersDirectory);
 		fs.mkdirSync(RegistryServer.clientsDirectory);
+		fs.mkdirSync(RegistryServer.imagesDirectory);
 
 		return key;
 	}
@@ -86,6 +87,30 @@ export class RegistryServer {
 
 	static get nameFile() {
 		return path.join(this.rootDirectory, "name");
+	}
+
+	static get imagesDirectory() {
+		return path.join(this.rootDirectory, "images");
+	}
+
+	static imageDirectory(id: string) {
+		return path.join(this.imagesDirectory, id);
+	}
+
+	static imageApplicationName(id: string) {
+		return path.join(this.imageDirectory(id), "application");
+	}
+
+	static imageVersion(id: string) {
+		return path.join(this.imageDirectory(id), "version");
+	}
+
+	static imageUploadKey(id: string) {
+		return path.join(this.imageDirectory(id), "key");
+	}
+
+	static imageSource(id: string) {
+		return path.join(this.imageDirectory(id), "image");
 	}
 
 	static get workersDirectory() {
@@ -147,14 +172,64 @@ export class RegistryServer {
 			const key = fs.readFileSync(RegistryServer.clientKeyFile(req.body.username));
 
 			if (key != req.body.key) {
-				throw new Error(`[ registry ]\tinvalid key login attepted`);
+				throw new Error(`invalid key login attepted`);
 			}
 
-			console.log(`[ registry ]\tcreate '${req.body.package.name}' v${req.body.package.version}`);
+			if (!req.body.name) {
+				throw new Error(`no application name set`);
+			}
+
+			if (!req.body.version) {
+				throw new Error(`no version set`);
+			}
+
+			console.log(`[ registry ]\tcreate '${req.body.name}' v${req.body.version}`);
+
+			const id = Crypto.imageKey(req.body.name, req.body.version);
+			const uploadKey = Crypto.createKey();
+
+			if (fs.existsSync(RegistryServer.imageDirectory(id))) {
+				console.log(`[registry]\timage of '${req.body.name}' v${req.body.version}`)
+
+				throw new Error("version already exists");
+			}
+
+			fs.mkdirSync(RegistryServer.imageDirectory(id));
+			fs.writeFileSync(RegistryServer.imageApplicationName(id), req.body.name);
+			fs.writeFileSync(RegistryServer.imageVersion(id), req.body.version);
+			fs.writeFileSync(RegistryServer.imageUploadKey(id), uploadKey);
 
 			res.json({
-				true: 1
+				id,
+				key: uploadKey
 			});
+		});
+
+		app.post(Cluster.api.registry.uploadImage, (req, res) => {
+			const id = req.headers.imageid;
+			const key = req.headers.imagekey;
+
+			if (!id) {
+				throw new Error("no image id set");
+			}
+
+			if (!key) {
+				throw new Error("no upload key set");
+			}
+
+			if (!fs.existsSync(RegistryServer.imageUploadKey(id))) {
+				throw new Error("image not found");
+			}
+
+			if (fs.readFileSync(RegistryServer.imageUploadKey(id)) != key) {
+				throw new Error("invalid key");
+			}
+
+			const application = fs.readFileSync(RegistryServer.imageApplicationName(id));
+			const version = fs.readFileSync(RegistryServer.imageVersion(id));
+
+			console.log(`[registry]\nuploading image '${application}' v${version}`);
+			console.log(req.body);
 		});
 	}
 }

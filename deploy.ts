@@ -14,8 +14,13 @@ export class Deployer {
 
 	constructor(
 		private directory: string,
-		private clusterName: string
+		private clusterName: string,
+		private env: string
 	) {
+		if (!this.env) {
+			throw new Error(`cannot deploy '${directory}'. no env set!`);
+		}
+
 		if (!fs.existsSync(directory)) {
 			throw new Error(`cannot deploy '${directory}'. directory does not exist!`);
 		}
@@ -53,7 +58,7 @@ export class Deployer {
 	async deploy() {
 		const imageId = Crypto.createKey().substr(0, 16);
 
-		console.log(`[ deploy ] building docker image...`);
+		console.log(`[ deploy ]\tbuilding docker image...`);
 		const buildProcess = spawn("docker", ["build", "-t", imageId, "."], {
 			cwd: this.directory,
 			stdio: "pipe"
@@ -65,22 +70,10 @@ export class Deployer {
 			})
 		});
 
-		console.log(`[ deploy ] exporting docker image...`);
-		const saveProcess = spawn("docker", ["save", "-o", imageId, imageId], {
-			cwd: this.directory,
-			stdio: "pipe"
-		});
-
-		await new Promise(done => {
-			saveProcess.on("close", () => {
-				done();
-			})
-		});
-		
-		console.log(`[ deploy ] creating image '${this.package.name}' v${this.package.version} in registry...`);
+		console.log(`[ deploy ]\tcreating image '${this.package.name}' v${this.package.version} in registry...`);
 		const client = new Client(this.clusterName);
 
-		const result = await fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
+		const uploadRequestResult = await fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json"
@@ -88,8 +81,29 @@ export class Deployer {
 			body: JSON.stringify({
 				key: client.key,
 				username: client.username,
-				package: this.package
+				name: this.package.name,
+				version: this.package.version
 			})
 		}).then(r => r.json());
+
+		console.log(`[ deploy ]\texporting and uploading docker image...`);
+		const fileStream = fs.createWriteStream("testfile.docker");
+
+		const saveProcess = spawn("docker", ["save", imageId], {
+			cwd: this.directory,
+			stdio: [
+				process.stdin,
+				fileStream,
+				process.stderr
+			]
+		});
+
+		await new Promise(done => {
+			saveProcess.on("close", () => {
+				console.log(`[ deploy ]\timage uploaded!`);
+
+				done();
+			})
+		});
 	}
 }

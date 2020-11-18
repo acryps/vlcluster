@@ -8,7 +8,8 @@ export class Cluster {
 		registry: {
 			createWorker: "/reg/worker/init",
 			createClient: "/reg/client/init",
-			createImage: "/reg/image/create"
+			createImage: "/reg/image/create",
+			uploadImage: "/req/push/:id"
 		},
 		worker: {
 			install: "/wok/install"
