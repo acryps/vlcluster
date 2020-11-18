@@ -61,7 +61,11 @@ export class Deployer {
 		console.log(`[ deploy ]\tbuilding docker image...`);
 		const buildProcess = spawn("docker", ["build", "-t", imageId, "."], {
 			cwd: this.directory,
-			stdio: "pipe"
+			stdio: [
+				"ignore",
+				process.stdout,
+				process.stderr
+			]
 		});
 
 		await new Promise(done => {
