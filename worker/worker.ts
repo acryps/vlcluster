@@ -92,7 +92,7 @@ export class WorkerServer {
 				method: "POST", 
 				headers: {
 					"content-type": "application/json"
-				}
+				},
 				body: JSON.stringify({
 					name: this.name,
 					key: this.key
