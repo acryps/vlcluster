@@ -222,8 +222,8 @@ export class RegistryServer {
 				throw new Error("version does not exists!")
 			}
 
-			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)) == key) {
-				throw new Error("no upload key set");
+			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)).toString() == key) {
+				throw new Error("invalid upload key set");
 			}
 
 			console.log(`[registry]\nuploading image v${version}`);
