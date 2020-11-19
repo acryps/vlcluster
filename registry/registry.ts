@@ -90,7 +90,7 @@ export class RegistryServer {
 	}
 
 	static get applicationsDirectory() {
-		return path.join(this.rootDirectory, "images");
+		return path.join(this.rootDirectory, "applications");
 	}
 
 	static applicationDirectory(name: string) {
@@ -174,36 +174,39 @@ export class RegistryServer {
 
 		app.post(Cluster.api.registry.createImage, (req, res) => {
 			const key = fs.readFileSync(RegistryServer.clientKeyFile(req.body.username));
-
 			if (key != req.body.key) {
 				throw new Error(`invalid key login attepted`);
 			}
 
-			if (!req.body.name) {
+			const version = req.body.version;
+			const application = req.body.name;
+
+			if (!application) {
 				throw new Error(`no application name set`);
 			}
 
-			if (!req.body.version) {
+			if (!version) {
 				throw new Error(`no version set`);
 			}
 
-			console.log(`[ registry ]\tcreate '${req.body.name}' v${req.body.version}`);
+			console.log(`[ registry ]\tcreate '${application}' v${version}`);
 
-			if (!fs.existsSync(RegistryServer.applicationDirectory(req.body.name))) {
-				console.log(`[ registry ]\tcreate new application '${req.body.name}'`);
+			if (!fs.existsSync(RegistryServer.applicationDirectory(application))) {
+				console.log(`[ registry ]\tcreate new application '${application}'`);
 
-				fs.mkdirSync(RegistryServer.applicationDirectory(req.body.name));
-				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(req.body.name));
+				fs.mkdirSync(RegistryServer.applicationDirectory(application));
+				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(application));
+				fs.writeFileSync(RegistryServer.applicationNameFile(application), application);
 			}
 
-			if (fs.existsSync(RegistryServer.applicationVersionDirectory(req.body.name, req.body.version))) {
-				throw new Error(`version '${req.body.version}' of application '${req.body.name}' already exists!`);
+			if (fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
+				throw new Error(`version '${version}' of application '${application}' already exists!`);
 			}
 
-			fs.mkdirSync(RegistryServer.applicationVersionDirectory(req.body.name, req.body.version));
+			fs.mkdirSync(RegistryServer.applicationVersionDirectory(application, version));
 
 			const uploadKey = Crypto.createKey();
-			fs.writeFileSync(RegistryServer.applicationVersionImageKeyFile(req.body.name, req.body.version), uploadKey);
+			fs.writeFileSync(RegistryServer.applicationVersionImageKeyFile(application, version), uploadKey);
 
 			res.json({
 				key: uploadKey
