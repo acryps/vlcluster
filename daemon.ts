@@ -26,7 +26,7 @@ export class Daemon {
 
 		for (let cluster of WorkerServer.getInstalledClusterNames()) {
 			const worker = new WorkerServer(cluster);
-			console.log(`[ daemon ]\tworker '${cluster}' from ${worker.host} active!`);
+			console.log(`[ daemon ]\tworker for '${cluster}' (${worker.host}) active!`);
 
 			worker.register(this.server);
 		}
