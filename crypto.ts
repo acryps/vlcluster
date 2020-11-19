@@ -20,4 +20,8 @@ export class Crypto {
 	static sanitizeUsername(name: string) {
 		return name.replace(/[^\-\_0-9a-z\.\@]/g, "");
 	}
+
+	static sanitizeVersion(name: string) {
+		return name.replace(/[^\-\_\.0-9a-z]/g, "");
+	}
 }

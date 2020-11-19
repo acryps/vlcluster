@@ -106,7 +106,7 @@ export class RegistryServer {
 	}
 
 	static applicationVersionDirectory(name: string, version: string) {
-		return path.join(this.applicationVersionsDirectory(name), version.replaceAll(/[^0-9a-z\-\_\.]/g, ""));
+		return path.join(this.applicationVersionsDirectory(name), Crypto.sanitizeVersion(version));
 	}
 
 	static applicationVersionImageSourceFile(name: string, version: string) {
