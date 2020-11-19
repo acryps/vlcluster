@@ -2,18 +2,19 @@ import { Cluster } from "../cluster";
 import * as fetch from "node-fetch";
 import * as fs from "fs";
 import * as path from "path";
-import { hostname } from "os";
 
 export class WorkerServer {
 	key: string;
+	name: string;
 	host: string;
 
 	constructor(clusterName: string) {
 		this.key = fs.readFileSync(WorkerServer.keyFile(clusterName)).toString();
 		this.host = fs.readFileSync(WorkerServer.hostFile(clusterName)).toString();
+		this.name = fs.readFileSync(WorkerServer.nameFile(clusterName)).toString();
 	}
 
-	static async create(host: string, key: string) {
+	static async create(host: string, name: string, key: string) {
 		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
 			method: "POST",
 			headers: {
@@ -21,7 +22,7 @@ export class WorkerServer {
 			},
 			body: JSON.stringify({
 				key,
-				host: hostname()
+				name
 			})
 		}).then(r => r.json());
 
@@ -32,6 +33,7 @@ export class WorkerServer {
 		fs.mkdirSync(this.workerDirectory(result.name));
 		fs.writeFileSync(WorkerServer.keyFile(result.name), result.key);
 		fs.writeFileSync(WorkerServer.hostFile(result.name), host);
+		fs.writeFileSync(WorkerServer.nameFile(result.name), name);
 
 		return {
 			name: result.name
@@ -62,6 +64,10 @@ export class WorkerServer {
 		return path.join(this.workerDirectory(clusterName), "key");
 	}
 
+	static nameFile(clusterName: string) {
+		return path.join(this.workerDirectory(clusterName), "name");
+	}
+
 	static hostFile(clusterName: string) {
 		return path.join(this.workerDirectory(clusterName), "host");
 	}
@@ -78,5 +84,21 @@ export class WorkerServer {
 				installed: true
 			});
 		});
+	}
+
+	startPing() {
+		setInterval(() => {
+			fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
+				method: "POST", 
+				body: JSON.stringify({
+					name: this.name,
+					key: this.key
+				})
+			}).then(res => res.json()).then(res => {
+				console.log("PING", res);
+			}).catch(error => {
+				console.error(`[ worker ]\tping failed!`, error);
+			})
+		}, 10 * 1000);
 	}
 }

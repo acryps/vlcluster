@@ -14,13 +14,8 @@ export class Deployer {
 
 	constructor(
 		private directory: string,
-		private clusterName: string,
-		private env: string
+		private clusterName: string
 	) {
-		if (!this.env) {
-			throw new Error(`cannot deploy '${directory}'. no env set!`);
-		}
-
 		if (!fs.existsSync(directory)) {
 			throw new Error(`cannot deploy '${directory}'. directory does not exist!`);
 		}
@@ -120,5 +115,9 @@ export class Deployer {
 				done();
 			})
 		});
+	}
+
+	async upgrade(env: string) {
+		
 	}
 }

@@ -5,9 +5,8 @@ import * as path from "path";
 
 export class RegistryServer {
 	key: string;
-	workers: [];
-	gateways: [];
-	imageHosts: [];
+
+	runningWorkers: string[];
 
 	constructor() {
 		if (!RegistryServer.isInstalled()) {
@@ -15,24 +14,24 @@ export class RegistryServer {
 		}
 
 		this.key = fs.readFileSync(RegistryServer.keyFile).toString();
+
+		this.runningWorkers = [];
 	}
 
-	createWorker(hostname: string) {
-		hostname = Crypto.hostIdentifier(hostname);
+	createWorker(name: string) {
+		console.log(`[ registry ]\tcreating worker '${name}'`);
 
-		console.log(`[ registry ]\tcreating worker on '${hostname}'`);
-
-		if (fs.existsSync(RegistryServer.workerDirectory(hostname))) {
+		if (fs.existsSync(RegistryServer.workerDirectory(name))) {
 			throw new Error("worker already registered");
 		}
 
 		const key = Crypto.createKey();
 
 		// create worker directory
-		fs.mkdirSync(RegistryServer.workerDirectory(hostname));
-		fs.writeFileSync(RegistryServer.workerKeyFile(hostname), key);
+		fs.mkdirSync(RegistryServer.workerDirectory(name));
+		fs.writeFileSync(RegistryServer.workerKeyFile(name), key);
 
-		console.log(`[ registry ]\tcreated worker on '${hostname}'`);
+		console.log(`[ registry ]\tcreated worker '${name}'`);
 
 		return key;
 	}
@@ -121,12 +120,12 @@ export class RegistryServer {
 		return path.join(this.rootDirectory, "workers");
 	}
 
-	static workerDirectory(hostname: string) {
-		return path.join(this.workersDirectory, hostname);
+	static workerDirectory(name: string) {
+		return path.join(this.workersDirectory, Crypto.sanitizeWorkerName(name));
 	}
 
-	static workerKeyFile(hostname: string) {
-		return path.join(this.workerDirectory(hostname), "key");
+	static workerKeyFile(name: string) {
+		return path.join(this.workerDirectory(name), "key");
 	}
 
 	static get clientsDirectory() {
@@ -151,7 +150,7 @@ export class RegistryServer {
 				throw new Error(`[ registry ]\tinvalid key login attepted`);
 			}
 
-			const key = this.createWorker(req.body.host);
+			const key = this.createWorker(req.body.name);
 
 			res.json({
 				key: key,
@@ -226,11 +225,11 @@ export class RegistryServer {
 				throw new Error("invalid upload key set");
 			}
 
-			console.log(`[registry]\tuploading image v${version}`);
+			console.log(`[ registry ]\tuploading image v${version}`);
 			req.pipe(fs.createWriteStream(RegistryServer.applicationVersionImageSourceFile(application, version)));
 
 			req.on("end", () => {
-				console.log(`[registry]\tuploaded image v${version}`);
+				console.log(`[ registry ]\tuploaded image v${version}`);
 
 				res.json({
 					size: fs.lstatSync(
@@ -238,6 +237,15 @@ export class RegistryServer {
 					).size
 				})
 			})
+		});
+
+		app.post(Cluster.api.registry.ping, (req, res) => {
+			const name = req.body.name;
+			const key = req.body.key;
+
+			if (key != fs.readFileSync(RegistryServer.workerKeyFile(name)).toString()) {
+				throw new Error("invalid key!");
+			}
 		});
 	}
 }

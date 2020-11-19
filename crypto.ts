@@ -28,4 +28,8 @@ export class Crypto {
 	static sanitizeApplicationName(name: string) {
 		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
 	}
+
+	static sanitizeWorkerName(name: string) {
+		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
+	}
 }

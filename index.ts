@@ -51,7 +51,7 @@ export async function main() {
 					}
 
 					case "worker": {
-						const registry = await WorkerServer.create(parameters[0], parameters[1]);
+						const registry = await WorkerServer.create(parameters[0], parameters[1], parameters[2]);
 						
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
 						return process.exit(0);
@@ -62,11 +62,16 @@ export async function main() {
 			}
 
 			case "deploy": {
-				await (new Deployer(
+				const deployer = new Deployer(
 					parameters[2] || process.cwd(),
-					parameters[0],
-					parameters[1]
-				)).deploy();
+					parameters[0]
+				);
+				
+				await deployer.deploy();
+
+				if (parameters[1]) {
+					await deployer.upgrade(parameters[1]);
+				}
 
 				return process.exit(0);
 			}
