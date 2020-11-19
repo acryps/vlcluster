@@ -105,6 +105,10 @@ export class RegistryServer {
 		return path.join(this.applicationDirectory(name), "versions");
 	}
 
+	static applicationEnvironnementsDirectory(name: string) {
+		return path.join(this.applicationDirectory(name), "environnements");
+	}
+
 	static applicationVersionDirectory(name: string, version: string) {
 		return path.join(this.applicationVersionsDirectory(name), Crypto.sanitizeVersion(version));
 	}
@@ -226,10 +230,12 @@ export class RegistryServer {
 				throw new Error("invalid upload key set");
 			}
 
-			console.log(`[registry]\nuploading image v${version}`);
+			console.log(`[registry]\tuploading image v${version}`);
 			req.pipe(fs.createWriteStream(RegistryServer.applicationVersionImageSourceFile(application, version)));
 
 			req.on("end", () => {
+				console.log(`[registry]\tuploaded image v${version}`);
+
 				res.json({
 					size: fs.lstatSync(
 						RegistryServer.applicationVersionImageSourceFile(application, version)
