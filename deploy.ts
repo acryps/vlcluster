@@ -63,7 +63,7 @@ export class Deployer {
 			]
 		});
 
-		await new Promise(done => {
+		await new Promise<void>(done => {
 			buildProcess.on("close", () => {
 				done();
 			})
@@ -106,7 +106,7 @@ export class Deployer {
 			body: saveProcess.stdout
 		}).then(r => r.json());
 
-		await new Promise(done => {
+		await new Promise<void>(done => {
 			saveProcess.on("close", async () => {
 				const res = await uploader;
 
