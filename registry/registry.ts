@@ -196,7 +196,7 @@ export class RegistryServer {
 
 				fs.mkdirSync(RegistryServer.applicationDirectory(application));
 				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(application));
-				fs.writeFileSync(RegistryServer.applicationNameFile(application), application);
+				fs.writeFileSync(RegistryServer.applicationNameFile(Crypto.nameHash(application)), application);
 			}
 
 			if (fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
