@@ -24,4 +24,8 @@ export class Crypto {
 	static sanitizeVersion(name: string) {
 		return name.replace(/[^\-\_\.0-9a-z]/g, "");
 	}
+
+	static sanitizeApplicationName(name: string) {
+		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
+	}
 }

@@ -94,11 +94,7 @@ export class RegistryServer {
 	}
 
 	static applicationDirectory(name: string) {
-		return path.join(this.applicationsDirectory, Crypto.nameHash(name));
-	}
-
-	static applicationNameFile(id: string) {
-		return path.join(this.applicationsDirectory, id, "name");
+		return path.join(this.applicationsDirectory, Crypto.sanitizeApplicationName(name));
 	}
 
 	static applicationVersionsDirectory(name: string) {
@@ -200,7 +196,6 @@ export class RegistryServer {
 
 				fs.mkdirSync(RegistryServer.applicationDirectory(application));
 				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(application));
-				fs.writeFileSync(RegistryServer.applicationNameFile(Crypto.nameHash(application)), application);
 				fs.mkdirSync(RegistryServer.applicationEnvironnementsDirectory(application));
 			}
 
