@@ -89,28 +89,32 @@ export class RegistryServer {
 		return path.join(this.rootDirectory, "name");
 	}
 
-	static get imagesDirectory() {
+	static get applicationsDirectory() {
 		return path.join(this.rootDirectory, "images");
 	}
 
-	static imageDirectory(id: string) {
-		return path.join(this.imagesDirectory, id);
+	static applicationDirectory(name: string) {
+		return path.join(this.applicationsDirectory, Crypto.nameHash(name));
 	}
 
-	static imageApplicationName(id: string) {
-		return path.join(this.imageDirectory(id), "application");
+	static applicationNameFile(id: string) {
+		return path.join(this.applicationsDirectory, id, "name");
 	}
 
-	static imageVersion(id: string) {
-		return path.join(this.imageDirectory(id), "version");
+	static applicationVersionsDirectory(name: string) {
+		return path.join(this.applicationDirectory(name), "versions");
 	}
 
-	static imageUploadKey(id: string) {
-		return path.join(this.imageDirectory(id), "key");
+	static applicationVersionDirectory(name: string, version: string) {
+		return path.join(this.applicationVersionsDirectory(name), version.replaceAll(/[^0-9a-z\-\_\.]/g, ""));
 	}
 
-	static imageSource(id: string) {
-		return path.join(this.imageDirectory(id), "image");
+	static applicationVersionImageSourceFile(name: string, version: string) {
+		return path.join(this.applicationVersionDirectory(name, version), "source");
+	}
+
+	static applicationVersionImageKeyFile(name: string, version: string) {
+		return path.join(this.applicationVersionDirectory(name, version), "key");
 	}
 
 	static get workersDirectory() {
@@ -185,51 +189,50 @@ export class RegistryServer {
 
 			console.log(`[ registry ]\tcreate '${req.body.name}' v${req.body.version}`);
 
-			const id = Crypto.imageKey(req.body.name, req.body.version);
-			const uploadKey = Crypto.createKey();
+			if (!fs.existsSync(RegistryServer.applicationDirectory(req.body.name))) {
+				console.log(`[ registry ]\tcreate new application '${req.body.name}'`);
 
-			if (fs.existsSync(RegistryServer.imageDirectory(id))) {
-				console.log(`[registry]\timage of '${req.body.name}' v${req.body.version}`)
-
-				throw new Error("version already exists");
+				fs.mkdirSync(RegistryServer.applicationDirectory(req.body.name));
+				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(req.body.name));
 			}
 
-			fs.mkdirSync(RegistryServer.imageDirectory(id));
-			fs.writeFileSync(RegistryServer.imageApplicationName(id), req.body.name);
-			fs.writeFileSync(RegistryServer.imageVersion(id), req.body.version);
-			fs.writeFileSync(RegistryServer.imageUploadKey(id), uploadKey);
+			if (fs.existsSync(RegistryServer.applicationVersionDirectory(req.body.name, req.body.version))) {
+				throw new Error(`version '${req.body.version}' of application '${req.body.name}' already exists!`);
+			}
+
+			fs.mkdirSync(RegistryServer.applicationVersionDirectory(req.body.name, req.body.version));
+
+			const uploadKey = Crypto.createKey();
+			fs.writeFileSync(RegistryServer.applicationVersionImageKeyFile(req.body.name, req.body.version), uploadKey);
 
 			res.json({
-				id,
 				key: uploadKey
 			});
 		});
 
 		app.post(Cluster.api.registry.uploadImage, (req, res) => {
-			const id = req.headers.imageid;
-			const key = req.headers.imagekey;
+			const application = req.headers["cluster-application"];
+			const version = req.headers["cluster-version"];
+			const key = req.headers["cluster-key"];
 
-			if (!id) {
-				throw new Error("no image id set");
+			if (!fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
+				throw new Error("version does not exists!")
 			}
 
-			if (!key) {
+			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)) == key) {
 				throw new Error("no upload key set");
 			}
 
-			if (!fs.existsSync(RegistryServer.imageUploadKey(id))) {
-				throw new Error("image not found");
-			}
+			console.log(`[registry]\nuploading image v${version}`);
+			req.pipe(fs.createWriteStream(RegistryServer.applicationVersionImageSourceFile(application, version)));
 
-			if (fs.readFileSync(RegistryServer.imageUploadKey(id)) != key) {
-				throw new Error("invalid key");
-			}
-
-			const application = fs.readFileSync(RegistryServer.imageApplicationName(id));
-			const version = fs.readFileSync(RegistryServer.imageVersion(id));
-
-			console.log(`[registry]\nuploading image '${application}' v${version}`);
-			req.pipe(fs.createWriteStream(RegistryServer.imageSource(id)));
+			req.on("end", () => {
+				res.json({
+					size: fs.lstatSync(
+						RegistryServer.applicationVersionImageSourceFile(application, version)
+					).size
+				})
+			})
 		});
 	}
 }

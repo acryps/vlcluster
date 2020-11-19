@@ -101,23 +101,24 @@ export class Deployer {
 			]
 		});
 
-		const uploadResponse = fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
+		const uploader = fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
 			method: "POST", 
 			headers: {
-				imageid: uploadRequestResult.id,
-				imagekey: uploadRequestResult.key
+				"cluster-application": this.package.name,
+				"cluster-version": this.package.version,
+				"cluster-key": uploadRequestResult.key
 			},
 			body: saveProcess.stdout
 		}).then(r => r.json());
 
 		await new Promise(done => {
-			saveProcess.on("close", () => {
-				console.log(`[ deploy ]\timage uploaded!`);
+			saveProcess.on("close", async () => {
+				const res = await uploader;
+
+				console.log(`[ deploy ]\timage uploaded (${res.size})!`);
 
 				done();
 			})
 		});
-
-		console.log(uploadResponse);
 	}
 }

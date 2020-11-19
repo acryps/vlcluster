@@ -5,8 +5,8 @@ export class Crypto {
 		return Array(128).fill(0).map(e => Math.random().toString(36)[3]).map(s => Math.random() > 0.5 ? s.toUpperCase() : s).join("");
 	}
 
-	static imageKey(packageName, version) {
-		return sha512(`${packageName}${"-".repeat(192)}${version}`).substring(10, 74);
+	static nameHash(name) {
+		return sha512(name).substring(10, 74);
 	}
 
 	static dockerImageKey() {
