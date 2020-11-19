@@ -90,6 +90,9 @@ export class WorkerServer {
 		setInterval(() => {
 			fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
 				method: "POST", 
+				headers: {
+					"content-type": "application/json"
+				}
 				body: JSON.stringify({
 					name: this.name,
 					key: this.key

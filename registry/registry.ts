@@ -243,6 +243,10 @@ export class RegistryServer {
 			const name = req.body.name;
 			const key = req.body.key;
 
+			if (!name) {
+				throw new Error("no name!");
+			}
+
 			if (key != fs.readFileSync(RegistryServer.workerKeyFile(name)).toString()) {
 				throw new Error("invalid key!");
 			}
