@@ -72,7 +72,7 @@ export class RegistryServer {
 		// create registry
 		fs.mkdirSync(RegistryServer.workersDirectory);
 		fs.mkdirSync(RegistryServer.clientsDirectory);
-		fs.mkdirSync(RegistryServer.imagesDirectory);
+		fs.mkdirSync(RegistryServer.applicationsDirectory);
 
 		return key;
 	}
