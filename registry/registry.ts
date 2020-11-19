@@ -250,6 +250,10 @@ export class RegistryServer {
 			if (key != fs.readFileSync(RegistryServer.workerKeyFile(name)).toString()) {
 				throw new Error("invalid key!");
 			}
+
+			res.json({
+				test: 1
+			});
 		});
 	}
 }
