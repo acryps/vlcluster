@@ -63,8 +63,12 @@ export class Deployer {
 			]
 		});
 
-		await new Promise<void>(done => {
-			buildProcess.on("close", () => {
+		await new Promise<void>((done, reject) => {
+			buildProcess.on("close", code => {
+				if (code) {
+					return reject(new Error("docker build failed!"));
+				}
+
 				done();
 			})
 		});
