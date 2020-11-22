@@ -2,11 +2,14 @@ import { Cluster } from "../cluster";
 import * as fetch from "node-fetch";
 import * as fs from "fs";
 import * as path from "path";
+import { cpuUsage } from "os-utils";
 
 export class WorkerServer {
 	key: string;
 	name: string;
 	host: string;
+
+	cpuUsage: number;
 
 	constructor(clusterName: string) {
 		this.key = fs.readFileSync(WorkerServer.keyFile(clusterName)).toString();
@@ -95,13 +98,20 @@ export class WorkerServer {
 				},
 				body: JSON.stringify({
 					name: this.name,
-					key: this.key
+					key: this.key,
+					cpuUsage: this.cpuUsage
 				})
 			}).then(res => res.json()).then(res => {
 				console.log("PING", res);
 			}).catch(error => {
 				console.error(`[ worker ]\tping failed!`, error);
 			})
-		}, 10 * 1000);
+		}, Cluster.pingInterval);
+	}
+
+	startCPUMonitoring() {
+		setInterval(() => {
+			cpuUsage(v => this.cpuUsage = v);
+		}, 10000);
 	}
 }

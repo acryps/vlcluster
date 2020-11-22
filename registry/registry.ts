@@ -6,7 +6,11 @@ import * as path from "path";
 export class RegistryServer {
 	key: string;
 
-	runningWorkers: string[];
+	runningWorkers: {
+		name: string,
+		lastSeen: Date,
+		cpuUsage: number
+	}[];
 
 	constructor() {
 		if (!RegistryServer.isInstalled()) {
@@ -242,6 +246,7 @@ export class RegistryServer {
 		app.post(Cluster.api.registry.ping, (req, res) => {
 			const name = req.body.name;
 			const key = req.body.key;
+			const cpuUsage = req.body.cpuUsage;
 
 			if (!name) {
 				throw new Error("no name!");
@@ -250,6 +255,31 @@ export class RegistryServer {
 			if (key != fs.readFileSync(RegistryServer.workerKeyFile(name)).toString()) {
 				throw new Error("invalid key!");
 			}
+
+			let worker = this.runningWorkers.find(s => s.name == name);
+			const now = new Date();
+
+			if (!worker) {
+				worker = {
+					name,
+					cpuUsage,
+					lastSeen: now
+				};
+
+				this.runningWorkers.push(worker);
+				console.log(`[ cluster ]\tnew worker login '${name}' (${(cpuUsage * 100).toFixed(2)}%)`);
+			} else {
+				worker.cpuUsage = cpuUsage;
+				worker.lastSeen = now;
+
+				console.log(`[ cluster * ]\tworker ${name} = ${(cpuUsage * 100).toFixed(2)}%`);
+			}
+
+			setTimeout(() => {
+				if (worker.lastSeen == now) {
+					console.warn(`[ cluster ]\tworker ${name} ping timeout!`);
+				}
+			}, Cluster.pingTimeout);
 
 			res.json({
 				test: 1
