@@ -15,6 +15,8 @@ export class WorkerServer {
 		this.key = fs.readFileSync(WorkerServer.keyFile(clusterName)).toString();
 		this.host = fs.readFileSync(WorkerServer.hostFile(clusterName)).toString();
 		this.name = fs.readFileSync(WorkerServer.nameFile(clusterName)).toString();
+
+		this.cpuUsage = 1;
 	}
 
 	static async create(host: string, name: string, key: string) {
