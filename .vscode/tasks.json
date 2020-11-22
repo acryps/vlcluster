@@ -5,7 +5,7 @@
 	"tasks": [
 		{
 			"label": "Create Version",
-			"detail": "Publish vlquery@dev to npm",
+			"detail": "Publish vlcluster to npm",
 			"type": "shell",
 			"command": "npm version ${input:version-type}",
 			"problemMatcher": []
