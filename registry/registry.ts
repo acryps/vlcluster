@@ -17,7 +17,8 @@ export class RegistryServer {
 		application: string,
 		version: string,
 		env: string,
-		worker: string
+		worker: string,
+		installing: boolean
 	}[];
 
 	constructor() {
@@ -261,6 +262,8 @@ export class RegistryServer {
 			const key = req.body.key;
 			const cpuUsage = req.body.cpuUsage;
 
+			const installRequests = [];
+
 			if (!name) {
 				throw new Error("no name!");
 			}
@@ -290,6 +293,20 @@ export class RegistryServer {
 				console.log(`[ cluster * ]\tworker ${name} = ${(cpuUsage * 100).toFixed(2)}%`);
 			}
 
+			for (let proposal of this.proposedInstalls) {
+				if (!proposal.installing && proposal.worker == worker.name) {
+					console.log(`[ cluster ]\tsent proposal '${proposal.application}' v${proposal.version} for env '${proposal.env}' to '${worker.name}'`);
+
+					installRequests.push({
+						application: proposal.application,
+						version: proposal.version,
+						env: proposal.env
+					});
+
+					proposal.installing = true;
+				}
+			}
+
 			setTimeout(() => {
 				if (worker.lastSeen == now) {
 					console.warn(`[ cluster ]\tworker ${name} ping timeout!`);
@@ -297,7 +314,7 @@ export class RegistryServer {
 					worker.up = false;
 
 					for (let proposal of this.proposedInstalls) {
-						if (proposal.worker == worker.name) {
+						if (!proposal.installing && proposal.worker == worker.name) {
 							console.warn(`[ cluster ]\tproposal for '${proposal.application}' for worker '${worker}' timed out`);
 
 							// remvoe failed proposal
@@ -311,7 +328,7 @@ export class RegistryServer {
 			}, Cluster.pingTimeout);
 
 			res.json({
-				test: 1
+				installRequests
 			});
 		});
 	}
@@ -321,7 +338,7 @@ export class RegistryServer {
 			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
 
 			if (!worker) {
-				console.warn(`[ cluster ]\tout of workers to run '${application}' v${version} for env '${env}'. retrying in 5s`);
+				console.warn(`[ cluster ]\tout of workers to run '${application}' v${version} for env '${env}'. retrying in ${Math.round(Cluster.pingInterval / 1000)}s`);
 
 				setTimeout(async () => {
 					await this.proposeInstall(application, version, env);
