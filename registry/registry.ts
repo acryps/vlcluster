@@ -9,7 +9,15 @@ export class RegistryServer {
 	runningWorkers: {
 		name: string,
 		lastSeen: Date,
-		cpuUsage: number
+		cpuUsage: number,
+		up: boolean
+	}[];
+
+	proposedInstalls: {
+		application: string,
+		version: string,
+		env: string,
+		worker: string
 	}[];
 
 	constructor() {
@@ -177,6 +185,7 @@ export class RegistryServer {
 
 		app.post(Cluster.api.registry.createImage, (req, res) => {
 			const key = fs.readFileSync(RegistryServer.clientKeyFile(req.body.username));
+			
 			if (key != req.body.key) {
 				throw new Error(`invalid key login attepted`);
 			}
@@ -243,6 +252,10 @@ export class RegistryServer {
 			})
 		});
 
+		app.post(Cluster.api.registry.upgrade, (req, res) => {
+			const application = req.headers["cluster-env"];
+		});
+
 		app.post(Cluster.api.registry.ping, (req, res) => {
 			const name = req.body.name;
 			const key = req.body.key;
@@ -263,7 +276,8 @@ export class RegistryServer {
 				worker = {
 					name,
 					cpuUsage,
-					lastSeen: now
+					lastSeen: now,
+					up: true
 				};
 
 				this.runningWorkers.push(worker);
@@ -271,6 +285,7 @@ export class RegistryServer {
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
+				worker.up = true;
 
 				console.log(`[ cluster * ]\tworker ${name} = ${(cpuUsage * 100).toFixed(2)}%`);
 			}
@@ -278,12 +293,53 @@ export class RegistryServer {
 			setTimeout(() => {
 				if (worker.lastSeen == now) {
 					console.warn(`[ cluster ]\tworker ${name} ping timeout!`);
+
+					worker.up = false;
+
+					for (let proposal of this.proposedInstalls) {
+						if (proposal.worker == worker.name) {
+							console.warn(`[ cluster ]\tproposal for '${proposal.application}' for worker '${worker}' timed out`);
+
+							// remvoe failed proposal
+							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
+
+							// create new proposal 
+							this.proposeInstall(proposal.application, proposal.version, proposal.env);
+						}
+					}
 				}
 			}, Cluster.pingTimeout);
 
 			res.json({
 				test: 1
 			});
+		});
+	}
+
+	proposeInstall(application: string, version: string, env: string) {
+		return new Promise(done => {
+			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
+
+			if (!worker) {
+				console.warn(`[ cluster ]\tout of workers to run '${application}' v${version} for env '${env}'. retrying in 5s`);
+
+				setTimeout(async () => {
+					await this.proposeInstall(application, version, env);
+
+					done();
+				}, Cluster.pingInterval);
+			}
+
+			console.log(`[ cluster ]\tproposed '${application}' v${version} for env '${env}' proposed to run on '${worker.name}'`)
+
+			this.proposedInstalls.push({
+				application,
+				version,
+				env,
+				worker: worker.name
+			});
+
+			done();
 		});
 	}
 }

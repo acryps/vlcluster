@@ -12,6 +12,8 @@ export class Deployer {
 		version: string;
 	};
 
+	client: Client;
+
 	constructor(
 		private directory: string,
 		private clusterName: string
@@ -48,6 +50,8 @@ export class Deployer {
 			name: packageConfiguration.name,
 			version: packageConfiguration.version
 		}
+
+		this.client = new Client(this.clusterName);
 	}
 
 	async deploy() {
@@ -74,7 +78,6 @@ export class Deployer {
 		});
 
 		console.log(`[ deploy ]\tcreating image '${this.package.name}' v${this.package.version} in registry...`);
-		const client = new Client(this.clusterName);
 
 		const uploadRequestResult = await fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
 			method: "POST",
@@ -82,8 +85,8 @@ export class Deployer {
 				"content-type": "application/json"
 			},
 			body: JSON.stringify({
-				key: client.key,
-				username: client.username,
+				key: this.client.key,
+				username: this.client.username,
 				name: this.package.name,
 				version: this.package.version
 			})

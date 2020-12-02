@@ -11,7 +11,8 @@ export class Cluster {
 			createWorker: "/reg/worker/init",
 			createClient: "/reg/client/init",
 			createImage: "/reg/image/create",
-			uploadImage: "/req/push/:id",
+			uploadImage: "/req/push",
+			upgrade: "/upgrade",
 			ping: "/reg/ping"
 		},
 		worker: {
