@@ -347,7 +347,7 @@ export class RegistryServer {
 	}
 
 	proposeInstall(application: string, version: string, env: string) {
-		return new Promise(done => {
+		return new Promise<void>(done => {
 			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
 
 			if (!worker) {
