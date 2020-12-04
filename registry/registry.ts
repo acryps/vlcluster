@@ -18,7 +18,8 @@ export class RegistryServer {
 		version: string,
 		env: string,
 		worker: string,
-		installing: boolean
+		installing: boolean,
+		requested: boolean
 	}[];
 
 	constructor() {
@@ -303,7 +304,19 @@ export class RegistryServer {
 						env: proposal.env
 					});
 
-					proposal.installing = true;
+					proposal.requested = true;
+
+					setTimeout(() => {
+						if (proposal.requested && !proposal.installing) {
+							console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker}' timed out`);
+
+							// remvoe failed install request
+							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
+
+							// create new proposal 
+							this.proposeInstall(proposal.application, proposal.version, proposal.env);
+						}
+					}, Cluster.imageInstallRequestTimeout);
 				}
 			}
 
@@ -353,7 +366,9 @@ export class RegistryServer {
 				application,
 				version,
 				env,
-				worker: worker.name
+				worker: worker.name,
+				installing: false,
+				requested: false
 			});
 
 			done();

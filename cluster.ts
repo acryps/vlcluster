@@ -3,8 +3,10 @@ import * as path from "path";
 
 export class Cluster {
 	static port = 9193;
+
 	static pingInterval = 10 * 1000;
 	static pingTimeout = 15 * 1000;
+	static imageInstallRequestTimeout = 30 * 1000;
 
 	static api = {
 		registry: {
