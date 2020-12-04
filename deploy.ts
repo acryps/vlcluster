@@ -79,7 +79,7 @@ export class Deployer {
 
 		console.log(`[ deploy ]\tcreating image '${this.package.name}' v${this.package.version} in registry...`);
 
-		const uploadRequestResult = await fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
+		const uploadRequestResult = await fetch(`http://${this.client.host}:${Cluster.port}${Cluster.api.registry.createImage}`, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json"
@@ -103,7 +103,7 @@ export class Deployer {
 			]
 		});
 
-		const uploader = fetch(`http://${client.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
+		const uploader = fetch(`http://${this.client.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
 			method: "POST", 
 			headers: {
 				"cluster-application": this.package.name,
