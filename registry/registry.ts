@@ -30,6 +30,7 @@ export class RegistryServer {
 		this.key = fs.readFileSync(RegistryServer.keyFile).toString();
 
 		this.runningWorkers = [];
+		this.proposedInstalls = [];
 	}
 
 	createWorker(name: string) {
