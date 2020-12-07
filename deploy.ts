@@ -128,6 +128,7 @@ export class Deployer {
 
 	async upgrade(key: string, env: string) {
 		await fetch(`http://${this.client.host}:${Cluster.port}${Cluster.api.registry.upgrade}`, {
+			method: "POST",
 			headers: {
 				"cluster-application": this.package.name,
 				"cluster-version": this.package.version,
