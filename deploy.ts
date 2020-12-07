@@ -122,9 +122,20 @@ export class Deployer {
 				done();
 			})
 		});
+
+		return uploadRequestResult.key;
 	}
 
-	async upgrade(env: string) {
-		
+	async upgrade(key: string, env: string) {
+		await fetch(`http://${this.client.host}:${Cluster.port}${Cluster.api.registry.upgrade}`, {
+			headers: {
+				"cluster-application": this.package.name,
+				"cluster-version": this.package.version,
+				"cluster-key": key,
+				"cluster-env": env
+			}
+		}).then(r => r.json());
+
+		console.log("APPLICATION UPGRADE REQUEST SUBMITTED!!!")
 	}
 }

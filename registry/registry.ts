@@ -256,7 +256,23 @@ export class RegistryServer {
 		});
 
 		app.post(Cluster.api.registry.upgrade, (req, res) => {
-			const application = req.headers["cluster-env"];
+			const env = req.headers["cluster-env"];
+			const application = req.headers["cluster-application"];
+			const key = req.headers["cluster-key"];
+			const version = req.headers["cluster-version"];
+
+			if (!fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
+				throw new Error("application or version does not exist!");
+			}
+
+			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)).toString() != key) {
+				throw new Error("invalid upload key set");
+			}
+
+			console.log(`[ registry ]\tupgrading '${application}' to v${version}`);
+			this.proposeInstall(application, version, env);
+
+			res.json({});
 		});
 
 		app.post(Cluster.api.registry.ping, (req, res) => {

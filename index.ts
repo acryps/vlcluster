@@ -63,14 +63,14 @@ export async function main() {
 
 			case "deploy": {
 				const deployer = new Deployer(
-					parameters[2] || process.cwd(),
+					process.cwd(),
 					parameters[0]
 				);
 				
-				await deployer.deploy();
+				const key = await deployer.deploy();
 
 				if (parameters[1]) {
-					await deployer.upgrade(parameters[1]);
+					await deployer.upgrade(key, parameters[1]);
 				}
 
 				return process.exit(0);
