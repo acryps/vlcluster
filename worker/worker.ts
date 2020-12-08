@@ -75,17 +75,7 @@ export class WorkerServer {
 	}
 
 	register(app) {
-		app.post(Cluster.api.worker.install, async (req, res) => {
-			if (this.key != req.body.key) {
-				throw new Error(`[ registry ]\tinvalid key login attepted`);
-			}
-
-			await this.install(req.body.image);
-
-			res.json({
-				installed: true
-			});
-		});
+		
 	}
 
 	startPing() {
