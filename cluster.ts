@@ -15,7 +15,8 @@ export class Cluster {
 			createImage: "/reg/image/create",
 			uploadImage: "/req/push",
 			upgrade: "/upgrade",
-			ping: "/reg/ping"
+			ping: "/reg/ping",
+			install: "/req/install"
 		},
 		worker: {
 			install: "/wok/install"

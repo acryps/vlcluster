@@ -3,6 +3,7 @@ import * as fetch from "node-fetch";
 import * as fs from "fs";
 import * as path from "path";
 import { cpuUsage } from "os-utils";
+import { spawn } from "child_process";
 
 export class WorkerServer {
 	key: string;
@@ -43,10 +44,6 @@ export class WorkerServer {
 		return {
 			name: result.name
 		};
-	}
-
-	async install(image: string) {
-		console.log(`[ worker ] install ${image}`);
 	}
 
 	static getInstalledClusterNames() {
@@ -104,7 +101,15 @@ export class WorkerServer {
 					cpuUsage: this.cpuUsage
 				})
 			}).then(res => res.json()).then(res => {
-				console.log("PING", res);
+				if (res.installRequests.length) {
+					for (let request of res.installRequests) {
+						console.log(`[ worker ]\tnew install request: '${request.application}' v${request.version} for env '${request.env}'`);
+
+						this.install(request.application, request.version, request.env, request.key);
+					}
+				} else {
+					console.log("[ worker ]\tping");
+				}
 			}).catch(error => {
 				console.error(`[ worker ]\tping failed!`, error);
 			})
@@ -115,5 +120,35 @@ export class WorkerServer {
 		setInterval(() => {
 			cpuUsage(v => this.cpuUsage = v);
 		}, 10000);
+	}
+
+	install(application: string, version: string, env: string, key: string) {
+		return new Promise(async done => {
+			console.log(`[ worker ]\tinstalling '${application}' v${version} for env '${env}'`);
+
+			const loadProcess = spawn("docker", ["load"], {
+				stdio: [
+					"pipe",
+					process.stdout,
+					process.stderr
+				]
+			});
+
+			const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.install}`, {
+				method: "POST",
+				headers: {
+					"cluster-key": key
+				}
+			});
+
+			console.log(`[ worker ]\tloading '${application}' v${version}`);
+			res.body.pipe(loadProcess.stdin);
+
+			res.body.on("finish", () => {
+				console.log(`[ worker ]\tloaded '${application}' v${version}`);
+
+				done();
+			});
+		});
 	}
 }

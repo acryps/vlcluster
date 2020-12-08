@@ -19,7 +19,8 @@ export class RegistryServer {
 		env: string,
 		worker: string,
 		installing: boolean,
-		requested: boolean
+		requested: boolean,
+		key: string
 	}[];
 
 	constructor() {
@@ -325,7 +326,7 @@ export class RegistryServer {
 
 					setTimeout(() => {
 						if (proposal.requested && !proposal.installing) {
-							console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker}' timed out`);
+							console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker.name}' timed out`);
 
 							// remvoe failed install request
 							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
@@ -345,7 +346,7 @@ export class RegistryServer {
 
 					for (let proposal of this.proposedInstalls) {
 						if (!proposal.installing && proposal.worker == worker.name) {
-							console.warn(`[ cluster ]\tproposal for '${proposal.application}' for worker '${worker}' timed out`);
+							console.warn(`[ cluster ]\tproposal for '${proposal.application}' for worker '${worker.name}' timed out`);
 
 							// remvoe failed proposal
 							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
@@ -360,6 +361,21 @@ export class RegistryServer {
 			res.json({
 				installRequests
 			});
+		});
+
+		app.post(Cluster.api.registry.install, (req, res) => {
+			const key = req.headers["cluster-key"];
+			
+			const request = this.proposedInstalls.find(s => s.key == key);
+
+			if (!request) {
+				throw new Error("no install found!");
+			}
+
+			request.installing = true;
+			
+			console.warn(`[ cluster ]\tsending '${request.application}' v${request.version} image to '${request.worker}'`);
+			res.send(RegistryServer.applicationVersionImageSourceFile(request.application, request.version));
 		});
 	}
 
@@ -385,7 +401,8 @@ export class RegistryServer {
 				env,
 				worker: worker.name,
 				installing: false,
-				requested: false
+				requested: false,
+				key: Crypto.createKey()
 			});
 
 			done();

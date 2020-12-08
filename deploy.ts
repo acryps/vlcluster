@@ -137,6 +137,6 @@ export class Deployer {
 			}
 		}).then(r => r.json());
 
-		console.log("APPLICATION UPGRADE REQUEST SUBMITTED!!!")
+		console.log("[ deploy ]\tupload request submitted. the update will be rolled out now");
 	}
 }
