@@ -303,7 +303,7 @@ export class RegistryServer {
 				};
 
 				this.runningWorkers.push(worker);
-				console.log(`[ cluster ]\tnew worker login '${name}' (${(cpuUsage * 100).toFixed(2)}%)`);
+				console.log(`[ cluster ]\tworker login '${name}'`);
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
