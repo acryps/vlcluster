@@ -123,7 +123,7 @@ export class WorkerServer {
 	}
 
 	install(application: string, version: string, env: string, key: string) {
-		return new Promise(async done => {
+		return new Promise<void>(async done => {
 			console.log(`[ worker ]\tinstalling '${application}' v${version} for env '${env}'`);
 
 			const loadProcess = spawn("docker", ["load"], {
