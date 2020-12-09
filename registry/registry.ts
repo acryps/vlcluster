@@ -375,7 +375,7 @@ export class RegistryServer {
 			request.installing = true;
 			
 			console.warn(`[ cluster ]\tsending '${request.application}' v${request.version} image to '${request.worker}'`);
-			res.send(RegistryServer.applicationVersionImageSourceFile(request.application, request.version));
+			fs.createReadStream(RegistryServer.applicationVersionImageSourceFile(request.application, request.version)).pipe(res);
 		});
 	}
 
