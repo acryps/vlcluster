@@ -237,6 +237,8 @@ export class WorkerServer {
 			const version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
 
+			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env}...`);
+
 			if (!fs.existsSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application))) {
 				fs.mkdirSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application));
 			}
@@ -248,8 +250,6 @@ export class WorkerServer {
 			if (!fs.existsSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version))) {
 				fs.mkdirSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version));
 			}
-
-			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env}...`);
 
 			const id = Crypto.createKey();
 			const port = Math.floor(Math.random() * 1000) + 5000;
