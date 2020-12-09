@@ -319,7 +319,8 @@ export class RegistryServer {
 					installRequests.push({
 						application: proposal.application,
 						version: proposal.version,
-						env: proposal.env
+						env: proposal.env,
+						key: proposal.key
 					});
 
 					proposal.requested = true;
