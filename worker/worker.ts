@@ -218,13 +218,13 @@ export class WorkerServer {
 
 					await this.start(application, env);
 
-					const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+					/* const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 
 					fs.writeFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env), version);
 
 					if (oldVersion) {
 						await this.stop(application, env, oldVersion);
-					}
+					} */
 
 					done();
 				});
