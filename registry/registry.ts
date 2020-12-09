@@ -132,6 +132,10 @@ export class RegistryServer {
 		return path.join(this.applicationVersionDirectory(name, version), "key");
 	}
 
+	static applicationVersionImageIdFile(name: string, version: string) {
+		return path.join(this.applicationVersionDirectory(name, version), "id");
+	}
+
 	static get workersDirectory() {
 		return path.join(this.rootDirectory, "workers");
 	}
@@ -233,6 +237,7 @@ export class RegistryServer {
 			const application = req.headers["cluster-application"];
 			const version = req.headers["cluster-version"];
 			const key = req.headers["cluster-key"];
+			const id = req.headers["cluster-image-id"];
 
 			if (!fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
 				throw new Error("version does not exists!")
@@ -241,6 +246,8 @@ export class RegistryServer {
 			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)).toString() != key) {
 				throw new Error("invalid upload key set");
 			}
+
+			fs.writeFileSync(RegistryServer.applicationVersionImageIdFile(application, version), id);
 
 			console.log(`[ registry ]\tuploading image v${version}`);
 			req.pipe(fs.createWriteStream(RegistryServer.applicationVersionImageSourceFile(application, version)));
@@ -320,7 +327,8 @@ export class RegistryServer {
 						application: proposal.application,
 						version: proposal.version,
 						env: proposal.env,
-						key: proposal.key
+						key: proposal.key,
+						imageId: fs.readFileSync(RegistryServer.applicationVersionImageIdFile(proposal.application, proposal.version)).toString()
 					});
 
 					proposal.requested = true;

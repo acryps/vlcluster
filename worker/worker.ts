@@ -4,6 +4,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { cpuUsage } from "os-utils";
 import { spawn } from "child_process";
+import { loadavg } from "os";
+import { Crypto } from "../crypto";
+import { Worker } from "cluster";
 
 export class WorkerServer {
 	key: string;
@@ -12,10 +15,18 @@ export class WorkerServer {
 
 	cpuUsage: number;
 
-	constructor(clusterName: string) {
+	constructor(private clusterName: string) {
 		this.key = fs.readFileSync(WorkerServer.keyFile(clusterName)).toString();
 		this.host = fs.readFileSync(WorkerServer.hostFile(clusterName)).toString();
 		this.name = fs.readFileSync(WorkerServer.nameFile(clusterName)).toString();
+
+		if (!fs.existsSync(WorkerServer.applicationsDirectory(this.clusterName))) {
+			fs.mkdirSync(WorkerServer.applicationsDirectory(this.clusterName));
+		}
+
+		if (!fs.existsSync(WorkerServer.instancesDirectory(this.clusterName))) {
+			fs.mkdirSync(WorkerServer.instancesDirectory(this.clusterName));
+		}
 
 		this.cpuUsage = 1;
 	}
@@ -74,6 +85,58 @@ export class WorkerServer {
 		return path.join(this.workerDirectory(clusterName), "host");
 	}
 
+	static applicationsDirectory(clusterName: string) {
+		return path.join(this.workerDirectory(clusterName), "applications");
+	}
+
+	static instancesDirectory(clusterName: string) {
+		return path.join(this.workerDirectory(clusterName), "instances");
+	}
+
+	static instanceApplicationDirectory(clusterName: string, application: string) {
+		return path.join(this.instancesDirectory(clusterName), Crypto.sanitizeApplicationName(application));
+	}
+
+	static instanceApplicationEnvDirectory(clusterName: string, application: string, env: string) {
+		return path.join(this.instanceApplicationDirectory(clusterName, application), env);
+	}
+
+	static instanceApplicationEnvVersionDirectory(clusterName: string, application: string, env: string, version: string) {
+		return path.join(this.instanceApplicationEnvDirectory(clusterName, application, env), version);
+	}
+
+	static instanceApplicationEnvVersionInstanceFile(clusterName: string, application: string, env: string, version: string, id: string) {
+		return path.join(this.instanceApplicationEnvVersionDirectory(clusterName, application, env, version), id);
+	}
+
+	static applicationDirectory(clusterName: string, application: string) {
+		return path.join(this.applicationsDirectory(clusterName), Crypto.sanitizeApplicationName(application));
+	}
+
+	static applicationVersionsDirecotry(clusterName: string, application: string) {
+		return path.join(this.applicationDirectory(clusterName, application), "versions");
+	}
+
+	static applicationVersionDirectory(clusterName: string, application: string, version: string) {
+		return path.join(this.applicationVersionsDirecotry(clusterName, application), Crypto.sanitizeVersion(version));
+	}
+
+	static applicationVersionImageIdFile(clusterName: string, application: string, version: string) {
+		return path.join(this.applicationVersionDirectory(clusterName, application, version), "image-id");
+	}
+
+	static applicationEnvsDirecotry(clusterName: string, application: string) {
+		return path.join(this.applicationDirectory(clusterName, application), "envs");
+	}
+
+	static applicationEnvDirecotry(clusterName: string, application: string, env: string) {
+		return path.join(this.applicationEnvsDirecotry(clusterName, application), env);
+	}
+
+	static applicationEnvVersionFile(clusterName: string, application: string, env: string) {
+		return path.join(this.applicationEnvDirecotry(clusterName, application, env), "version");
+	}
+
 	register(app) {
 		
 	}
@@ -95,7 +158,7 @@ export class WorkerServer {
 					for (let request of res.installRequests) {
 						console.log(`[ worker ]\tnew install request: '${request.application}' v${request.version} for env '${request.env}'`);
 
-						this.install(request.application, request.version, request.env, request.key);
+						this.install(request.application, request.version, request.env, request.key, request.imageId);
 					}
 				} else {
 					console.log("[ worker ]\tping");
@@ -112,7 +175,7 @@ export class WorkerServer {
 		}, 10000);
 	}
 
-	install(application: string, version: string, env: string, key: string) {
+	install(application: string, version: string, env: string, key: string, imageId: string) {
 		return new Promise<void>(async done => {
 			console.log(`[ worker ]\tinstalling '${application}' v${version} for env '${env}'`);
 
@@ -131,14 +194,93 @@ export class WorkerServer {
 				}
 			});
 
-			console.log(`[ worker ]\tloading '${application}' v${version}`);
+			console.log(`[ worker ]\tpulling '${application}' v${version}`);
 			res.body.pipe(loadProcess.stdin);
 
 			res.body.on("finish", () => {
-				console.log(`[ worker ]\tloaded '${application}' v${version}`);
+				console.log(`[ worker ]\tpulled '${application}' v${version}`);
+
+				loadProcess.on("exit", async () => {
+					console.log(`[ worker ]\tloaded '${application}' v${version}`);
+
+					if (!fs.existsSync(WorkerServer.applicationDirectory(this.clusterName, application))) {
+						fs.mkdirSync(WorkerServer.applicationDirectory(this.clusterName, application));
+						fs.mkdirSync(WorkerServer.applicationVersionsDirecotry(this.clusterName, application));
+						fs.mkdirSync(WorkerServer.applicationEnvsDirecotry(this.clusterName, application));
+					}
+
+					fs.mkdirSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version));
+					fs.writeFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version), imageId);
+
+					if (!fs.existsSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env))) {
+						fs.mkdirSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env));
+					}
+
+					await this.start(application, env);
+
+					const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+
+					fs.writeFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env), version);
+
+					if (oldVersion) {
+						await this.stop(application, env, oldVersion);
+					}
+
+					done();
+				});
+			});
+		});
+	}
+
+	start(application: string, env: string) {
+		return new Promise<void>(done => {
+			const version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
+
+			if (!fs.existsSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application))) {
+				fs.mkdirSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application));
+			}
+
+			if (!fs.existsSync(WorkerServer.instanceApplicationEnvDirectory(this.clusterName, application, env))) {
+				fs.mkdirSync(WorkerServer.instanceApplicationEnvDirectory(this.clusterName, application, env));
+			}
+
+			if (!fs.existsSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version))) {
+				fs.mkdirSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version));
+			}
+
+			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env}...`);
+
+			const id = Crypto.createKey();
+			const port = Math.floor(Math.random() * 1000) + 5000;
+
+			console.log(`[ worker ]\tmap port ${port}`);
+
+			const runProcess = spawn("docker", [
+				"run",
+				"--name", id, // tag container
+				"--expose", port.toString(), // expose port
+				"--env", `PORT=${port}`, // add port env variable
+				"-d", // detatch
+				imageId
+			], {
+				stdio: [
+					"ignore",
+					process.stdout,
+					process.stderr
+				]
+			});
+
+			runProcess.on("exit", () => {
+				WorkerServer.instanceApplicationEnvVersionInstanceFile(this.clusterName, application, env, version, id);
+
+				console.log(`[ worker ]\tstarted '${application}' v${version} for ${env}...`);
 
 				done();
 			});
 		});
+	}
+
+	stop(application: string, env: string, verison: string = null) {
 	}
 }

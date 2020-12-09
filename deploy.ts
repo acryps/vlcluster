@@ -108,7 +108,8 @@ export class Deployer {
 			headers: {
 				"cluster-application": this.package.name,
 				"cluster-version": this.package.version,
-				"cluster-key": uploadRequestResult.key
+				"cluster-key": uploadRequestResult.key,
+				"cluster-image-id": imageId
 			},
 			body: saveProcess.stdout
 		}).then(r => r.json());
