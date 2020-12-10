@@ -222,8 +222,12 @@ export class WorkerServer {
 					await this.start(application, env);
 
 					if (oldVersion) {
+						console.log(`[ worker ]\told version '${oldVersion}' of '${application}' for '${env}' will be stopped...`);
+
 						await this.stop(application, env, oldVersion);
-					} 
+					} else {
+						console.log(`[ worker ]\tno old versions of '${application}' for '${env}' found. good to go!`);
+					}
 
 					done();
 				});
