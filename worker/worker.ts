@@ -234,15 +234,15 @@ export class WorkerServer {
 	}
 
 	start(application: string, env: string) {
-		return new Promise<void>(done => {
+		return new Promise<void>(async done => {
 			const version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
 
 			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env} from ${imageId}...`);
 
 			const id = Crypto.createKey();
-			const internalPort = Math.floor(Math.random() * 1000) + 50000;
-			const externalPort = Math.floor(Math.random() * 1000) + 60000;
+			const internalPort = await Crypto.getRandomPort();
+			const externalPort = await Crypto.getRandomPort();
 
 			console.log(`[ worker ]\tmap port http://container:${internalPort} to http://localhost:${externalPort}/`);
 

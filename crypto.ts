@@ -1,5 +1,7 @@
 import { sha512 } from "js-sha512";
 
+import * as net from "net";
+
 export class Crypto {
 	static createKey() {
 		return Array(128).fill(0).map(e => Math.random().toString(36)[3]).map(s => Math.random() > 0.5 ? s.toUpperCase() : s).join("");
@@ -31,5 +33,19 @@ export class Crypto {
 
 	static sanitizeWorkerName(name: string) {
 		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
+	}
+
+	static getRandomPort() {
+		return new Promise<number>(done => {
+			const server = net.createServer(() => {});
+
+			server.listen(0, () => {
+				const port = (server.address() as net.AddressInfo).port;
+
+				server.close(() => {
+					done(port);
+				});
+			});
+		});
 	}
 }
