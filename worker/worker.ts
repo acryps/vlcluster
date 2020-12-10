@@ -298,6 +298,11 @@ export class WorkerServer {
 		
 					stopProcess.on("exit", () => {
 						console.log(`[ worker ]\tstopped ${application}[${env}]:${version}`);
+
+						fs.rmSync(WorkerServer.applicationEnvInstanceDirecotry(this.clusterName, application, env, instance), {
+							recursive: true,
+							force: true
+						});
 		
 						done();
 					});
