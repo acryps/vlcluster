@@ -254,13 +254,14 @@ export class WorkerServer {
 			const internalPort = Math.floor(Math.random() * 1000) + 50000;
 			const externalPort = Math.floor(Math.random() * 1000) + 60000;
 
-			console.log(`[ worker ]\tmap port ${internalPort} -> ${externalPort}`);
+			console.log(`[ worker ]\tmap port http://container:${internalPort} to http://localhost:${externalPort}/`);
 
 			const runProcess = spawn("docker", [
 				"run",
-				"--name", id, // tag container
-				"--expose", `${internalPort}:${externalPort}`, // expose port
 				"--env", `PORT=${internalPort}`, // add port env variable
+				"--expose", internalPort.toString(), // export container port to docker interface
+				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
+				"--name", id, // tag container
 				"-d", // detatch
 				imageId
 			], {
