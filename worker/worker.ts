@@ -320,7 +320,7 @@ export class WorkerServer {
 		return new Promise<InstanceState[]>(done => {
 			let dockerProcessListOutput = "";
 
-			const dockerProcessListProcess = spawn("docker", ["ps", "--format", "{{.Name}}"]);
+			const dockerProcessListProcess = spawn("docker", ["ps", "--format", "{{.Names}}"]);
 			dockerProcessListProcess.stdout.on("data", data => {
 				dockerProcessListOutput += data;
 			});
