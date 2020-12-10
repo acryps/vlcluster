@@ -327,7 +327,7 @@ export class WorkerServer {
 
 			dockerProcessListProcess.on("exit", () => {
 				const processes: InstanceState[] = [];
-				const psResult = dockerProcessListOutput.split("\n");
+				const psResult = dockerProcessListOutput.split("\n").map(s => s.trim());
 
 				for (let application of this.getInstalledApplications()) {
 					for (let env of this.getInstalledApplicationEnvs(application)) {

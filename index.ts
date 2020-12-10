@@ -82,11 +82,13 @@ export async function main() {
 					console.group(cluster);
 
 					for (let instance of await new WorkerServer(cluster).getInstances()) {
-						console.log(`${instance.running ? "✔ Running" : "✗ Stopped"}\t${instance.application}[${instance.env}]:${instance.version}\tcontainer:${instance.internalPort} → localhost:${instance.externalPort}`);
+						console.log(`${instance.running ? "✔ Running" : "✗ Stopped"}\t${instance.application}[${instance.env}]:${instance.version}\t${instance.instanceId.substr(0, 8)}…:${instance.internalPort} → localhost:${instance.externalPort}`);
 					}
 
 					console.groupEnd();
 				}
+
+				return process.exit(0);
 			}
 
 			case "daemon": {
