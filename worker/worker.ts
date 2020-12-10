@@ -282,6 +282,32 @@ export class WorkerServer {
 		});
 	}
 
-	stop(application: string, env: string, verison: string = null) {
+	stop(application: string, env: string, version: string = null) {
+		return new Promise<void>(done => {
+			if (!version) {
+				version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+			}
+
+			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
+
+			console.log(`[ worker ]\tstopping '${application}' v${version} for ${env} running as ${imageId}...`);
+
+			const stopProcess = spawn("docker", [
+				"stop",
+				imageId
+			], {
+				stdio: [
+					"ignore",
+					process.stdout,
+					process.stderr
+				]
+			});
+
+			stopProcess.on("exit", () => {
+				console.log(`[ worker ]\tstopped '${application}' v${version} for ${env}`);
+
+				done();
+			});
+		});
 	}
 }
