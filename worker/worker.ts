@@ -249,6 +249,16 @@ export class WorkerServer {
 			const runProcess = spawn("docker", [
 				"run",
 				"--env", `PORT=${internalPort}`, // add port env variable
+				"--env", `CLUSTER_APPLICATION=${application}`,
+				"--env", `CLUSTER_INTERNAL_PORT=${internalPort}`,
+				"--env", `CLUSTER_EXTERNAL_PORT=${externalPort}`,
+				"--env", `CLUSTER_VERSION=${version}`,
+				"--env", `CLUSTER_IMAGE_ID=${imageId}`,
+				"--env", `CLUSTER_CONTAINER_ID=${id}`,
+				"--env", `CLUSTER_NAME=${this.clusterName}`,
+				"--env", `CLUSTER_WORKER_NAME=${this.name}`,
+				"--env", `CLUSTER_REGISTRY_HOST=${this.host}`,
+				"--env", `CLUSTER_ENV=${env}`,
 				"--expose", internalPort.toString(), // export container port to docker interface
 				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
 				"--name", id, // tag container
