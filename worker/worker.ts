@@ -275,33 +275,35 @@ export class WorkerServer {
 		});
 	}
 
-	stop(application: string, env: string, version: string = null) {
-		return new Promise<void>(done => {
-			if (!version) {
-				version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+	async stop(application: string, env: string, version: string = null) {
+		if (!version) {
+			version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+		}
+
+		for (let instance of this.getInstalledApplicationInstances(application, env)) {
+			if (fs.readFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, instance)).toString() == version) {
+				await new Promise<void>(done => {
+					console.log(`[ worker ]\tstopping ${application}[${env}]:${version} running as ${instance}...`);
+
+					const stopProcess = spawn("docker", [
+						"stop",
+						instance
+					], {
+						stdio: [
+							"ignore",
+							process.stdout,
+							process.stderr
+						]
+					});
+		
+					stopProcess.on("exit", () => {
+						console.log(`[ worker ]\tstopped ${application}[${env}]:${version}`);
+		
+						done();
+					});
+				});
 			}
-
-			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
-
-			console.log(`[ worker ]\tstopping '${application}' v${version} for ${env} running as ${imageId}...`);
-
-			const stopProcess = spawn("docker", [
-				"stop",
-				imageId
-			], {
-				stdio: [
-					"ignore",
-					process.stdout,
-					process.stderr
-				]
-			});
-
-			stopProcess.on("exit", () => {
-				console.log(`[ worker ]\tstopped '${application}' v${version} for ${env}`);
-
-				done();
-			});
-		});
+		}
 	}
 
 	getInstalledApplications() {
