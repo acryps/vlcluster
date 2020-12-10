@@ -8,6 +8,7 @@ import { Daemon } from "./daemon";
 import { WorkerServer } from "./worker/worker";
 import { Deployer } from "./deploy";
 import { Client } from "./client/client";
+import { Worker } from "cluster";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -74,6 +75,16 @@ export async function main() {
 				}
 
 				return process.exit(0);
+			}
+
+			case "ps": {
+				for (let cluster of WorkerServer.getInstalledClusterNames()) {
+					console.group(cluster);
+
+					new WorkerServer(cluster).getRunningInstances();
+
+					console.groupEnd();
+				}
 			}
 
 			case "daemon": {
