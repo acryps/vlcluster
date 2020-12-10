@@ -81,7 +81,9 @@ export async function main() {
 				for (let cluster of WorkerServer.getInstalledClusterNames()) {
 					console.group(cluster);
 
-					new WorkerServer(cluster).getRunningInstances();
+					for (let instance of await new WorkerServer(cluster).getInstances()) {
+						console.log(`${instance.running ? "✔ Running" : "✗ Stopped"}\t${instance.application}[${instance.env}]:${instance.version}\tcontainer:${instance.internalPort} → localhost:${instance.externalPort}`);
+					}
 
 					console.groupEnd();
 				}

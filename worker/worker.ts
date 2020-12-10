@@ -7,6 +7,7 @@ import { spawn } from "child_process";
 import { loadavg } from "os";
 import { Crypto } from "../crypto";
 import { Worker } from "cluster";
+import { InstanceState } from "./instance-state";
 
 export class WorkerServer {
 	key: string;
@@ -22,10 +23,6 @@ export class WorkerServer {
 
 		if (!fs.existsSync(WorkerServer.applicationsDirectory(this.clusterName))) {
 			fs.mkdirSync(WorkerServer.applicationsDirectory(this.clusterName));
-		}
-
-		if (!fs.existsSync(WorkerServer.instancesDirectory(this.clusterName))) {
-			fs.mkdirSync(WorkerServer.instancesDirectory(this.clusterName));
 		}
 
 		this.cpuUsage = 1;
@@ -89,26 +86,6 @@ export class WorkerServer {
 		return path.join(this.workerDirectory(clusterName), "applications");
 	}
 
-	static instancesDirectory(clusterName: string) {
-		return path.join(this.workerDirectory(clusterName), "instances");
-	}
-
-	static instanceApplicationDirectory(clusterName: string, application: string) {
-		return path.join(this.instancesDirectory(clusterName), Crypto.sanitizeApplicationName(application));
-	}
-
-	static instanceApplicationEnvDirectory(clusterName: string, application: string, env: string) {
-		return path.join(this.instanceApplicationDirectory(clusterName, application), env);
-	}
-
-	static instanceApplicationEnvVersionDirectory(clusterName: string, application: string, env: string, version: string) {
-		return path.join(this.instanceApplicationEnvDirectory(clusterName, application, env), version);
-	}
-
-	static instanceApplicationEnvVersionInstanceFile(clusterName: string, application: string, env: string, version: string, id: string) {
-		return path.join(this.instanceApplicationEnvVersionDirectory(clusterName, application, env, version), id);
-	}
-
 	static applicationDirectory(clusterName: string, application: string) {
 		return path.join(this.applicationsDirectory(clusterName), Crypto.sanitizeApplicationName(application));
 	}
@@ -145,8 +122,8 @@ export class WorkerServer {
 		return path.join(this.applicationEnvInstancesDirecotry(clusterName, application, env), instance);
 	}
 
-	static applicationEnvInstanceStartFile(clusterName: string, application: string, env: string, instance: string) {
-		return path.join(this.applicationEnvInstanceDirecotry(clusterName, application, env, instance), "start");
+	static applicationEnvInstanceVersionFile(clusterName: string, application: string, env: string, instance: string) {
+		return path.join(this.applicationEnvInstanceDirecotry(clusterName, application, env, instance), "version");
 	}
 
 	static applicationEnvInstanceInternalPortFile(clusterName: string, application: string, env: string, instance: string) {
@@ -263,18 +240,6 @@ export class WorkerServer {
 
 			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env} from ${imageId}...`);
 
-			if (!fs.existsSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application))) {
-				fs.mkdirSync(WorkerServer.instanceApplicationDirectory(this.clusterName, application));
-			}
-
-			if (!fs.existsSync(WorkerServer.instanceApplicationEnvDirectory(this.clusterName, application, env))) {
-				fs.mkdirSync(WorkerServer.instanceApplicationEnvDirectory(this.clusterName, application, env));
-			}
-
-			if (!fs.existsSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version))) {
-				fs.mkdirSync(WorkerServer.instanceApplicationEnvVersionDirectory(this.clusterName, application, env, version));
-			}
-
 			const id = Crypto.createKey();
 			const internalPort = Math.floor(Math.random() * 1000) + 50000;
 			const externalPort = Math.floor(Math.random() * 1000) + 60000;
@@ -298,10 +263,8 @@ export class WorkerServer {
 			});
 
 			runProcess.on("exit", () => {
-				WorkerServer.instanceApplicationEnvVersionInstanceFile(this.clusterName, application, env, version, id);
-
 				fs.mkdirSync(WorkerServer.applicationEnvInstanceDirecotry(this.clusterName, application, env, id));
-				fs.writeFileSync(WorkerServer.applicationEnvInstanceStartFile(this.clusterName, application, env, id), new Date().toISOString());
+				fs.writeFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, id), version);
 				fs.writeFileSync(WorkerServer.applicationEnvInstanceInternalPortFile(this.clusterName, application, env, id), internalPort.toString());
 				fs.writeFileSync(WorkerServer.applicationEnvInstanceExternalPortFile(this.clusterName, application, env, id), externalPort.toString());
 
@@ -350,15 +313,11 @@ export class WorkerServer {
 	}
 
 	getInstalledApplicationInstances(application: string, env: string) {
-		// return fs.readdirSync(WorkerServer.applicationEnvInstancesDirecotry(this.clusterName, application));
+		return fs.readdirSync(WorkerServer.applicationEnvInstancesDirecotry(this.clusterName, application, env));
 	}
 
 	getInstances() {
-		return new Promise<{
-			application: string,
-			env: string,
-			version: string
-		}>(done => {
+		return new Promise<InstanceState[]>(done => {
 			let dockerProcessListOutput = "";
 
 			const dockerProcessListProcess = spawn("docker", ["ps", "--format", "{{.Name}}"]);
@@ -367,20 +326,27 @@ export class WorkerServer {
 			});
 
 			dockerProcessListProcess.on("exit", () => {
-				const processes = [];
+				const processes: InstanceState[] = [];
+				const psResult = dockerProcessListOutput.split("\n");
 
 				for (let application of this.getInstalledApplications()) {
 					for (let env of this.getInstalledApplicationEnvs(application)) {
-
+						for (let instance of this.getInstalledApplicationInstances(application, env)) {
+							processes.push({
+								application,
+								env,
+								version: fs.readFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, instance)).toString(),
+								instanceId: instance,
+								internalPort: +fs.readFileSync(WorkerServer.applicationEnvInstanceInternalPortFile(this.clusterName, application, env, instance)).toString(),
+								externalPort: +fs.readFileSync(WorkerServer.applicationEnvInstanceExternalPortFile(this.clusterName, application, env, instance)).toString(),
+								running: psResult.includes(instance)
+							})
+						}
 					}
 				}
+
+				done(processes);
 			});
 		});
-	}
-
-
-
-	getRunningInstances() {
-
 	}
 }
