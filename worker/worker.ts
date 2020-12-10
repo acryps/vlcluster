@@ -251,15 +251,16 @@ export class WorkerServer {
 			}
 
 			const id = Crypto.createKey();
-			const port = Math.floor(Math.random() * 1000) + 5000;
+			const internalPort = Math.floor(Math.random() * 1000) + 50000;
+			const externalPort = Math.floor(Math.random() * 1000) + 60000;
 
-			console.log(`[ worker ]\tmap port ${port}`);
+			console.log(`[ worker ]\tmap port ${internalPort} -> ${externalPort}`);
 
 			const runProcess = spawn("docker", [
 				"run",
 				"--name", id, // tag container
-				"--expose", port.toString(), // expose port
-				"--env", `PORT=${port}`, // add port env variable
+				"--expose", `${internalPort}:${externalPort}`, // expose port
+				"--env", `PORT=${internalPort}`, // add port env variable
 				"-d", // detatch
 				imageId
 			], {
