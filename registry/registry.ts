@@ -389,8 +389,8 @@ export class RegistryServer {
 
 		setInterval(() => {
 			process.stdout.write(`\u001b[2m[ cluster ]\t${this.runningWorkers.length ? this.runningWorkers.map(
-				w => `${w.up ? "✔" : "✗\u001b[32m"} ${w.name}: ${w.cpuUsage.toFixed(1).padStart(5, " ")}%`
-			).join(", ") : "no running workers"}\u001b[22m\u001b[39m\n`);
+				w => `${w.up ? "\u001b[2m✔" : "\u001b[31m✗"} ${w.name}: ${w.cpuUsage.toFixed(1).padStart(5, " ")}%\u001b[0m`
+			).join(", ") : "no running workers"}\u001b[0m\n`);
 		}, Cluster.pingInterval);
 	}
 
