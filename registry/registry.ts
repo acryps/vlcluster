@@ -3,6 +3,7 @@ import { Cluster } from "../cluster";
 
 import * as fs from "fs";
 import * as path from "path";
+import { worker } from "cluster";
 
 export class RegistryServer {
 	key: string;
@@ -316,8 +317,6 @@ export class RegistryServer {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
 				worker.up = true;
-
-				console.log(`[ cluster * ]\tworker ${name} = ${(cpuUsage * 100).toFixed(2)}%`);
 			}
 
 			for (let proposal of this.proposedInstalls) {
@@ -387,6 +386,12 @@ export class RegistryServer {
 			console.warn(`[ cluster ]\tsending '${request.application}' v${request.version} image to '${request.worker}'`);
 			fs.createReadStream(RegistryServer.applicationVersionImageSourceFile(request.application, request.version)).pipe(res);
 		});
+
+		setInterval(() => {
+			process.stdout.write(`\u001b[2m[ cluster ] ${this.runningWorkers.length ? this.runningWorkers.map(
+				w => `${w.up ? "✔" : "✗\u001b[32m"} ${w.name}: ${w.cpuUsage.toFixed(1).padStart(5, " ")}`
+			).join(", ") : "no running workers"}\u001b[22m\u001b[39m\n`);
+		}, Cluster.pingInterval);
 	}
 
 	proposeInstall(application: string, version: string, env: string) {
