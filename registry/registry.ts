@@ -429,7 +429,7 @@ export class RegistryServer {
 
 		return new Promise<void>(done => {
 			setTimeout(() => {
-				if (!fs.existsSync(RegistryServer.clientDirectory(username))) {
+				if (!username || !fs.existsSync(RegistryServer.clientDirectory(username))) {
 					throw new Error("user does not exist!");
 				}
 		

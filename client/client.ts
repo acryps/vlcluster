@@ -172,6 +172,7 @@ export class Client {
 		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.upgrade}`, {
 			method: "POST",
 			headers: {
+				...this.authHeaders,
 				"cluster-application": application,
 				"cluster-version": version,
 				"cluster-env": env
