@@ -171,7 +171,7 @@ export class Client {
 	}
 
 	async deploy(directory: string, env: string) {
-		const app = await this.build(directory);
+		const app = await Client.build(directory);
 		await this.push(app.application, app.version);
 		await this.upgrade(app.application, app.version, env);
 	}
