@@ -4,9 +4,11 @@ import { Cluster } from "../cluster";
 import * as fs from "fs";
 import * as path from "path";
 import { worker } from "cluster";
+import { Logger } from "../log";
 
 export class RegistryServer {
 	key: string;
+	logger: Logger;
 
 	runningWorkers: {
 		name: string,
@@ -27,17 +29,19 @@ export class RegistryServer {
 
 	constructor() {
 		if (!RegistryServer.isInstalled()) {
-			throw new Error("No registry installed on this host!");
+			throw new Error("no registry installed on this host!");
 		}
 
 		this.key = fs.readFileSync(RegistryServer.keyFile).toString();
 
 		this.runningWorkers = [];
 		this.proposedInstalls = [];
+
+		this.logger = new Logger("registry");
 	}
 
 	createWorker(name: string) {
-		console.log(`[ registry ]\tcreating worker '${name}'`);
+		this.logger.log(`creating worker '${name}'`);
 
 		if (fs.existsSync(RegistryServer.workerDirectory(name))) {
 			throw new Error("worker already registered");
@@ -49,7 +53,7 @@ export class RegistryServer {
 		fs.mkdirSync(RegistryServer.workerDirectory(name));
 		fs.writeFileSync(RegistryServer.workerKeyFile(name), key);
 
-		console.log(`[ registry ]\tcreated worker '${name}'`);
+		this.logger.log(`created worker '${name}'`);
 
 		return key;
 	}
@@ -57,16 +61,16 @@ export class RegistryServer {
 	createClient(name: string) {
 		const key = Crypto.createKey();
 
+		this.logger.log(`creating client ${name}`);
+
 		if (fs.existsSync(RegistryServer.clientDirectory(name))) {
 			throw new Error(`client '${name}' already exists!`);
 		}
 
-		console.log(`[ registry ]\tcreating client ${name}`);
-
 		fs.mkdirSync(RegistryServer.clientDirectory(name));
 		fs.writeFileSync(RegistryServer.clientKeyFile(name), key);
 
-		console.log(`[ registry ]\tcreated client`);
+		this.logger.log(`created client`);
 
 		return key;
 	}
@@ -130,10 +134,6 @@ export class RegistryServer {
 		return path.join(this.applicationVersionDirectory(name, version), "source");
 	}
 
-	static applicationVersionImageKeyFile(name: string, version: string) {
-		return path.join(this.applicationVersionDirectory(name, version), "key");
-	}
-
 	static applicationVersionImageIdFile(name: string, version: string) {
 		return path.join(this.applicationVersionDirectory(name, version), "id");
 	}
@@ -169,7 +169,7 @@ export class RegistryServer {
 	register(app) {
 		app.post(Cluster.api.registry.createWorker, (req, res) => {
 			if (this.key != req.body.key) {
-				throw new Error(`[ registry ]\tinvalid key login attepted`);
+				throw new Error(`invalid key login attepted`);
 			}
 
 			const key = this.createWorker(req.body.name);
@@ -182,7 +182,7 @@ export class RegistryServer {
 
 		app.post(Cluster.api.registry.createClient, (req, res) => {
 			if (this.key != req.body.key) {
-				throw new Error(`[ registry ]\tinvalid key login attepted`);
+				throw new Error(`invalid key login attepted`);
 			}
 
 			const key = this.createClient(req.body.username);
@@ -193,28 +193,25 @@ export class RegistryServer {
 			});
 		});
 
-		app.post(Cluster.api.registry.createImage, (req, res) => {
-			const key = fs.readFileSync(RegistryServer.clientKeyFile(req.body.username));
-			
-			if (key != req.body.key) {
-				throw new Error(`invalid key login attepted`);
-			}
+		app.post(Cluster.api.registry.push, async (req, res) => {
+			await this.validateClientAuth(req);
 
-			const version = req.body.version;
-			const application = req.body.name;
+			const application = req.headers["cluster-application"];
+			const version = req.headers["cluster-version"];
+			const imageName = req.headers["cluster-image-name"];
 
 			if (!application) {
-				throw new Error(`no application name set`);
+				throw new Error(`no application name!`);
 			}
 
 			if (!version) {
-				throw new Error(`no version set`);
+				throw new Error(`no version!`);
 			}
 
-			console.log(`[ registry ]\tcreate '${application}' v${version}`);
+			this.logger.log("create ", this.logger.av(application, version));
 
 			if (!fs.existsSync(RegistryServer.applicationDirectory(application))) {
-				console.log(`[ registry ]\tcreate new application '${application}'`);
+				this.logger.log(`create new application '${application}'`);
 
 				fs.mkdirSync(RegistryServer.applicationDirectory(application));
 				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(application));
@@ -226,42 +223,15 @@ export class RegistryServer {
 			}
 
 			fs.mkdirSync(RegistryServer.applicationVersionDirectory(application, version));
+			fs.writeFileSync(RegistryServer.applicationVersionImageIdFile(application, version), imageName);
 
-			const uploadKey = Crypto.createKey();
-			fs.writeFileSync(RegistryServer.applicationVersionImageKeyFile(application, version), uploadKey);
-
-			res.json({
-				key: uploadKey
-			});
-		});
-
-		app.post(Cluster.api.registry.uploadImage, (req, res) => {
-			const application = req.headers["cluster-application"];
-			const version = req.headers["cluster-version"];
-			const key = req.headers["cluster-key"];
-			const id = req.headers["cluster-image-id"];
-
-			if (!fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
-				throw new Error("version does not exists!")
-			}
-
-			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)).toString() != key) {
-				throw new Error("invalid upload key set");
-			}
-
-			fs.writeFileSync(RegistryServer.applicationVersionImageIdFile(application, version), id);
-
-			console.log(`[ registry ]\tuploading image v${version}`);
+			this.logger.log("receiving ", this.logger.av(application, version), " image...");
 			req.pipe(fs.createWriteStream(RegistryServer.applicationVersionImageSourceFile(application, version)));
 
 			req.on("end", () => {
-				console.log(`[ registry ]\tuploaded image v${version}`);
+				this.logger.log("saved ", this.logger.av(application, version), " image");
 
-				res.json({
-					size: fs.lstatSync(
-						RegistryServer.applicationVersionImageSourceFile(application, version)
-					).size
-				})
+				res.json({});
 			})
 		});
 
@@ -279,7 +249,7 @@ export class RegistryServer {
 			console.log(`[ registry ]\tupgrading '${application}' to v${version}`);
 			await this.proposeInstall(application, version, env);
 
-			res.json();
+			res.json({});
 		});
 
 		app.post(Cluster.api.registry.ping, (req, res) => {

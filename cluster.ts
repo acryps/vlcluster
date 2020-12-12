@@ -10,16 +10,12 @@ export class Cluster {
 
 	static api = {
 		registry: {
-			createWorker: "/reg/worker/init",
-			createClient: "/reg/client/init",
-			createImage: "/reg/image/create",
-			uploadImage: "/req/push",
+			createWorker: "/init/worker",
+			createClient: "/init/client",
+			push: "/push",
 			upgrade: "/upgrade",
-			ping: "/reg/ping",
-			install: "/req/install"
-		},
-		worker: {
-			install: "/wok/install"
+			ping: "/ping",
+			install: "/install"
 		}
 	}
 
