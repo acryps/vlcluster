@@ -2,7 +2,7 @@ export class Logger {
     constructor(public name: string) {}
 
     log(...text: string[]) {
-        console.log(`[ ${this.name} ]\t${text.join("")}\n`);
+        process.stdout.write(`[ ${this.name} ]\t${text.join("")}\n`);
     }
 
     av(application: string, version: string) {
