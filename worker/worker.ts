@@ -177,9 +177,9 @@ export class WorkerServer {
 		}, 10000);
 	}
 
-	async install(application: string, version: string, env: string, key: string, imageId: string) {
+	install(application: string, version: string, env: string, key: string, imageId: string) {
 		if (fs.existsSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version))) {
-			return await this.createInstance(application, version, env, imageId);
+			return this.createInstance(application, version, env, imageId);
 		}
 
 		if (!fs.existsSync(WorkerServer.applicationDirectory(this.clusterName, application))) {
