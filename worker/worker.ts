@@ -8,6 +8,7 @@ import { loadavg } from "os";
 import { Crypto } from "../crypto";
 import { Worker } from "cluster";
 import { InstanceState } from "./instance-state";
+import { Logger } from "../log";
 
 export class WorkerServer {
 	key: string;
@@ -16,7 +17,11 @@ export class WorkerServer {
 
 	cpuUsage: number;
 
+	logger: Logger;
+
 	constructor(private clusterName: string) {
+		this.logger = new Logger("worker");
+
 		this.key = fs.readFileSync(WorkerServer.keyFile(clusterName)).toString();
 		this.host = fs.readFileSync(WorkerServer.hostFile(clusterName)).toString();
 		this.name = fs.readFileSync(WorkerServer.nameFile(clusterName)).toString();
@@ -153,13 +158,13 @@ export class WorkerServer {
 			}).then(res => res.json()).then(res => {
 				if (res.installRequests.length) {
 					for (let request of res.installRequests) {
-						console.log(`[ worker ]\tnew install request: '${request.application}' v${request.version} for env '${request.env}'`);
+						this.logger.log("received install request for ", this.logger.aev(request.application, request.env, request.version));
 
 						this.install(request.application, request.version, request.env, request.key, request.imageId);
 					}
-				} else {
-					process.stdout.write("🏓");
 				}
+				
+				process.stdout.write("🏓");
 			}).catch(error => {
 				console.error(`[ worker ]\tping failed!`, error);
 			})
@@ -172,9 +177,22 @@ export class WorkerServer {
 		}, 10000);
 	}
 
-	install(application: string, version: string, env: string, key: string, imageId: string) {
+	async install(application: string, version: string, env: string, key: string, imageId: string) {
+		if (fs.existsSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version))) {
+			return await this.createInstance(application, version, env, imageId);
+		}
+
+		if (!fs.existsSync(WorkerServer.applicationDirectory(this.clusterName, application))) {
+			fs.mkdirSync(WorkerServer.applicationDirectory(this.clusterName, application));
+			fs.mkdirSync(WorkerServer.applicationVersionsDirecotry(this.clusterName, application));
+			fs.mkdirSync(WorkerServer.applicationEnvsDirecotry(this.clusterName, application));
+		}
+
+		fs.mkdirSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version));
+		fs.writeFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version), imageId);
+
 		return new Promise<void>(async done => {
-			console.log(`[ worker ]\tinstalling '${application}' v${version} for env '${env}'`);
+			this.logger.log(`[ worker ]\tinstalling `);
 
 			const loadProcess = spawn("docker", ["load"], {
 				stdio: [
@@ -200,37 +218,32 @@ export class WorkerServer {
 				loadProcess.on("exit", async () => {
 					console.log(`[ worker ]\tloaded '${application}' v${version}`);
 
-					if (!fs.existsSync(WorkerServer.applicationDirectory(this.clusterName, application))) {
-						fs.mkdirSync(WorkerServer.applicationDirectory(this.clusterName, application));
-						fs.mkdirSync(WorkerServer.applicationVersionsDirecotry(this.clusterName, application));
-						fs.mkdirSync(WorkerServer.applicationEnvsDirecotry(this.clusterName, application));
-					}
-
-					fs.mkdirSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version));
-					fs.writeFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version), imageId);
-
-					if (!fs.existsSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env))) {
-						fs.mkdirSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env));
-						fs.mkdirSync(WorkerServer.applicationEnvInstancesDirecotry(this.clusterName, application, env));
-					}
-
-					const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
-					fs.writeFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env), version);
-
-					await this.start(application, env);
-
-					if (oldVersion) {
-						console.log(`[ worker ]\told version '${oldVersion}' of '${application}' for '${env}' will be stopped...`);
-
-						await this.stop(application, env, oldVersion);
-					} else {
-						console.log(`[ worker ]\tno old versions of '${application}' for '${env}' found. good to go!`);
-					}
+					await this.createInstance(application, version, env, imageId);
 
 					done();
 				});
 			});
 		});
+	}
+
+	async createInstance(application: string, version: string, env: string, imageId: string) {
+		if (!fs.existsSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env))) {
+			fs.mkdirSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env));
+			fs.mkdirSync(WorkerServer.applicationEnvInstancesDirecotry(this.clusterName, application, env));
+		}
+
+		const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
+		fs.writeFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env), version);
+
+		await this.start(application, env);
+
+		if (oldVersion) {
+			console.log(`[ worker ]\told version '${oldVersion}' of '${application}' for '${env}' will be stopped...`);
+
+			await this.stop(application, env, oldVersion);
+		} else {
+			console.log(`[ worker ]\tno old versions of '${application}' for '${env}' found. good to go!`);
+		}
 	}
 
 	start(application: string, env: string) {
