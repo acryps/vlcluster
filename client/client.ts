@@ -87,7 +87,7 @@ export class Client {
 			throw new Error(`no version in ${packagePath} set!`);
 		}
 
-		logger.log(`building image...`);
+		logger.log("building ", logger.av(packageConfiguration.name, packageConfiguration.version), "...");
 		const buildProcess = spawn("docker", ["build", "-t", `${packageConfiguration.name}:${packageConfiguration.version}`, "."], {
 			cwd: directory,
 			stdio: [
@@ -107,7 +107,7 @@ export class Client {
 			})
 		});
 
-		logger.log(`image built`);
+		logger.log("image ", logger.av(packageConfiguration.name, packageConfiguration.version), " build!");
 
 		return {
 			application: packageConfiguration.name,

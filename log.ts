@@ -1,7 +1,5 @@
 export class Logger {
-    constructor(public name: string) {
-
-    }
+    constructor(public name: string) {}
 
     log(...text: string[]) {
         process.stdout.write(`[ ${this.name} ]\t${text.join("")}\n`);
