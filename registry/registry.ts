@@ -265,24 +265,21 @@ export class RegistryServer {
 			})
 		});
 
-		app.post(Cluster.api.registry.upgrade, (req, res) => {
+		app.post(Cluster.api.registry.upgrade, async (req, res) => {
+			await this.validateClientAuth(req);
+
 			const env = req.headers["cluster-env"];
 			const application = req.headers["cluster-application"];
-			const key = req.headers["cluster-key"];
 			const version = req.headers["cluster-version"];
 
 			if (!fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
 				throw new Error("application or version does not exist!");
 			}
 
-			if (fs.readFileSync(RegistryServer.applicationVersionImageKeyFile(application, version)).toString() != key) {
-				throw new Error("invalid upload key set");
-			}
-
 			console.log(`[ registry ]\tupgrading '${application}' to v${version}`);
-			this.proposeInstall(application, version, env);
+			await this.proposeInstall(application, version, env);
 
-			res.json({});
+			res.json();
 		});
 
 		app.post(Cluster.api.registry.ping, (req, res) => {
@@ -395,22 +392,22 @@ export class RegistryServer {
 	}
 
 	proposeInstall(application: string, version: string, env: string) {
-		return new Promise<void>(done => {
+		return new Promise(done => {
 			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
 
 			if (!worker) {
 				console.warn(`[ cluster ]\tout of workers to run '${application}' v${version} for env '${env}'. retrying in ${Math.round(Cluster.pingInterval / 1000)}s`);
 
 				setTimeout(async () => {
-					await this.proposeInstall(application, version, env);
-
-					done();
+					done(await this.proposeInstall(application, version, env));
 				}, Cluster.pingInterval);
+
+				return;
 			}
 
-			console.log(`[ cluster ]\tproposed '${application}' v${version} for env '${env}' proposed to run on '${worker.name}'`)
+			console.log(`[ cluster ]\tproposed '${application}' v${version} for env '${env}' proposed to run on '${worker.name}'`);
 
-			this.proposedInstalls.push({
+			const proposal = {
 				application,
 				version,
 				env,
@@ -418,9 +415,30 @@ export class RegistryServer {
 				installing: false,
 				requested: false,
 				key: Crypto.createKey()
-			});
+			};
 
-			done();
+			this.proposedInstalls.push(proposal);
+
+			done(proposal);
+		});
+	}
+
+	async validateClientAuth(req) {
+		const username = req.headers["cluster-auth-username"];
+		const key = req.headers["cluster-auth-key"];
+
+		return new Promise<void>(done => {
+			setTimeout(() => {
+				if (!fs.existsSync(RegistryServer.clientDirectory(username))) {
+					throw new Error("user does not exist!");
+				}
+		
+				if (fs.readFileSync(RegistryServer.clientDirectory(username)).toString() != key) {
+					throw new Error("invalid key!");
+				}
+
+				done();
+			}, 500);
 		});
 	}
 }

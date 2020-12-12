@@ -6,7 +6,6 @@ import { RegistryServer } from "./registry/registry";
 import { Cluster } from "./cluster";
 import { Daemon } from "./daemon";
 import { WorkerServer } from "./worker/worker";
-import { Deployer } from "./deploy";
 import { Client } from "./client/client";
 import { Worker } from "cluster";
 
@@ -62,17 +61,30 @@ export async function main() {
 				break;
 			}
 
-			case "deploy": {
-				const deployer = new Deployer(
-					process.cwd(),
-					parameters[0]
-				);
-				
-				const key = await deployer.deploy();
+			case "build": {
+				const client = new Client(parameters[0]);
+				await client.build(parameters[1] || ".");
 
-				if (parameters[1]) {
-					await deployer.upgrade(key, parameters[1]);
-				}
+				return process.exit(0);
+			}
+
+			case "push": {
+				const client = new Client(parameters[0]);
+				await client.push(parameters[1], parameters[2]);
+
+				return process.exit(0);
+			}
+
+			case "upgrade": {
+				const client = new Client(parameters[0]);
+				await client.upgrade(parameters[1], parameters[2], parameters[3]);
+
+				return process.exit(0);
+			}
+
+			case "deploy": {
+				const client = new Client(parameters[0]);
+				await client.deploy(parameters[2] || ".", parameters[1]);
 
 				return process.exit(0);
 			}
