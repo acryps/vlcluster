@@ -62,8 +62,7 @@ export async function main() {
 			}
 
 			case "build": {
-				const client = new Client(parameters[0]);
-				await client.build(parameters[1] || ".");
+				await Client.build(parameters[0] || ".");
 
 				return process.exit(0);
 			}

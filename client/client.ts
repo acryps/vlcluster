@@ -69,7 +69,7 @@ export class Client {
 		return path.join(this.clusterDirectory(name), "host");
 	}
 
-	async build(directory: string) {
+	static async build(directory: string) {
 		const logger = new Logger("build");
 		const packagePath = path.join(directory, "package.json");
 
