@@ -144,31 +144,37 @@ export class WorkerServer {
 	}
 
 	startPing() {
-		setInterval(() => {
-			fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
-				method: "POST", 
-				headers: {
-					"content-type": "application/json"
-				},
-				body: JSON.stringify({
-					name: this.name,
-					key: this.key,
-					cpuUsage: this.cpuUsage
-				})
-			}).then(res => res.json()).then(res => {
-				if (res.installRequests.length) {
-					for (let request of res.installRequests) {
-						this.logger.log("received install request for ", this.logger.aev(request.application, request.env, request.version));
+		this.ping();
 
-						this.install(request.application, request.version, request.env, request.key, request.imageId);
-					}
-				}
-				
-				process.stdout.write("🏓");
-			}).catch(error => {
-				console.error(`[ worker ]\tping failed!`, error);
-			})
+		setInterval(() => {
+			this.ping();
 		}, Cluster.pingInterval);
+	}
+
+	ping() {
+		fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
+			method: "POST", 
+			headers: {
+				"content-type": "application/json"
+			},
+			body: JSON.stringify({
+				name: this.name,
+				key: this.key,
+				cpuUsage: this.cpuUsage
+			})
+		}).then(res => res.json()).then(res => {
+			if (res.installRequests.length) {
+				for (let request of res.installRequests) {
+					this.logger.log("received install request for ", this.logger.aev(request.application, request.env, request.version));
+
+					this.install(request.application, request.version, request.env, request.key, request.imageId);
+				}
+			}
+			
+			process.stdout.write("🏓");
+		}).catch(error => {
+			console.error(`[ worker ]\tping failed!`, error);
+		})
 	}
 
 	startCPUMonitoring() {

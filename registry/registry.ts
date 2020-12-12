@@ -287,30 +287,34 @@ export class RegistryServer {
 			}
 
 			for (let proposal of this.proposedInstalls) {
-				if (!proposal.installing && proposal.worker == worker.name) {
-					console.log(`[ cluster ]\tsent proposal '${proposal.application}' v${proposal.version} for env '${proposal.env}' to '${worker.name}'`);
+				if (proposal.worker == worker.name) {
+					if (proposal.requested) {
+						proposal.installing = true;
+					} else {
+						console.log(`[ cluster ]\tsent proposal '${proposal.application}' v${proposal.version} for env '${proposal.env}' to '${worker.name}'`);
 
-					installRequests.push({
-						application: proposal.application,
-						version: proposal.version,
-						env: proposal.env,
-						key: proposal.key,
-						imageId: fs.readFileSync(RegistryServer.applicationVersionImageIdFile(proposal.application, proposal.version)).toString()
-					});
+						installRequests.push({
+							application: proposal.application,
+							version: proposal.version,
+							env: proposal.env,
+							key: proposal.key,
+							imageId: fs.readFileSync(RegistryServer.applicationVersionImageIdFile(proposal.application, proposal.version)).toString()
+						});
 
-					proposal.requested = true;
+						proposal.requested = true;
 
-					setTimeout(() => {
-						if (proposal.requested && !proposal.installing) {
-							console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker.name}' timed out`);
+						setTimeout(() => {
+							if (proposal.requested && !proposal.installing) {
+								console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker.name}' timed out`);
 
-							// remvoe failed install request
-							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
+								// remvoe failed install request
+								this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
 
-							// create new proposal 
-							this.proposeInstall(proposal.application, proposal.version, proposal.env);
-						}
-					}, Cluster.imageInstallRequestTimeout);
+								// create new proposal 
+								this.proposeInstall(proposal.application, proposal.version, proposal.env);
+							}
+						}, Cluster.imageInstallRequestTimeout);
+					}
 				}
 			}
 
