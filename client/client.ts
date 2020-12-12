@@ -107,7 +107,7 @@ export class Client {
 			})
 		});
 
-		logger.log("image ", logger.av(packageConfiguration.name, packageConfiguration.version), " build!");
+		logger.log("image ", logger.av(packageConfiguration.name, packageConfiguration.version), " built!");
 
 		return {
 			application: packageConfiguration.name,
