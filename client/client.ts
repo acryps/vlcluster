@@ -129,7 +129,7 @@ export class Client {
 			]
 		});
 
-		const uploader = fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.uploadImage}`, {
+		const uploader = fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.push}`, {
 			method: "POST", 
 			headers: {
 				...this.authHeaders,
