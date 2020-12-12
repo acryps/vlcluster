@@ -433,7 +433,7 @@ export class RegistryServer {
 					throw new Error("user does not exist!");
 				}
 		
-				if (fs.readFileSync(RegistryServer.clientDirectory(username)).toString() != key) {
+				if (fs.readFileSync(RegistryServer.clientKeyFile(username)).toString() != key) {
 					throw new Error("invalid key!");
 				}
 
