@@ -296,7 +296,7 @@ export class WorkerServer {
 
 				done();
 			});
-		});
+		}));
 	}
 
 	async stop(application: string, env: string, version: string = null) {
