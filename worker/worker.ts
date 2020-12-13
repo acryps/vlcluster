@@ -170,8 +170,6 @@ export class WorkerServer {
 					this.install(request.application, request.version, request.env, request.key, request.imageId);
 				}
 			}
-			
-			process.stdout.write("🏓");
 		}).catch(error => {
 			console.error(`[ worker ]\tping failed!`, error);
 		})
