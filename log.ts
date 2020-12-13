@@ -8,15 +8,11 @@ export class Logger {
     constructor(public unit: string) {
         const hash = sha.sha512(unit);
 
-        this.color = {
-            r: hash.substr(0, 32).split("").reduce((a, c) => a + +c, 0) % 0xff,
-            g: hash.substr(48, 64).split("").reduce((a, c) => a + +c, 0) % 0xff,
-            b: hash.substr(128, 256).split("").reduce((a, c) => a + +c, 0) % 0xff,
-        };
+        this.color = hash.split("").reduce((a, c) => a + parseInt(c, 16), 0) % 230;
     }
 
     log(...text: string[]) {
-        process.stdout.write(`[   \x1b[38;2;${this.color.r};${this.color.g};${this.color.b}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
+        process.stdout.write(`[   \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
     }
 
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
@@ -37,7 +33,7 @@ export class Logger {
 
             clearInterval(interval);
 
-            process.stdout.write(`[ ✔${result ? ` \x1b[38;2;${this.color.r};${this.color.g};${this.color.b}m${this.unit}\x1b[0m ]\t${result}` : ""}\n`);
+            process.stdout.write(`[ ✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result}` : ""}\n`);
         } catch (e) {
             clearInterval(interval);
 
