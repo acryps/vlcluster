@@ -15,7 +15,7 @@ export class Cluster {
 			push: "/push",
 			upgrade: "/upgrade",
 			ping: "/ping",
-			install: "/install"
+			pull: "/pull"
 		}
 	}
 

@@ -198,7 +198,7 @@ export class WorkerServer {
 		fs.writeFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version), imageId);
 
 		return new Promise<void>(async done => {
-			this.logger.log(`[ worker ]\tinstalling `);
+			this.logger.log("pulling", this.logger.av(application, version), "...");
 
 			const loadProcess = spawn("docker", ["load"], {
 				stdio: [
@@ -208,21 +208,20 @@ export class WorkerServer {
 				]
 			});
 
-			const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.install}`, {
+			const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.pull}`, {
 				method: "POST",
 				headers: {
 					"cluster-key": key
 				}
 			});
 
-			console.log(`[ worker ]\tpulling '${application}' v${version}`);
 			res.body.pipe(loadProcess.stdin);
 
 			res.body.on("finish", () => {
-				console.log(`[ worker ]\tpulled '${application}' v${version}`);
+				this.logger.log("loading ", this.logger.av(application, version), " image");
 
 				loadProcess.on("exit", async () => {
-					console.log(`[ worker ]\tloaded '${application}' v${version}`);
+					this.logger.log("loaded ", this.logger.av(application, version));
 
 					await this.createInstance(application, version, env, imageId);
 
@@ -244,26 +243,22 @@ export class WorkerServer {
 		await this.start(application, env);
 
 		if (oldVersion) {
-			console.log(`[ worker ]\told version '${oldVersion}' of '${application}' for '${env}' will be stopped...`);
+			this.logger.log("replaced ", this.logger.aev(application, env, version), " will be stopped...");
 
 			await this.stop(application, env, oldVersion);
-		} else {
-			console.log(`[ worker ]\tno old versions of '${application}' for '${env}' found. good to go!`);
 		}
 	}
 
 	start(application: string, env: string) {
-		return new Promise<void>(async done => {
+		return this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
 			const version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 			const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
 
-			console.log(`[ worker ]\tstarting '${application}' v${version} for ${env} from ${imageId}...`);
+			this.logger.log("starting ", this.logger.aev(application, env, version), "...");
 
 			const id = Crypto.createKey();
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
-
-			console.log(`[ worker ]\tmap port http://container:${internalPort} to http://localhost:${externalPort}/`);
 
 			const runProcess = spawn("docker", [
 				"run",
@@ -297,7 +292,7 @@ export class WorkerServer {
 				fs.writeFileSync(WorkerServer.applicationEnvInstanceInternalPortFile(this.clusterName, application, env, id), internalPort.toString());
 				fs.writeFileSync(WorkerServer.applicationEnvInstanceExternalPortFile(this.clusterName, application, env, id), externalPort.toString());
 
-				console.log(`[ worker ]\tstarted '${application}' v${version} for ${env}...`);
+				finished("started ", this.logger.aev(application, env, version));
 
 				done();
 			});
@@ -311,9 +306,7 @@ export class WorkerServer {
 
 		for (let instance of this.getInstalledApplicationInstances(application, env)) {
 			if (fs.readFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, instance)).toString() == version) {
-				await new Promise<void>(done => {
-					console.log(`[ worker ]\tstopping ${application}[${env}]:${version} running as ${instance}...`);
-
+				await this.logger.process(["stopping", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(done => {
 					const stopProcess = spawn("docker", [
 						"stop",
 						instance
@@ -326,7 +319,7 @@ export class WorkerServer {
 					});
 		
 					stopProcess.on("exit", () => {
-						console.log(`[ worker ]\tstopped ${application}[${env}]:${version}`);
+						finished("stopped ", this.logger.aev(application, env, version));
 
 						fs.rmSync(WorkerServer.applicationEnvInstanceDirecotry(this.clusterName, application, env, instance), {
 							recursive: true,
@@ -335,7 +328,7 @@ export class WorkerServer {
 		
 						done();
 					});
-				});
+				}));
 			}
 		}
 	}

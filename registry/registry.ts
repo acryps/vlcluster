@@ -246,7 +246,7 @@ export class RegistryServer {
 				throw new Error("application or version does not exist!");
 			}
 
-			console.log(`[ registry ]\tupgrading '${application}' to v${version}`);
+			this.logger.log(`upgrading '${application}' to v${version}`);
 			await this.proposeInstall(application, version, env);
 
 			res.json({});
@@ -279,7 +279,7 @@ export class RegistryServer {
 				};
 
 				this.runningWorkers.push(worker);
-				console.log(`[ cluster ]\tworker login '${name}'`);
+				this.logger.log(`worker login '${name}'`);
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
@@ -291,7 +291,7 @@ export class RegistryServer {
 					if (proposal.requested) {
 						proposal.installing = true;
 					} else {
-						console.log(`[ cluster ]\tsent proposal '${proposal.application}' v${proposal.version} for env '${proposal.env}' to '${worker.name}'`);
+						this.logger.log("sent proposal ", this.logger.aev(proposal.application, proposal.env, proposal.version), " to ", this.logger.w(worker.name));
 
 						installRequests.push({
 							application: proposal.application,
@@ -305,7 +305,7 @@ export class RegistryServer {
 
 						setTimeout(() => {
 							if (proposal.requested && !proposal.installing) {
-								console.warn(`[ cluster ]\tinstall request for proposal '${proposal.application}' for worker '${worker.name}' timed out`);
+								this.logger.log("install request ", this.logger.aev(proposal.application, proposal.env, proposal.version), " to ", this.logger.w(worker.name), " timed out");
 
 								// remvoe failed install request
 								this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
@@ -320,13 +320,13 @@ export class RegistryServer {
 
 			setTimeout(() => {
 				if (worker.lastSeen == now) {
-					console.warn(`[ cluster ]\tworker ${name} ping timeout!`);
+					this.logger.log(this.logger.w(name), " ping timed out");
 
 					worker.up = false;
 
 					for (let proposal of this.proposedInstalls) {
 						if (!proposal.installing && proposal.worker == worker.name) {
-							console.warn(`[ cluster ]\tproposal for '${proposal.application}' for worker '${worker.name}' timed out`);
+							this.logger.log("proposal ", this.logger.aev(proposal.application, proposal.env, proposal.version), " for ", this.logger.w(worker.name), " timed out");
 
 							// remvoe failed proposal
 							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
@@ -343,7 +343,7 @@ export class RegistryServer {
 			});
 		});
 
-		app.post(Cluster.api.registry.install, (req, res) => {
+		app.post(Cluster.api.registry.pull, (req, res) => {
 			const key = req.headers["cluster-key"];
 			
 			const request = this.proposedInstalls.find(s => s.key == key);
@@ -353,8 +353,10 @@ export class RegistryServer {
 			}
 
 			request.installing = true;
+
+			this.logger.log("sending ", this.logger.av(request.application, request.version));
 			
-			console.warn(`[ cluster ]\tsending '${request.application}' v${request.version} image to '${request.worker}'`);
+			console.warn(`sending '${request.application}' v${request.version} image to '${request.worker}'`);
 			fs.createReadStream(RegistryServer.applicationVersionImageSourceFile(request.application, request.version)).pipe(res);
 		});
 
