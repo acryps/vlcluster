@@ -18,7 +18,7 @@ export class Logger {
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
         let i = 0;
 
-        process.stdout.write(`[ ${Logger.loadingFrames[0]} \x1b[38;2;${this.color.r};${this.color.g};${this.color.b}m${this.unit}\x1b[0m ]\t${Array.isArray(text) ? text.join("") : text}\r`);
+        process.stdout.write(`[ ${Logger.loadingFrames[0]} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${Array.isArray(text) ? text.join("") : text}\r`);
 
         const interval = setInterval(() => {
             process.stdout.write(`[ ${Logger.loadingFrames[i++ % (Logger.loadingFrames.length - 1)]}\r`);
@@ -33,7 +33,7 @@ export class Logger {
 
             clearInterval(interval);
 
-            process.stdout.write(`[ ✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result}` : ""}\n`);
+            process.stdout.write(`[ ✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("")}` : ""}\n`);
         } catch (e) {
             clearInterval(interval);
 
