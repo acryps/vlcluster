@@ -343,7 +343,7 @@ export class RegistryServer {
 							if (proposal.requested && !proposal.installing) {
 								this.logger.log("install request ", this.logger.aev(proposal.application, proposal.env, proposal.version), " to ", this.logger.w(worker.name), " timed out");
 
-								// remvoe failed install request
+								// remove failed install request
 								this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
 
 								// create new proposal 
@@ -364,7 +364,7 @@ export class RegistryServer {
 						if (!proposal.installing && proposal.worker == worker.name) {
 							this.logger.log("proposal ", this.logger.aev(proposal.application, proposal.env, proposal.version), " for ", this.logger.w(worker.name), " timed out");
 
-							// remvoe failed proposal
+							// remove failed proposal
 							this.proposedInstalls.splice(this.proposedInstalls.indexOf(proposal), 1);
 
 							// create new proposal 
