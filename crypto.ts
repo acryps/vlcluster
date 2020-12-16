@@ -35,6 +35,14 @@ export class Crypto {
 		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
 	}
 
+	static sanitizeInstanceName(name: string) {
+		return name.replace(/[^0-9a-zA-Z]/g, "");
+	}
+
+	static sanitizeEnv(name: string) {
+		return name.replace(/[^\-\_\@0-9a-zA-Z]/g, "");
+	}
+
 	static getRandomPort() {
 		return new Promise<number>(done => {
 			const server = net.createServer(() => {});

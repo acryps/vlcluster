@@ -107,6 +107,10 @@ export class WorkerServer {
 		return path.join(this.applicationVersionDirectory(clusterName, application, version), "image-id");
 	}
 
+	static applicationVersionInstanceFile(clusterName: string, application: string, version: string) {
+		return path.join(this.applicationVersionDirectory(clusterName, application, version), "instance");
+	}
+
 	static applicationEnvsDirecotry(clusterName: string, application: string) {
 		return path.join(this.applicationDirectory(clusterName, application), "envs");
 	}
@@ -167,7 +171,7 @@ export class WorkerServer {
 				for (let request of res.installRequests) {
 					this.logger.log("received install request for ", this.logger.aev(request.application, request.env, request.version));
 
-					this.install(request.application, request.version, request.env, request.key, request.imageId);
+					this.install(request.application, request.version, request.env, request.key, request.imageId, request.instance);
 				}
 			}
 		}).catch(error => {
@@ -181,9 +185,9 @@ export class WorkerServer {
 		}, 10000);
 	}
 
-	install(application: string, version: string, env: string, key: string, imageId: string) {
+	install(application: string, version: string, env: string, key: string, imageId: string, instance: string) {
 		if (fs.existsSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version))) {
-			return this.createInstance(application, version, env, imageId);
+			return this.createInstance(application, version, env, instance);
 		}
 
 		if (!fs.existsSync(WorkerServer.applicationDirectory(this.clusterName, application))) {
@@ -194,6 +198,7 @@ export class WorkerServer {
 
 		fs.mkdirSync(WorkerServer.applicationVersionDirectory(this.clusterName, application, version));
 		fs.writeFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version), imageId);
+		fs.writeFileSync(WorkerServer.applicationVersionInstanceFile(this.clusterName, application, version), instance);
 
 		return new Promise<void>(async done => {
 			this.logger.log("pulling", this.logger.av(application, version), "...");
@@ -229,7 +234,7 @@ export class WorkerServer {
 		});
 	}
 
-	async createInstance(application: string, version: string, env: string, imageId: string) {
+	async createInstance(application: string, version: string, env: string, instance: string) {
 		if (!fs.existsSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env))) {
 			fs.mkdirSync(WorkerServer.applicationEnvDirecotry(this.clusterName, application, env));
 			fs.mkdirSync(WorkerServer.applicationEnvInstancesDirecotry(this.clusterName, application, env));
@@ -238,7 +243,7 @@ export class WorkerServer {
 		const oldVersion = fs.existsSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)) && fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 		fs.writeFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env), version);
 
-		await this.start(application, env);
+		await this.start(application, env, instance);
 
 		if (oldVersion) {
 			this.logger.log("replaced ", this.logger.aev(application, env, version), " will be stopped...");
@@ -247,12 +252,11 @@ export class WorkerServer {
 		}
 	}
 
-	start(application: string, env: string) {
+	start(application: string, env: string, instance: string) {
 		const version = fs.readFileSync(WorkerServer.applicationEnvVersionFile(this.clusterName, application, env)).toString();
 		const imageId = fs.readFileSync(WorkerServer.applicationVersionImageIdFile(this.clusterName, application, version)).toString();
 
 		return this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
-			const id = Crypto.createKey();
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
 
@@ -263,15 +267,15 @@ export class WorkerServer {
 				"--env", `CLUSTER_INTERNAL_PORT=${internalPort}`,
 				"--env", `CLUSTER_EXTERNAL_PORT=${externalPort}`,
 				"--env", `CLUSTER_VERSION=${version}`,
-				"--env", `CLUSTER_IMAGE_ID=${imageId}`,
-				"--env", `CLUSTER_CONTAINER_ID=${id}`,
+				"--env", `CLUSTER_IMAGE=${imageId}`,
+				"--env", `CLUSTER_INSTANCE=${instance}`,
 				"--env", `CLUSTER_NAME=${this.clusterName}`,
-				"--env", `CLUSTER_WORKER_NAME=${this.name}`,
-				"--env", `CLUSTER_REGISTRY_HOST=${this.host}`,
+				"--env", `CLUSTER_WORKER=${this.name}`,
+				"--env", `CLUSTER_REGISTRY=${this.host}`,
 				"--env", `CLUSTER_ENV=${env}`,
 				"--expose", internalPort.toString(), // export container port to docker interface
 				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
-				"--name", id, // tag container
+				"--name", instance, // tag container
 				"-d", // detatch
 				imageId
 			], {
@@ -282,11 +286,20 @@ export class WorkerServer {
 				]
 			});
 
-			runProcess.on("exit", () => {
-				fs.mkdirSync(WorkerServer.applicationEnvInstanceDirecotry(this.clusterName, application, env, id));
-				fs.writeFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, id), version);
-				fs.writeFileSync(WorkerServer.applicationEnvInstanceInternalPortFile(this.clusterName, application, env, id), internalPort.toString());
-				fs.writeFileSync(WorkerServer.applicationEnvInstanceExternalPortFile(this.clusterName, application, env, id), externalPort.toString());
+			runProcess.on("exit", async () => {
+				fs.mkdirSync(WorkerServer.applicationEnvInstanceDirecotry(this.clusterName, application, env, instance));
+				fs.writeFileSync(WorkerServer.applicationEnvInstanceVersionFile(this.clusterName, application, env, instance), version);
+				fs.writeFileSync(WorkerServer.applicationEnvInstanceInternalPortFile(this.clusterName, application, env, instance), internalPort.toString());
+				fs.writeFileSync(WorkerServer.applicationEnvInstanceExternalPortFile(this.clusterName, application, env, instance), externalPort.toString());
+
+				finished("reporting start ", this.logger.aev(application, env, version), " to registry");
+
+				await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.startedApplication}`, {
+					method: "POST",
+					headers: {
+						"cluster-instance": instance
+					}
+				}).then(r => r.json());
 
 				finished("started ", this.logger.aev(application, env, version));
 

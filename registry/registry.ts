@@ -24,7 +24,10 @@ export class RegistryServer {
 		worker: string,
 		installing: boolean,
 		requested: boolean,
-		key: string
+		key: string,
+		instance: string,
+
+		oncomplete(): void
 	}[];
 
 	constructor() {
@@ -122,9 +125,41 @@ export class RegistryServer {
 		return path.join(this.applicationDirectory(name), "versions");
 	}
 
-	static applicationEnvironnementsDirectory(name: string) {
-		return path.join(this.applicationDirectory(name), "environnements");
+	static applicationEnvsDirectory(name: string) {
+		return path.join(this.applicationDirectory(name), "envs");
 	}
+
+	static applicationEnvDirectory(name: string, env: string) {
+		return path.join(this.applicationEnvsDirectory(name), Crypto.sanitizeEnv(env));
+	}
+
+	static applicationEnvLatestVersionFile(name: string, env: string) {
+		return path.join(this.applicationEnvDirectory(name, env), "latest");
+	} 
+
+	static applicationEnvDangelingVersionFile(name: string, env: string) {
+		return path.join(this.applicationEnvDirectory(name, env), "dangeling");
+	} 
+
+	static applicationEnvActiveVersionsDirectory(name: string, env: string) {
+		return path.join(this.applicationEnvDirectory(name, env), "active-versions");
+	} 
+
+	static applicationEnvActiveVersionDirectory(name: string, env: string, version: string) {
+		return path.join(this.applicationEnvActiveVersionsDirectory(name, env), Crypto.sanitizeVersion(version));
+	} 
+
+	static applicationEnvActiveVersionWorkerDirectory(name: string, env: string, version: string, worker: string) {
+		return path.join(this.applicationEnvActiveVersionDirectory(name, env, version), Crypto.sanitizeWorkerName(worker));
+	} 
+
+	static applicationEnvActiveVersionWorkerInstanceDirectory(name: string, env: string, version: string, worker: string, instance: string) {
+		return path.join(this.applicationEnvActiveVersionWorkerDirectory(name, env, version, worker), Crypto.sanitizeInstanceName(instance));
+	} 
+
+	static applicationEnvActiveVersionWorkerInstancePortFile(name: string, env: string, version: string, worker: string, instance: string) {
+		return path.join(this.applicationEnvActiveVersionWorkerInstanceDirectory(name, env, version, worker, instance), "port");
+	} 
 
 	static applicationVersionDirectory(name: string, version: string) {
 		return path.join(this.applicationVersionsDirectory(name), Crypto.sanitizeVersion(version));
@@ -215,7 +250,7 @@ export class RegistryServer {
 
 				fs.mkdirSync(RegistryServer.applicationDirectory(application));
 				fs.mkdirSync(RegistryServer.applicationVersionsDirectory(application));
-				fs.mkdirSync(RegistryServer.applicationEnvironnementsDirectory(application));
+				fs.mkdirSync(RegistryServer.applicationEnvsDirectory(application));
 			}
 
 			if (fs.existsSync(RegistryServer.applicationVersionDirectory(application, version))) {
@@ -247,7 +282,7 @@ export class RegistryServer {
 			}
 
 			this.logger.log(`upgrading '${application}' to v${version}`);
-			await this.proposeInstall(application, version, env);
+			await this.upgrade(application, version, env);
 
 			res.json({});
 		});
@@ -298,6 +333,7 @@ export class RegistryServer {
 							version: proposal.version,
 							env: proposal.env,
 							key: proposal.key,
+							instance: Crypto.createKey(),
 							imageId: fs.readFileSync(RegistryServer.applicationVersionImageIdFile(proposal.application, proposal.version)).toString()
 						});
 
@@ -360,11 +396,38 @@ export class RegistryServer {
 			fs.createReadStream(RegistryServer.applicationVersionImageSourceFile(request.application, request.version)).pipe(res);
 		});
 
+		app.post(Cluster.api.registry.startedApplication, (req, res) => {
+			const proposal = this.proposedInstalls.find(i => i.instance == req.headers["cluster-instance"]);
+
+			this.logger.log(this.logger.aev(proposal.application, proposal.env, proposal.version), " started on ", this.logger.w(proposal.worker));
+
+			proposal.oncomplete();
+		});
+
 		setInterval(() => {
 			process.stdout.write(`\u001b[2m[ cluster ]\t${this.runningWorkers.length ? this.runningWorkers.map(
 				w => `${w.up ? "\u001b[2m✔" : "\u001b[31m✗"} ${w.name}: ${w.cpuUsage.toFixed(1).padStart(5, " ")}%\u001b[0m`
 			).join("\u001b[2m, \u001b[0m") : "no running workers"}\u001b[0m\n`);
 		}, Cluster.pingInterval);
+	}
+
+	async upgrade(application: string, version: string, env: string) {
+		this.logger.log("upgrade", this.logger.aev(application, env, version));
+		
+		if (!fs.existsSync(RegistryServer.applicationEnvDirectory(application, env))) {
+			fs.mkdirSync(RegistryServer.applicationEnvDirectory(application, env));
+
+			this.logger.log("new env", this.logger.ae(application, env));
+		}
+
+		if (fs.existsSync(RegistryServer.applicationEnvDangelingVersionFile(application, env))) {
+			throw new Error("cannot upgrade. upgrade already in progress!");
+		}
+
+		const dangelingVersion = fs.readFileSync(RegistryServer.applicationEnvLatestVersionFile(application, env)).toString();
+		fs.writeFileSync(RegistryServer.applicationEnvDangelingVersionFile(application, env), dangelingVersion);
+
+		const installs = await this.proposeInstall(application, version, env);
 	}
 
 	proposeInstall(application: string, version: string, env: string) {
@@ -390,12 +453,12 @@ export class RegistryServer {
 				worker: worker.name,
 				installing: false,
 				requested: false,
-				key: Crypto.createKey()
+				instance: Crypto.createKey(),
+				key: Crypto.createKey(),
+				oncomplete: () => done(proposal)
 			};
 
 			this.proposedInstalls.push(proposal);
-
-			done(proposal);
 		});
 	}
 
