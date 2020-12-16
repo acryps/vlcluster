@@ -412,20 +412,26 @@ export class RegistryServer {
 	}
 
 	async upgrade(application: string, version: string, env: string) {
-		this.logger.log("upgrade", this.logger.aev(application, env, version));
+		this.logger.log("upgrade ", this.logger.aev(application, env, version));
 		
 		if (!fs.existsSync(RegistryServer.applicationEnvDirectory(application, env))) {
 			fs.mkdirSync(RegistryServer.applicationEnvDirectory(application, env));
 
-			this.logger.log("new env", this.logger.ae(application, env));
+			this.logger.log("new env ", this.logger.ae(application, env));
 		}
 
 		if (fs.existsSync(RegistryServer.applicationEnvDangelingVersionFile(application, env))) {
 			throw new Error("cannot upgrade. upgrade already in progress!");
 		}
 
-		const dangelingVersion = fs.readFileSync(RegistryServer.applicationEnvLatestVersionFile(application, env)).toString();
-		fs.writeFileSync(RegistryServer.applicationEnvDangelingVersionFile(application, env), dangelingVersion);
+		let dangelingVersion;
+		
+		if (fs.existsSync(RegistryServer.applicationEnvLatestVersionFile(application, env))) {
+			dangelingVersion = fs.readFileSync(RegistryServer.applicationEnvLatestVersionFile(application, env)).toString();
+
+			fs.writeFileSync(RegistryServer.applicationEnvDangelingVersionFile(application, env), dangelingVersion);
+		} 
+		
 
 		const installs = await this.proposeInstall(application, version, env);
 	}
