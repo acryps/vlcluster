@@ -397,6 +397,8 @@ export class RegistryServer {
 		});
 
 		app.post(Cluster.api.registry.startedApplication, (req, res) => {
+			console.log(req.headers);
+
 			const proposal = this.proposedInstalls.find(i => i.instance == req.headers["cluster-instance"]);
 
 			this.logger.log(this.logger.aev(proposal.application, proposal.env, proposal.version), " started on ", this.logger.w(proposal.worker));
