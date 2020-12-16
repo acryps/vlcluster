@@ -333,7 +333,7 @@ export class RegistryServer {
 							version: proposal.version,
 							env: proposal.env,
 							key: proposal.key,
-							instance: Crypto.createKey(),
+							instance: proposal.instance,
 							imageId: fs.readFileSync(RegistryServer.applicationVersionImageIdFile(proposal.application, proposal.version)).toString()
 						});
 
