@@ -226,7 +226,7 @@ export class WorkerServer {
 				loadProcess.on("exit", async () => {
 					this.logger.log("loaded ", this.logger.av(application, version));
 
-					await this.createInstance(application, version, env, imageId);
+					await this.createInstance(application, version, env, instance);
 
 					done();
 				});
