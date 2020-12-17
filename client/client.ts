@@ -157,19 +157,20 @@ export class Client {
 
 	async upgrade(application: string, version: string, env: string) {
 		const logger = new Logger("upgrade");
-		logger.log("requesting upgrade of ", logger.av(application, version), "...");
+		
+		await logger.process(["upgrading ", logger.aev(application, env, version), "..."], async finished => {
+			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.upgrade}`, {
+				method: "POST",
+				headers: {
+					...this.authHeaders,
+					"cluster-application": application,
+					"cluster-version": version,
+					"cluster-env": env
+				}
+			}).then(r => r.json());
 
-		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.upgrade}`, {
-			method: "POST",
-			headers: {
-				...this.authHeaders,
-				"cluster-application": application,
-				"cluster-version": version,
-				"cluster-env": env
-			}
-		}).then(r => r.json());
-
-		logger.log("request submitted. the update will be rolled out now");
+			finished("upgraded ", logger.aev(application, env, version));
+		});
 	}
 
 	async deploy(directory: string, env: string) {
