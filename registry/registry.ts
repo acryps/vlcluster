@@ -189,7 +189,7 @@ export class RegistryServer {
 			const now = new Date();
 
 			if (!worker) {
-				const worker = new ChildWorker();
+				worker = new ChildWorker();
 				worker.name = name;
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
