@@ -35,7 +35,7 @@ export class Logger {
 
             clearInterval(interval);
 
-            process.stdout.write(`[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(" ", text.length)}` : ""}\n`);
+            process.stdout.write(`[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length)}` : ""}\n`);
         } catch (e) {
             clearInterval(interval);
 
