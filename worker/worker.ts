@@ -91,7 +91,7 @@ export class WorkerServer {
 				this.start(request.application, request.version, request.env, request.instance);
 			}
 
-			for (let request of res.start as StopRequest[]) {
+			for (let request of res.stop as StopRequest[]) {
 				this.stop(request.instance);
 			}
 		}).catch(error => {
