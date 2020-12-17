@@ -188,9 +188,6 @@ export class RegistryServer {
 			let worker = this.runningWorkers.find(s => s.name == name);
 			const now = new Date();
 
-			const messages = [...worker.messageQueue];
-			worker.messageQueue = [];
-
 			if (!worker) {
 				const worker = new ChildWorker();
 				worker.name = name;
@@ -205,6 +202,9 @@ export class RegistryServer {
 				worker.lastSeen = now;
 				worker.up = true;
 			}
+
+			const messages = [...worker.messageQueue];
+			worker.messageQueue = [];
 
 			// timeout check
 			setTimeout(() => {
