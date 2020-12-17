@@ -282,6 +282,7 @@ export class RegistryServer {
 		
 		if (!fs.existsSync(RegistryPath.applicationEnvDirectory(application, env))) {
 			fs.mkdirSync(RegistryPath.applicationEnvDirectory(application, env));
+			fs.mkdirSync(RegistryPath.applicationEnvActiveVersionsDirectory(application, env));
 
 			this.logger.log("new env ", this.logger.ae(application, env));
 		}
@@ -297,6 +298,8 @@ export class RegistryServer {
 
 			fs.writeFileSync(RegistryPath.applicationEnvDangelingVersionFile(application, env), dangelingVersion);
 		} 
+
+		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
 		
 		await this.start(application, version, env);
 
