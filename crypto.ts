@@ -7,6 +7,10 @@ export class Crypto {
 		return Array(128).fill(0).map(e => Math.random().toString(36)[3]).map(s => Math.random() > 0.5 ? s.toUpperCase() : s).join("");
 	}
 
+	static createId() {
+		return Array(16).fill(0).map(e => Math.random().toString(16)[3]).join("");
+	}
+
 	static nameHash(name) {
 		return sha512(name).substring(10, 74);
 	}

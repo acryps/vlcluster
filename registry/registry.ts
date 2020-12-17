@@ -309,7 +309,7 @@ export class RegistryServer {
 	}
 
 	start(application: string, version: string, env: string) {
-		const instance = Crypto.createKey();
+		const instance = Crypto.createId();
 
 		return new Promise<StartRequest>(done => {
 			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
