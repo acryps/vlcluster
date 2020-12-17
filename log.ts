@@ -12,16 +12,18 @@ export class Logger {
     }
 
     log(...text: string[]) {
-        process.stdout.write(`[   \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
+        process.stdout.write(`[  \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
     }
 
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
         let i = 0;
 
-        process.stdout.write(`[ ${Logger.loadingFrames[0]} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${Array.isArray(text) ? text.join("") : text}\r`);
+        text = Array.isArray(text) ? text.join("") : text;
+
+        process.stdout.write(`[${Logger.loadingFrames[0]} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text}\r`);
 
         const interval = setInterval(() => {
-            process.stdout.write(`[ ${Logger.loadingFrames[i++ % (Logger.loadingFrames.length - 1)]}\r`);
+            process.stdout.write(`[${Logger.loadingFrames[i++ % (Logger.loadingFrames.length - 1)]}\r`);
         }, 100);
         
         try {
@@ -33,11 +35,11 @@ export class Logger {
 
             clearInterval(interval);
 
-            process.stdout.write(`[ ✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("")}` : ""}\n`);
+            process.stdout.write(`[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(" ", text.length)}` : ""}\n`);
         } catch (e) {
             clearInterval(interval);
 
-            process.stdout.write(`[ ✗\n`);
+            process.stdout.write(`[✗\n`);
 
             throw e;
         }
