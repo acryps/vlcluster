@@ -407,8 +407,6 @@ export class RegistryServer {
 		});
 
 		setInterval(() => {
-			process.stdout.write(`\u001b[s\u001b[1;1H*****\u001b[u`);
-
 			process.stdout.write(`\u001b[2m[ cluster ]\t${this.runningWorkers.length ? this.runningWorkers.map(
 				w => `${w.up ? "\u001b[2m✔" : "\u001b[31m✗"} ${w.name}: ${w.cpuUsage.toFixed(1).padStart(5, " ")}%\u001b[0m`
 			).join("\u001b[2m, \u001b[0m") : "no running workers"}\u001b[0m\n`);
