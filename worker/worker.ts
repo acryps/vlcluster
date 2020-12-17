@@ -201,7 +201,7 @@ export class WorkerServer {
 		fs.writeFileSync(WorkerServer.applicationVersionInstanceFile(this.clusterName, application, version), instance);
 
 		return new Promise<void>(async done => {
-			this.logger.log("pulling", this.logger.av(application, version), "...");
+			this.logger.log("pulling ", this.logger.av(application, version), "...");
 
 			const loadProcess = spawn("docker", ["load"], {
 				stdio: [
@@ -301,7 +301,7 @@ export class WorkerServer {
 					}
 				}).then(r => r.json());
 
-				finished("started ", this.logger.aev(application, env, version));
+				finished("started ", this.logger.aevi(application, env, version, instance));
 
 				done();
 			});

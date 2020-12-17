@@ -46,26 +46,30 @@ export class Logger {
     }
 
     av(application: string, version: string) {
-        return `${application}:${version}`;
+        return `\u001b[1m${application}:${version}\u001b[0m`;
     }
 
     ae(application: string, env: string) {
-        return `${application}[${env}]`;
+        return `\u001b[1m${application}[${env}]\u001b[0m`;
     }
 
     aev(application: string, env: string, version: string) {
-        return `${application}[${env}]:${version}`;
+        return `\u001b[1m${application}[${env}]:${version}\u001b[0m`;
+    }
+
+    aevi(application: string, env: string, version: string, instance: string) {
+        return `\u001b[1m${application}[${env}]:${version}(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
     }
 
     w(worker: string) {
-        return `<${worker}>`;
+        return `\u001b[1m<${worker}>\u001b[0m`;
     }
 
     c(worker: string) {
-        return `{${worker}}`;
+        return `\u001b[1m{${worker}}\u001b[0m`;
     }
 
     g(worker: string) {
-        return `#${worker}`;
+        return `\u001b[1m#${worker}\u001b[0m`;
     }
 }
