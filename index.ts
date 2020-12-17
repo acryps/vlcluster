@@ -103,7 +103,9 @@ export async function main() {
 			}
 
 			case "daemon": {
-				new Daemon();
+				const daemon = new Daemon();
+
+				daemon.start();
 			}
 		}
 	} catch (e) {

@@ -65,8 +65,12 @@ export class Logger {
         return `\u001b[1m<${worker}>\u001b[0m`;
     }
 
-    c(worker: string) {
-        return `\u001b[1m{${worker}}\u001b[0m`;
+    c(cluster: string) {
+        return `\u001b[1m{${cluster}}\u001b[0m`;
+    }
+
+    cw(cluster: string, worker: string) {
+        return `\u001b[1m{${cluster}}<${worker}>\u001b[0m`;
     }
 
     g(worker: string) {
