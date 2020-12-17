@@ -58,4 +58,12 @@ export class Logger {
     w(worker: string) {
         return `<${worker}>`;
     }
+
+    c(worker: string) {
+        return `{${worker}}`;
+    }
+
+    g(worker: string) {
+        return `#${worker}`;
+    }
 }

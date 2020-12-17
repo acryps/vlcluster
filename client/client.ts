@@ -25,7 +25,9 @@ export class Client {
 	}
 
 	static async create(username: string, host: string, key: string) {
-		console.log(`[ client ] logging into ${host}...`);
+		const logger = new Logger("login");
+
+		logger.log("logging into ", host, "...");
 
 		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createClient}`, {
 			method: "POST",
@@ -38,7 +40,7 @@ export class Client {
 			})
 		}).then(r => r.json());
 
-		console.log(`[ client ] welcome to '${result.name}'!`);
+		logger.log("welcome to ", logger.c(result.name), "!");
 
 		if (!fs.existsSync(Client.clusterDirectory(result.name))) {
 			fs.mkdirSync(Client.clusterDirectory(result.name));
@@ -142,15 +144,15 @@ export class Client {
 
 		await new Promise<void>(done => {
 			saveProcess.on("close", async () => {
-				logger.log("uploading ", logger.av(application, version), " image...");
+				logger.process(["uploading ", logger.av(application, version), " image..."], async finished => {
+					await uploader;
 
-				await uploader;
+					finished(logger.av(application, version), " pushed");
 
-				done();
+					done();
+				});
 			});
 		});
-
-		logger.log(logger.av(application, version), " pushed");
 	}
 
 	async upgrade(application: string, version: string, env: string) {
