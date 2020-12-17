@@ -76,4 +76,8 @@ export class Logger {
     g(worker: string) {
         return `\u001b[1m#${worker}\u001b[0m`;
     }
+
+    i(worker: string) {
+        return `\u001b[1m(${worker})\u001b[0m`;
+    }
 }
