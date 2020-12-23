@@ -119,32 +119,31 @@ export class Client {
 
 	async push(application: string, version: string) {
 		const logger = new Logger("push");
-		logger.log("exporting ", logger.av(application, version), " image...");
+		logger.process(["pushing ", logger.av(application, version), "..."], async finished => {
 
-		const imageName = `${application}:${version}`;
-		
-		const saveProcess = spawn("docker", ["save", imageName], {
-			stdio: [
-				"ignore",
-				"pipe",
-				process.stderr
-			]
-		});
+			const imageName = `${application}:${version}`;
+			
+			const saveProcess = spawn("docker", ["save", imageName], {
+				stdio: [
+					"ignore",
+					"pipe",
+					process.stderr
+				]
+			});
 
-		const uploader = fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.push}`, {
-			method: "POST", 
-			headers: {
-				...this.authHeaders,
-				"cluster-application": application,
-				"cluster-version": version,
-				"cluster-image-name": imageName
-			},
-			body: saveProcess.stdout
-		}).then(r => r.json());
+			const uploader = fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.push}`, {
+				method: "POST", 
+				headers: {
+					...this.authHeaders,
+					"cluster-application": application,
+					"cluster-version": version,
+					"cluster-image-name": imageName
+				},
+				body: saveProcess.stdout
+			}).then(r => r.json());
 
-		await new Promise<void>(done => {
-			saveProcess.on("close", async () => {
-				logger.process(["uploading ", logger.av(application, version), " image..."], async finished => {
+			await new Promise<void>(done => {
+				saveProcess.on("close", async () => {
 					await uploader;
 
 					finished(logger.av(application, version), " pushed");
