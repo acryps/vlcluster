@@ -187,7 +187,7 @@ export class WorkerServer {
 						}
 					}).then(r => r.json());
 
-					finished();
+					finished("start ", this.logger.aev(application, env, version), " reported");
 					done();
 				});
 			});

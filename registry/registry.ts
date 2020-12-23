@@ -255,13 +255,15 @@ export class RegistryServer {
 				throw new Error("application does not exist");
 			}
 
-			this.logger.process(["sending ", this.logger.av(application, version), " to ", this.logger.w(worker)], finished => new Promise<void>(done => {
+			this.logger.log("sending ", this.logger.av(application, version), " to ", this.logger.w(worker));
+			
+			new Promise<void>(done => {
 				fs.createReadStream(RegistryPath.applicationVersionImageSourceFile(application, version)).pipe(res).on("end", () => {
-					finished("sent ", this.logger.av(application, version), " to ", this.logger.w(worker));
+					this.logger.log("sent ", this.logger.av(application, version), " to ", this.logger.w(worker));
 
 					done();
 				})
-			}));
+			});
 		});
 
 		app.post(Cluster.api.registry.startedApplication, (req, res) => {
