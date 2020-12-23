@@ -119,8 +119,7 @@ export class Client {
 
 	async push(application: string, version: string) {
 		const logger = new Logger("push");
-		logger.process(["pushing ", logger.av(application, version), "..."], async finished => {
-
+		await logger.process(["pushing ", logger.av(application, version), "..."], async finished => {
 			const imageName = `${application}:${version}`;
 			
 			const saveProcess = spawn("docker", ["save", imageName], {
