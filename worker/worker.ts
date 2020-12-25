@@ -152,8 +152,11 @@ export class WorkerServer {
 			await this.pull(application, version);
 		}
 
+		// skip start if instance is already running
 		if (await this.isInstanceRunning(instance)) {
 			this.logger.log(this.logger.aevi(application, env, version, instance), " already running");
+
+			return;
 		}
 
 		return await this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
