@@ -159,14 +159,17 @@ export class WorkerServer {
 			return;
 		}
 
+		// remove old container if present
+		if (await this.isInstanceContainerLoaded(instance)) {
+			await this.removeInstanceContainer(instance);
+		}
+
 		return await this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
 
-			const isContainerLoaded = await this.isInstanceContainerLoaded(instance);
-
 			const runProcess = spawn("docker", [
-				isContainerLoaded ? "start" : "run",
+				"run",
 				"--env", `PORT=${internalPort}`, // add port env variable
 				"--env", `CLUSTER_APPLICATION=${application}`,
 				"--env", `CLUSTER_INTERNAL_PORT=${internalPort}`,
@@ -272,6 +275,21 @@ export class WorkerServer {
 
 			process.on("exit", () => {
 				done(output.split("\n").includes(instance));
+			});
+		});
+	}
+
+	removeInstanceContainer(instance: string) {
+		return new Promise<void>(done => {
+			const stopProcess = spawn("docker", [
+				"rm",
+				instance
+			], {
+				stdio: "ignore"
+			});
+			
+			stopProcess.on("exit", () => {
+				done();
 			});
 		});
 	}
