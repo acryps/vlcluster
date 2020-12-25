@@ -73,8 +73,12 @@ export class Logger {
         return `\u001b[1m{${cluster}}<${worker}>\u001b[0m`;
     }
 
-    g(worker: string) {
-        return `\u001b[1m#${worker}\u001b[0m`;
+    g(gateway: string) {
+        return `\u001b[1m#${gateway}\u001b[0m`;
+    }
+
+    cg(cluster: string, gateway: string) {
+        return `\u001b[1m{${cluster}}#${gateway}\u001b[0m`;
     }
 
     i(instance: string) {

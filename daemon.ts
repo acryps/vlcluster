@@ -5,6 +5,7 @@ import { Cluster } from "./cluster";
 import { WorkerServer } from "./worker/worker";
 import { Logger } from "./log";
 import { finished } from "stream";
+import { GatewayServer } from "./gateway/gateway";
 
 export class Daemon {
 	server;
@@ -40,6 +41,16 @@ export class Daemon {
 				worker.startPing();
 
 				finished("started worker ", logger.cw(cluster, worker.name));
+			});
+		}
+
+		for (let cluster of GatewayServer.getInstalledGateways()) {
+			await logger.process(["starting gateway for ", logger.c(cluster)], async finished => {
+				const gateway = new GatewayServer(cluster);
+
+				await gateway.register();
+
+				finished("started gateway ", logger.cg(cluster, gateway.name));
 			});
 		}
 
