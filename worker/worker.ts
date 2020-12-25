@@ -259,8 +259,8 @@ export class WorkerServer {
 	isInstanceContainerLoaded(instance: string) {
 		return new Promise<boolean>(done => {
 			const process = spawn("docker", [
-				"container", 
-				"ls",
+				"ps",
+				"-a", // include stopped/exited containers
 				`--format={{.Names}}`
 			]);
 
