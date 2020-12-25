@@ -8,6 +8,7 @@ import { Daemon } from "./daemon";
 import { WorkerServer } from "./worker/worker";
 import { Client } from "./client/client";
 import { Worker } from "cluster";
+import { GatewayServer } from "./gateway/gateway";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -62,6 +63,13 @@ export async function main() {
 						worker.setLocalPath(parameters[1]);
 
 						console.log(`local path assigned`);
+						return process.exit(0);
+					}
+
+					case "gateway": {
+						await GatewayServer.create(parameters[0], parameters[1], parameters[2], parameters[3]);
+
+						console.log(`gateway created`);
 						return process.exit(0);
 					}
 				}

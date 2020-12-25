@@ -4,7 +4,7 @@ import * as path from "path";
 import { Cluster } from "../cluster";
 import { Crypto } from "../crypto";
 
-export class WorkerPath {
+export class GatewayPath {
     static get rootDirectory() {
 		return path.join(Cluster.localDirectory, "gateways");
     }
@@ -15,7 +15,19 @@ export class WorkerPath {
 
     static gatewayDirectory(name: string) {
 		return path.join(this.rootDirectory, Crypto.sanitizeGatewayName(name));
-    }
+	}
+	
+	static gatewayClusterHostFile(name: string) {
+		return path.join(this.gatewayDirectory(name), "cluster-host");
+	}
+	
+	static gatewayClusterKeyFile(name: string) {
+		return path.join(this.gatewayDirectory(name), "key");
+	}
+	
+	static gatewayEndpointHostFile(name: string) {
+		return path.join(this.gatewayDirectory(name), "endpoint-host");
+	}
     
     static gatewayDomainsDirectory(name: string) {
 		return path.join(this.gatewayDirectory(name), "domains");
