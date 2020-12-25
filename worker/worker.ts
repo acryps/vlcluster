@@ -163,8 +163,10 @@ export class WorkerServer {
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
 
+			const isContainerLoaded = await this.isInstanceContainerLoaded(instance);
+
 			const runProcess = spawn("docker", [
-				"run",
+				isContainerLoaded ? "start" : "run",
 				"--env", `PORT=${internalPort}`, // add port env variable
 				"--env", `CLUSTER_APPLICATION=${application}`,
 				"--env", `CLUSTER_INTERNAL_PORT=${internalPort}`,
@@ -239,6 +241,26 @@ export class WorkerServer {
 		return new Promise<boolean>(done => {
 			const process = spawn("docker", [
 				"ps", 
+				`--format={{.Names}}`
+			]);
+
+			let output = "";
+
+			process.stdout.on("data", data => {
+				output += data;
+			});
+
+			process.on("exit", () => {
+				done(output.split("\n").includes(instance));
+			});
+		});
+	}
+
+	isInstanceContainerLoaded(instance: string) {
+		return new Promise<boolean>(done => {
+			const process = spawn("docker", [
+				"container", 
+				"ls",
 				`--format={{.Names}}`
 			]);
 
