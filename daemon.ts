@@ -34,6 +34,8 @@ export class Daemon {
 			await logger.process(["starting worker for ", logger.c(cluster)], async finished => {
 				const worker = new WorkerServer(cluster);
 
+				await worker.startInstances();
+
 				worker.startCPUMonitoring();
 				worker.startPing();
 

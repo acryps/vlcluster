@@ -67,6 +67,17 @@ export class WorkerServer {
 		return fs.readdirSync(WorkerPath.rootDirectory);
 	}
 
+	async startInstances() {
+		for (let instance of fs.readdirSync(WorkerPath.instancesDirectory(this.clusterName))) {
+			await this.start(
+				fs.readFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance)).toString(),
+				fs.readFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance)).toString(),
+				fs.readFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance)).toString(),
+				instance
+			);
+		}
+	}
+
 	startPing() {
 		this.ping();
 
@@ -141,6 +152,10 @@ export class WorkerServer {
 			await this.pull(application, version);
 		}
 
+		if (await this.isInstanceRunning(instance)) {
+			this.logger.log(this.logger.aevi(application, env, version, instance), " already running");
+		}
+
 		return await this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
@@ -211,6 +226,25 @@ export class WorkerServer {
 
 			process.on("exit", () => {
 				done(output.includes(`${application}${divider}${version}`));
+			});
+		});
+	}
+
+	isInstanceRunning(instance: string) {
+		return new Promise<boolean>(done => {
+			const process = spawn("docker", [
+				"ps", 
+				`--format={{.Names}}`
+			]);
+
+			let output = "";
+
+			process.stdout.on("data", data => {
+				output += data;
+			});
+
+			process.on("exit", () => {
+				done(output.split("\n").includes(instance));
 			});
 		});
 	}
