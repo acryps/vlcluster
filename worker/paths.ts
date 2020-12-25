@@ -16,6 +16,10 @@ export class WorkerPath {
 		return path.join(this.workerDirectory(clusterName), "key");
 	}
 
+	static endpointFile(clusterName: string) {
+		return path.join(this.workerDirectory(clusterName), "endpoint");
+	}
+
 	static nameFile(clusterName: string) {
 		return path.join(this.workerDirectory(clusterName), "name");
 	}

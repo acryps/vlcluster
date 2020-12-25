@@ -56,6 +56,13 @@ export async function main() {
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
 						return process.exit(0);
 					}
+
+					case "endpoint": {
+						const worker = new WorkerServer(parameters[0]);
+						worker.setLocalPath(parameters[1]);
+
+						console.log(`local path assigned`);
+					}
 				}
 
 				break;

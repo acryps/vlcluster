@@ -14,6 +14,7 @@ export class WorkerServer {
 	key: string;
 	name: string;
 	host: string;
+	endpoint: string;
 
 	cpuUsage: number;
 
@@ -25,6 +26,10 @@ export class WorkerServer {
 		this.key = fs.readFileSync(WorkerPath.keyFile(clusterName)).toString();
 		this.host = fs.readFileSync(WorkerPath.hostFile(clusterName)).toString();
 		this.name = fs.readFileSync(WorkerPath.nameFile(clusterName)).toString();
+
+		if (fs.existsSync(WorkerPath.endpointFile(clusterName))) {
+			this.endpoint = fs.readFileSync(WorkerPath.endpointFile(clusterName)).toString();
+		}
 
 		if (!fs.existsSync(WorkerPath.instancesDirectory(this.clusterName))) {
 			fs.mkdirSync(WorkerPath.instancesDirectory(this.clusterName));
@@ -95,7 +100,8 @@ export class WorkerServer {
 			body: JSON.stringify({
 				name: this.name,
 				key: this.key,
-				cpuUsage: this.cpuUsage
+				cpuUsage: this.cpuUsage,
+				endpoint: this.endpoint 
 			})
 		}).then(res => res.json()).then(res => {
 			for (let request of res.start as StartRequest[]) {
@@ -309,5 +315,9 @@ export class WorkerServer {
 				done();
 			});
 		}));
+	}
+
+	setLocalPath(hostname: string) {
+		fs.writeFileSync(WorkerPath.endpointFile(this.clusterName), hostname);
 	}
 }

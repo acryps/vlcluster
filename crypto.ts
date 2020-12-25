@@ -11,8 +11,8 @@ export class Crypto {
 		return Array(16).fill(0).map(e => Math.random().toString(16)[3]).join("");
 	}
 
-	static nameHash(name) {
-		return sha512(name).substring(10, 74);
+	static nameHash(...name: string[]) {
+		return sha512(name.join("")).substring(10, 74);
 	}
 
 	static dockerImageKey() {
@@ -36,6 +36,10 @@ export class Crypto {
 	}
 
 	static sanitizeWorkerName(name: string) {
+		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
+	}
+
+	static sanitizeGatewayName(name: string) {
 		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
 	}
 

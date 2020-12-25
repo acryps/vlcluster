@@ -1,0 +1,47 @@
+import { appendFile } from "fs";
+import * as path from "path";
+
+import { Cluster } from "../cluster";
+import { Crypto } from "../crypto";
+
+export class WorkerPath {
+    static get rootDirectory() {
+		return path.join(Cluster.localDirectory, "gateways");
+    }
+    
+    static nginxFile(name: string) {
+		return "/" + path.join("etc", "nginx", "sites-enabled", Crypto.sanitizeGatewayName(name));
+	}
+
+    static gatewayDirectory(name: string) {
+		return path.join(this.rootDirectory, Crypto.sanitizeGatewayName(name));
+    }
+    
+    static gatewayDomainsDirectory(name: string) {
+		return path.join(this.gatewayDirectory(name), "domains");
+    }
+
+    static gatewayDomainDirectory(name: string, domain: string) {
+		return path.join(this.gatewayDomainsDirectory(name), Crypto.nameHash(domain));
+    }
+
+    static gatewayDomainHostnameFile(name: string, domain: string) {
+		return path.join(this.gatewayDomainDirectory(name, domain), "hostname");
+    }
+
+    static gatewayDomainMappingsDirectory(name: string, domain: string) {
+		return path.join(this.gatewayDomainDirectory(name, domain), "mappings");
+    }
+
+    static gatewayDomainMappingDirectory(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainMappingsDirectory(name, domain), Crypto.nameHash(domain, application, env));
+    }
+
+    static gatewayDomainMappingApplicationFile(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainMappingDirectory(name, domain, application, env), "application");
+    }
+
+    static gatewayDomainMappingEnvFile(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainMappingDirectory(name, domain, application, env), "env");
+    }
+}
