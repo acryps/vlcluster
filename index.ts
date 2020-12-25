@@ -62,8 +62,12 @@ export async function main() {
 						worker.setLocalPath(parameters[1]);
 
 						console.log(`local path assigned`);
+						return process.exit(0);
 					}
 				}
+
+				console.error("invalid init");
+				return process.exit(1);
 
 				break;
 			}
