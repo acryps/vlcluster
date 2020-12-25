@@ -191,10 +191,12 @@ export class WorkerServer {
 			runProcess.on("exit", async () => {
 				finished("started ", this.logger.aevi(application, env, version, instance));
 
-				fs.mkdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
-				fs.writeFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance), application);
-				fs.writeFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance), version);
-				fs.writeFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance), env);
+				if (!fs.existsSync(WorkerPath.instanceDirectory(this.clusterName, instance))) {
+					fs.mkdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
+					fs.writeFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance), application);
+					fs.writeFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance), version);
+					fs.writeFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance), env);
+				}
 				
 				this.logger.process(["reporting start ", this.logger.aev(application, env, version), " to registry"], async finished => {
 					await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.startedApplication}`, {
