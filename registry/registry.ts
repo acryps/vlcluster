@@ -308,11 +308,12 @@ export class RegistryServer {
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
-		fs.unlinkSync(RegistryPath.applicationEnvDangelingVersionFile(application, env));
-
+		
 		// stop dangeling versions
 		if (dangelingVersion) {
 			this.stop(application, dangelingVersion, env);
+
+			fs.unlinkSync(RegistryPath.applicationEnvDangelingVersionFile(application, env));
 		}
 	}
 
