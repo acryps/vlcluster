@@ -302,11 +302,17 @@ export class RegistryServer {
 		} 
 
 		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
-		
+
+		// install application on new worker
 		await this.start(application, version, env);
 
+		// write current version file
+		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
+		fs.unlinkSync(RegistryPath.applicationEnvDangelingVersionFile(application, env));
+
+		// stop dangeling versions
 		if (dangelingVersion) {
-			// this.stop();
+			this.stop(application, dangelingVersion, env);
 		}
 	}
 
@@ -352,6 +358,10 @@ export class RegistryServer {
 
 			worker.messageQueue.push(request);
 		});
+	}
+
+	stop(application: string, version: string, env: string) {
+		this.logger.log("STOP", this.logger.aev(application, version, env));
 	}
 
 	async validateClientAuth(req) {
