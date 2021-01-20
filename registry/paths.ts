@@ -25,7 +25,7 @@ export class RegistryPath {
 	}
 
 	static mappingDirectory(id: string) {
-		return path.join(this.applicationsDirectory, id);
+		return path.join(this.mappingsDirectory, id);
 	}
 
 	static mappingHostFile(id: string) {
