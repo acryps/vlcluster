@@ -297,6 +297,8 @@ export class RegistryServer {
 			if (request) {
 				request.oncomplete();
 			}
+
+			res.json({});
 		});
 	}
 
