@@ -307,7 +307,8 @@ export class WorkerServer {
 	async stop(instance: string) {
 		await this.logger.process(["stopping ", this.logger.i(instance)], finished => new Promise<void>(done => {
 			const stopProcess = spawn("docker", [
-				"stop",
+				"rm", // remove container
+				"--force", // stop container
 				instance
 			], {
 				stdio: "ignore"
