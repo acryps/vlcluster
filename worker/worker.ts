@@ -41,6 +41,13 @@ export class WorkerServer {
 		this.cpuUsage = 1;
 	}
 
+	async register() {
+		this.startCPUMonitoring();
+		
+		await this.startPing();
+		await this.startInstances();
+	}
+
 	static async create(host: string, name: string, key: string) {
 		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
 			method: "POST",
@@ -86,16 +93,16 @@ export class WorkerServer {
 		}
 	}
 
-	startPing() {
-		this.ping();
+	async startPing() {
+		await this.ping();
 
 		setInterval(() => {
 			this.ping();
 		}, Cluster.pingInterval);
 	}
 
-	ping() {
-		fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
+	async ping() {
+		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
 			method: "POST", 
 			headers: {
 				"content-type": "application/json"
@@ -116,7 +123,7 @@ export class WorkerServer {
 			}
 		}).catch(error => {
 			this.logger.log("ping failed! ", error.message);
-		})
+		});
 	}
 
 	startCPUMonitoring() {

@@ -38,11 +38,7 @@ export class Daemon {
 		for (let cluster of WorkerServer.getInstalledClusterNames()) {
 			await logger.process(["starting worker for ", logger.c(cluster)], async finished => {
 				const worker = new WorkerServer(cluster);
-
-				await worker.startInstances();
-
-				worker.startCPUMonitoring();
-				worker.startPing();
+				await worker.register();
 
 				finished("started worker ", logger.cw(cluster, worker.name));
 			});
