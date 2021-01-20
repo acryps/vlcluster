@@ -56,13 +56,9 @@ export class RegistryPath {
 		return path.join(this.applicationEnvActiveVersionDirectory(name, env, version), Crypto.sanitizeWorkerName(worker));
 	} 
 
-	static applicationEnvActiveVersionWorkerInstanceDirectory(name: string, env: string, version: string, worker: string, instance: string) {
+	static applicationEnvActiveVersionWorkerInstanceFile(name: string, env: string, version: string, worker: string, instance: string) {
 		return path.join(this.applicationEnvActiveVersionWorkerDirectory(name, env, version, worker), Crypto.sanitizeInstanceName(instance));
-	} 
-
-	static applicationEnvActiveVersionWorkerInstancePortFile(name: string, env: string, version: string, worker: string, instance: string) {
-		return path.join(this.applicationEnvActiveVersionWorkerInstanceDirectory(name, env, version, worker, instance), "port");
-	} 
+	}
 
 	static applicationVersionDirectory(name: string, version: string) {
 		return path.join(this.applicationVersionsDirectory(name), Crypto.sanitizeVersion(version));

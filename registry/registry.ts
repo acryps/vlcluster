@@ -360,7 +360,10 @@ export class RegistryServer {
 					fs.mkdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
 				}
 
-				RegistryPath.applicationEnvActiveVersionWorkerInstanceDirectory(application, env, version, worker.name, instance);
+				fs.writeFileSync(
+					RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance),
+					instance
+				);
 
 				this.logger.log("started ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
 
@@ -373,6 +376,10 @@ export class RegistryServer {
 
 	stop(application: string, version: string, env: string) {
 		this.logger.log("STOP", this.logger.aev(application, version, env));
+
+		return new Promise(done => {
+			
+		});
 	}
 
 	async validateClientAuth(req) {
