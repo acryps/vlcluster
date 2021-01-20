@@ -13,6 +13,8 @@ export class Daemon {
 	async start() {
 		const logger = new Logger("daemon");
 
+		process.stdout.write(Cluster.logo);
+
 		logger.log("starting vlcluster daemon server");
 
 		this.server = express();
