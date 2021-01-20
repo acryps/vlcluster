@@ -354,7 +354,7 @@ export class RegistryServer {
 			const env = fs.readFileSync(RegistryPath.mappingEnvFile(id)).toString();
 			const application = fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString();
 
-			const latestVersion = RegistryPath.applicationEnvLatestVersionFile(application, env);
+			const latestVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
 
 			const instances: ChildInstance[] = [];
 
