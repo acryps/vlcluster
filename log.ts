@@ -15,6 +15,10 @@ export class Logger {
         process.stdout.write(`[  \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
     }
 
+    warn(...text: string[]) {
+        process.stdout.write(`\x1b[1;43m\x1b[1;30m[! ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
+    }
+
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
         let i = 0;
 
