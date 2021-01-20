@@ -369,8 +369,12 @@ export class RegistryServer {
 
 						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
 							instances.push(instance);
+						} else {
+							this.logger.log("outdated version ", this.logger.w(worker.name), "");
 						}
 					}
+				} else {
+					this.logger.log("no endpoint set, skipped ", this.logger.w(worker.name), "");
 				}
 			}
 			
