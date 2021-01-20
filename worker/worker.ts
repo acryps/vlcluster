@@ -19,7 +19,7 @@ export class WorkerServer {
 
 	logger: Logger;
 
-	instances: WorkerInstance[];
+	instances: WorkerInstance[] = [];
 
 	constructor(private clusterName: string) {
 		this.logger = new Logger("worker");
