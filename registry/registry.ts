@@ -267,10 +267,20 @@ export class RegistryServer {
 		});
 
 		app.post(Cluster.api.registry.startedApplication, (req, res) => {
-			const request = this.pendingStartRequests.find(i => i.instance == req.headers["cluster-instance"]);
-			
+			const worker = req.headers["cluster-worker"];
+			const instance = req.headers["cluster-instance"];
+			const env = req.headers["cluster-env"];
+			const version = req.headers["cluster-verison"];
+			const application = req.headers["cluster-application"];
+
+			const request = this.pendingStartRequests.find(i => i.instance == instance);
+
 			if (!request) {
-				throw new Error("request does not exist");
+				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(worker));
+
+				res.json({});
+
+				return;
 			}
 
 			request.oncomplete(request);

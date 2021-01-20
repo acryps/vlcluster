@@ -214,6 +214,10 @@ export class WorkerServer {
 						method: "POST",
 						headers: {
 							"cluster-instance": instance,
+							"cluster-worker": this.name,
+							"cluster-application": application,
+							"cluster-env": env,
+							"cluster-verison": version,
 							"cluster-port": externalPort
 						}
 					}).then(r => r.json());
