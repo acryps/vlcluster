@@ -199,7 +199,12 @@ export class RegistryServer {
 				worker.endpoint = endpoint;
 
 				this.runningWorkers.push(worker);
-				this.logger.log("worker login ", this.logger.w(name), " on ", endpoint);
+
+				if (endpoint) {
+					this.logger.log("worker login ", this.logger.w(name), " on ", endpoint);
+				} else {
+					this.logger.log("worker login ", this.logger.w(name));
+				}
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
