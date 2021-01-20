@@ -4,7 +4,7 @@ import * as fs from "fs";
 import { cpuUsage } from "os-utils";
 import { spawn } from "child_process";
 import { Crypto } from "../crypto";
-import { InstanceState } from "./instance-state";
+import { WorkerInstance } from "./instance-state";
 import { Logger } from "../log";
 import { WorkerPath } from "./paths";
 import { StartRequest } from "../registry/messages/start";
@@ -15,10 +15,11 @@ export class WorkerServer {
 	name: string;
 	host: string;
 	endpoint: string;
-
 	cpuUsage: number;
 
 	logger: Logger;
+
+	instances: WorkerInstance[];
 
 	constructor(private clusterName: string) {
 		this.logger = new Logger("worker");
@@ -103,7 +104,7 @@ export class WorkerServer {
 				name: this.name,
 				key: this.key,
 				cpuUsage: this.cpuUsage,
-				endpoint: this.endpoint 
+				endpoint: this.endpoint
 			})
 		}).then(res => res.json()).then(res => {
 			for (let request of res.start as StartRequest[]) {
@@ -156,12 +157,26 @@ export class WorkerServer {
 	}
 
 	async start(application: string, version: string, env: string, instance: string) {
+		const state = new WorkerInstance();
+		state.application = application;
+		state.version = version;
+		state.env = env;
+		state.instanceId = instance;
+		state.running = false;
+
+		this.instances.push(state);
+		
 		if (!(await this.hasLoadedImage(application, version))) {
 			await this.pull(application, version);
 		}
 
 		// skip start if instance is already running
 		if (await this.isInstanceRunning(instance)) {
+			state.externalPort = await this.getExternalPort(instance);
+			state.running = true;
+
+			await this.reportInstanceStart(application, version, env, instance, state.externalPort);
+
 			this.logger.log(this.logger.aevi(application, env, version, instance), " already running");
 
 			return;
@@ -212,23 +227,33 @@ export class WorkerServer {
 				}
 				
 				this.logger.process(["reporting start ", this.logger.aev(application, env, version), " to registry"], async finished => {
-					await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.startedApplication}`, {
-						method: "POST",
-						headers: {
-							"cluster-instance": instance,
-							"cluster-worker": this.name,
-							"cluster-application": application,
-							"cluster-env": env,
-							"cluster-verison": version,
-							"cluster-port": externalPort
-						}
-					}).then(r => r.json());
+					await this.reportInstanceStart(application, version, env, instance, externalPort);
 
 					finished("start ", this.logger.aev(application, env, version), " reported");
+
+					state.externalPort = externalPort;
+					state.internalPort = internalPort;
+
+					state.running = true;
+
 					done();
 				});
 			});
 		}));
+	}
+
+	async reportInstanceStart(application: string, version: string, env: string, instance: string, externalPort: number) {
+		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.startedApplication}`, {
+			method: "POST",
+			headers: {
+				"cluster-instance": instance,
+				"cluster-worker": this.name,
+				"cluster-application": application,
+				"cluster-env": env,
+				"cluster-verison": version,
+				"cluster-port": externalPort
+			}
+		}).then(r => r.json());
 	}
 
 	hasLoadedImage(application: string, version: string) {
@@ -287,6 +312,25 @@ export class WorkerServer {
 
 			process.on("exit", () => {
 				done(output.split("\n").includes(instance));
+			});
+		});
+	}
+
+	getExternalPort(instance: string) {
+		return new Promise<number>(done => {
+			const process = spawn("docker", [
+				"port",
+				instance
+			]);
+
+			let output = "";
+
+			process.stdout.on("data", data => {
+				output += data;
+			});
+
+			process.on("exit", () => {
+				done(+output.split(":").pop().trim());
 			});
 		});
 	}

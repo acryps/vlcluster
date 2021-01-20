@@ -178,6 +178,7 @@ export class RegistryServer {
 			const key = req.body.key;
 			const cpuUsage = req.body.cpuUsage;
 			const endpoint = req.body.endpoint;
+			const instances = req.body.instances;
 
 			if (!name) {
 				throw new Error("no name!");
@@ -280,11 +281,12 @@ export class RegistryServer {
 			const env = req.headers["cluster-env"];
 			const version = req.headers["cluster-verison"];
 			const application = req.headers["cluster-application"];
+			const port = +req.headers["cluster-port"];
 
 			const request = this.pendingStartRequests.find(i => i.instance == instance);
 
 			if (!request) {
-				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(worker));
+				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(worker), " exposing ", this.logger.p(port));
 
 				res.json({});
 

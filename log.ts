@@ -81,6 +81,10 @@ export class Logger {
         return `\u001b[1m#${gateway}\u001b[0m`;
     }
 
+    p(port: number) {
+        return `\u001b[1m:${port}\u001b[0m`;
+    }
+
     cg(cluster: string, gateway: string) {
         return `\u001b[1m{${cluster}}#${gateway}\u001b[0m`;
     }

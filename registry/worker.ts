@@ -1,3 +1,4 @@
+import { WorkerInstance } from "../worker/instance-state";
 import { QueueMessage } from "./messages/base";
 
 export class ChildWorker {

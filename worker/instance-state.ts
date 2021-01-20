@@ -1,4 +1,4 @@
-export class InstanceState {
+export class WorkerInstance {
     application: string;
     env: string;
     version: string;
