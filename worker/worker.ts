@@ -127,7 +127,7 @@ export class WorkerServer {
 			const loadProcess = spawn("docker", ["load"], {
 				stdio: [
 					"pipe",
-					process.stdout,
+					"ignore",
 					process.stderr
 				]
 			});
