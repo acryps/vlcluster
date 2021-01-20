@@ -29,6 +29,8 @@ export class WorkerServer {
 
 		if (fs.existsSync(WorkerPath.endpointFile(clusterName))) {
 			this.endpoint = fs.readFileSync(WorkerPath.endpointFile(clusterName)).toString();
+		} else {
+			this.logger.warn("endpoint missing. worker will not be reachable from gateways. set endpoint by running 'vlcluster init endpoint'");
 		}
 
 		if (!fs.existsSync(WorkerPath.instancesDirectory(this.clusterName))) {

@@ -204,7 +204,7 @@ export class RegistryServer {
 					this.logger.log("worker login ", this.logger.w(name), " on ", endpoint);
 				} else {
 					this.logger.log("worker login ", this.logger.w(name));
-				}
+				} 
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
