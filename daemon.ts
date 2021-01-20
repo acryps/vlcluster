@@ -13,7 +13,7 @@ export class Daemon {
 	async start() {
 		const logger = new Logger("daemon");
 
-		logger.log("starting vlcluster daemon");
+		logger.log("starting vlcluster daemon server");
 
 		this.server = express();
 		this.server.use(express.json());
@@ -57,7 +57,7 @@ export class Daemon {
 		}
 
 		this.server.listen(Cluster.port, () => {
-			logger.log("server started");
+			logger.log("daemon server started");
 		});
 	}
 }
