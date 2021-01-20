@@ -9,4 +9,14 @@ export class ChildWorker {
 	cpuUsage: number;
 	up: boolean;
 	endpoint: string;
+
+	instances: { [key: string]: ChildInstance } = {};
+}
+
+export class ChildInstance {
+	id: string;
+	application: string;
+	version: string;
+	env: string;
+	port: number;
 }

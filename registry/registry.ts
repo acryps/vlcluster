@@ -3,7 +3,7 @@ import { Cluster } from "../cluster";
 
 import * as fs from "fs";
 import { Logger } from "../log";
-import { ChildWorker } from "./worker";
+import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
 import { StartRequest } from "./messages/start";
 import { StopRequest } from "./messages/stop";
@@ -23,6 +23,10 @@ export class RegistryServer {
 		}
 
 		this.key = fs.readFileSync(RegistryPath.keyFile).toString();
+
+		setInterval(() => {
+			process.stdout.write(`\n\n${this.runningWorkers.map(w => `${w.name}\n${Object.keys(w.instances).map(k => `* ${w.instances[k].application} ${w.instances[k].env} ${w.instances[k].version}`)}`)}`);
+		}, 10000);
 	}
 
 	createWorker(name: string) {
@@ -276,7 +280,7 @@ export class RegistryServer {
 		});
 
 		app.post(Cluster.api.registry.startedApplication, (req, res) => {
-			const worker = req.headers["cluster-worker"];
+			const workerName = req.headers["cluster-worker"];
 			const instance = req.headers["cluster-instance"];
 			const env = req.headers["cluster-env"];
 			const version = req.headers["cluster-verison"];
@@ -284,9 +288,19 @@ export class RegistryServer {
 			const port = +req.headers["cluster-port"];
 
 			const request = this.pendingStartRequests.find(i => i.instance == instance);
+			const worker = this.runningWorkers.find(w => w.name == workerName);
+
+			const state = new ChildInstance();
+			state.application = application;
+			state.version = version;
+			state.env = env;
+			state.id = instance;
+			state.port = port;
+
+			worker.instances[instance] = state;
 
 			if (!request) {
-				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(worker), " exposing ", this.logger.p(port));
+				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
 
 				res.json({});
 
