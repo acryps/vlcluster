@@ -16,7 +16,7 @@ export class Logger {
     }
 
     warn(...text: string[]) {
-        process.stdout.write(`\x1b[1;43m\x1b[1;30m[! ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
+        process.stdout.write(`\x1b[48;5;190m\x1b[1;30m[! ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
     }
 
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
