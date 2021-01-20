@@ -86,6 +86,6 @@ export class Logger {
     }
 
     wi(worker: string, instance: string) {
-        return `\u001b<${worker}>(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
+        return `\u001b[1m<${worker}>(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
     }
 }
