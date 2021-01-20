@@ -314,9 +314,12 @@ export class WorkerServer {
 			});
 			
 			stopProcess.on("exit", () => {
-				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance), {
-					recursive: true
-				});
+				// remove instance files
+				fs.rmSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
+				fs.rmSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
+				fs.rmSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
+				
+				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
 
 				finished("stopped ", this.logger.i(instance));
 	

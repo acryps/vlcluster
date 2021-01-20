@@ -386,20 +386,22 @@ export class RegistryServer {
 	}
 
 	async stop(application: string, version: string, env: string) {
-		this.logger.log("STOP", this.logger.aev(application, version, env));
+		this.logger.log("shutting down ", this.logger.aev(application, version, env));
 
 		for (let worker of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))]) {
 			for (let instance of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))]) {
 				await this.stopInstance(application, version, env, worker, instance);
 			}
 		}
+
+		this.logger.log("shut down ", this.logger.aev(application, version, env));
 	}
 
 	async stopInstance(application: string, version: string, env: string, workerName: string, instance: string) {
 		const worker = this.runningWorkers.find(w => w.name == workerName);
 
 		if (!worker) {
-			this.logger.log("skipping shutdown of ", this.logger.wi(workerName, instance), ". worker down");
+			this.logger.log("skipping shut down of ", this.logger.wi(workerName, instance), ". worker down");
 
 			return;
 		}
