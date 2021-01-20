@@ -378,7 +378,11 @@ export class RegistryServer {
 		this.logger.log("STOP", this.logger.aev(application, version, env));
 
 		return new Promise(done => {
-			
+			for (let worker of fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))) {
+				for (let instance of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))) {
+					console.log("running on ", instance, " - ", worker);
+				}
+			}
 		});
 	}
 
