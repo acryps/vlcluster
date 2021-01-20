@@ -23,10 +23,6 @@ export class RegistryServer {
 		}
 
 		this.key = fs.readFileSync(RegistryPath.keyFile).toString();
-
-		setInterval(() => {
-			process.stdout.write(`\n\n${this.runningWorkers.map(w => `\n${w.name}\n${Object.keys(w.instances).map(k => `* ${w.instances[k].application} ${w.instances[k].env} ${w.instances[k].version}`).join("\n")}`).join("\n")}`);
-		}, 10000);
 	}
 
 	createWorker(name: string) {
