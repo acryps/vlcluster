@@ -416,7 +416,7 @@ export class RegistryServer {
 				
 				request.oncomplete = () => {
 					// remove instance file
-					fs.rmSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
+					fs.unlinkSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
 
 					// remove worker directory if no other instances are running
 					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version)).length) {

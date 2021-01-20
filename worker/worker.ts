@@ -316,9 +316,9 @@ export class WorkerServer {
 			
 			stopProcess.on("exit", async () => {
 				// remove instance files
-				fs.rmSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
-				fs.rmSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
-				fs.rmSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
+				fs.unlinkSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
+				fs.unlinkSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
+				fs.unlinkSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
 				
 				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
 
