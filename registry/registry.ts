@@ -408,33 +408,33 @@ export class RegistryServer {
 			return;
 		}
 		
-		await this.logger.process(["stopping ", this.logger.wi(workerName, instance)], async finished => {
-			await new Promise<void>(done => {
-				const request = new StopRequest();
-				request.instance = instance;
+		await this.logger.log("requesting shutdown ", this.logger.wi(workerName, instance));
+
+		const request = new StopRequest();
+		request.instance = instance;
 		
-				this.pendingStopRequests.push(request);
-				worker.messageQueue.push(request);
-				
-				request.oncomplete = () => {
-					// remove instance file
-					fs.unlinkSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance));
+		this.pendingStopRequests.push(request);
+		worker.messageQueue.push(request);
+		
+		await new Promise<void>(done => {
+			request.oncomplete = () => {
+				// remove instance file
+				fs.unlinkSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance));
 
-					// remove worker directory if no other instances are running
-					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name)).length) {
-						fs.rmdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
-					}
+				// remove worker directory if no other instances are running
+				if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name)).length) {
+					fs.rmdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
+				}
 
-					// remove version directory if no other instances are running
-					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version)).length) {
-						fs.rmdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
-					}
+				// remove version directory if no other instances are running
+				if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version)).length) {
+					fs.rmdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
+				}
 
-					finished("stopped ", this.logger.wi(workerName, instance));
+				this.logger.log("stopped ", this.logger.wi(workerName, instance));
 
-					done();
-				};
-			});
+				done();
+			};
 		});
 	}
 
