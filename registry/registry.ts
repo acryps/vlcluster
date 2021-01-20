@@ -416,9 +416,14 @@ export class RegistryServer {
 				
 				request.oncomplete = () => {
 					// remove instance file
-					fs.unlinkSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
+					fs.unlinkSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance));
 
 					// remove worker directory if no other instances are running
+					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name)).length) {
+						fs.rmdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
+					}
+
+					// remove version directory if no other instances are running
 					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version)).length) {
 						fs.rmdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
 					}
