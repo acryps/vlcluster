@@ -7,4 +7,5 @@ export class ChildWorker {
 	lastSeen: Date;
 	cpuUsage: number;
 	up: boolean;
+	endpoint: string;
 }

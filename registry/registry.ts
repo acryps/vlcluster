@@ -177,6 +177,7 @@ export class RegistryServer {
 			const name = req.body.name;
 			const key = req.body.key;
 			const cpuUsage = req.body.cpuUsage;
+			const endpoint = req.body.endpoint;
 
 			if (!name) {
 				throw new Error("no name!");
@@ -195,9 +196,10 @@ export class RegistryServer {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
 				worker.up = true;
+				worker.endpoint = endpoint;
 
 				this.runningWorkers.push(worker);
-				this.logger.log("worker login ", this.logger.w(name));
+				this.logger.log("worker login ", this.logger.w(name), " on ", endpoint);
 			} else {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
