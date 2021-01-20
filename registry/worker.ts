@@ -19,4 +19,6 @@ export class ChildInstance {
 	version: string;
 	env: string;
 	port: number;
+
+	worker: ChildWorker;
 }

@@ -89,6 +89,10 @@ export class Logger {
         return `\u001b[1m{${cluster}}#${gateway}\u001b[0m`;
     }
 
+    hp(host: string, port: number) {
+        return `\u001b[1m${host}:${port}\u001b[0m`;
+    }
+
     i(instance: string) {
         return `\u001b[1m(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
     }

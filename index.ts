@@ -100,9 +100,18 @@ export async function main() {
 				return process.exit(0);
 			}
 
+			// vlcluster deploy <cluster> <env> [<cwd>]
 			case "deploy": {
 				const client = new Client(parameters[0]);
 				await client.deploy(parameters[2] || ".", parameters[1]);
+
+				return process.exit(0);
+			}
+
+			// vlcluster map <cluster> <host> <port> <application> <env>
+			case "map": {
+				const client = new Client(parameters[0]);
+				await client.map(parameters[1], +parameters[2], parameters[3], parameters[4]);
 
 				return process.exit(0);
 			}

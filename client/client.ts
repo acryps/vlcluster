@@ -4,6 +4,7 @@ import * as path from "path";
 import { Cluster } from "../cluster";
 import { spawn } from "child_process";
 import { Logger } from "../log";
+import { hostname } from "os";
 
 export class Client {
 	host: string;
@@ -175,6 +176,25 @@ export class Client {
 		const app = await Client.build(directory);
 		await this.push(app.application, app.version);
 		await this.upgrade(app.application, app.version, env);
+	}
+
+	async map(host: string, port: number, application: string, env: string) {
+		const logger = new Logger("map");
+
+		await logger.process(["mapping ", host, ":" + port, " to ", logger.ae(application, env), "..."], async finished => {
+			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.map}`, {
+				method: "POST",
+				headers: {
+					...this.authHeaders,
+					"cluster-host": host,
+					"cluster-port": port,
+					"cluster-application": application,
+					"cluster-env": env
+				}
+			}).then(r => r.json());
+
+			finished("mapped ", host, ":" + port, " to ", logger.ae(application, env));
+		});
 	}
 
 	get authHeaders() {

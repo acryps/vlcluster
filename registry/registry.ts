@@ -83,6 +83,7 @@ export class RegistryServer {
 		fs.mkdirSync(RegistryPath.workersDirectory);
 		fs.mkdirSync(RegistryPath.clientsDirectory);
 		fs.mkdirSync(RegistryPath.applicationsDirectory);
+		fs.mkdirSync(RegistryPath.mappingsDirectory);
 
 		return key;
 	}
@@ -171,8 +172,22 @@ export class RegistryServer {
 				throw new Error("application or version does not exist!");
 			}
 
-			this.logger.log(`upgrading '${application}' to v${version}`);
+			this.logger.log("upgrading to ", this.logger.av(application, version));
 			await this.upgrade(application, version, env);
+
+			res.json({});
+		});
+
+		app.post(Cluster.api.registry.map, async (req, res) => {
+			await this.validateClientAuth(req);
+
+			const host = req.headers["cluster-host"];
+			const port = +req.headers["cluster-port"];
+			const application = req.headers["cluster-application"];
+			const env = req.headers["cluster-env"];
+
+			this.logger.log("mapping ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
+			await this.map(host, port, application, env);
 
 			res.json({});
 		});
@@ -182,7 +197,6 @@ export class RegistryServer {
 			const key = req.body.key;
 			const cpuUsage = req.body.cpuUsage;
 			const endpoint = req.body.endpoint;
-			const instances = req.body.instances;
 
 			if (!name) {
 				throw new Error("no name!");
@@ -211,6 +225,10 @@ export class RegistryServer {
 					this.logger.log("worker login ", this.logger.w(name));
 				} 
 			} else {
+				if (!worker.up) {
+					this.updateGateways();
+				}
+
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
 				worker.up = true;
@@ -225,6 +243,8 @@ export class RegistryServer {
 					this.logger.log(this.logger.w(name), " ping timed out");
 
 					worker.up = false;
+
+					this.updateGateways();
 
 					for (let message of messages) {
 						if (message instanceof StartRequest) {
@@ -297,7 +317,11 @@ export class RegistryServer {
 			state.id = instance;
 			state.port = port;
 
+			state.worker = worker;
+
 			worker.instances[instance] = state;
+
+			this.updateGateways();
 
 			if (!request) {
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
@@ -323,6 +347,49 @@ export class RegistryServer {
 
 			res.json({});
 		});
+	}
+
+	async updateGateways() {
+		console.log("UPDATE GATEWAYS");
+
+		for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
+			const host = fs.readFileSync(RegistryPath.mappingHostFile(id)).toString();
+			const port = +fs.readFileSync(RegistryPath.mappingPortFile(id)).toString();
+			const env = fs.readFileSync(RegistryPath.mappingEnvFile(id)).toString();
+			const application = fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString();
+
+			const latestVersion = RegistryPath.applicationEnvLatestVersionFile(application, env);
+
+			const instances: ChildInstance[] = [];
+
+			for (let worker of this.runningWorkers) {
+				if (worker.endpoint) {
+					for (let id in worker.instances) {
+						const instance = worker.instances[id];
+
+						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
+							instances.push(instance);
+						}
+					}
+				}
+			}
+			
+			console.log(`
+			
+			server {
+				listen ${port};
+
+				server_name ${host};
+
+				upstream main {
+					${instances.map(i => `server ${i.worker.endpoint}:${i.port}`)}
+				}
+
+				location / {}
+			}
+			
+			`);
+		}
 	}
 
 	async upgrade(application: string, version: string, env: string) {
@@ -354,6 +421,9 @@ export class RegistryServer {
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
+
+		// wait for gateway updates
+		await this.updateGateways();
 		
 		// stop dangeling versions
 		if (dangelingVersion) {
@@ -478,5 +548,18 @@ export class RegistryServer {
 				done();
 			}, 500);
 		});
+	}
+
+	async map(host: string, port: number, application: string, env: string) {
+		const id = Crypto.createId();
+
+		fs.mkdirSync(RegistryPath.mappingDirectory(id));
+
+		fs.writeFileSync(RegistryPath.mappingApplicationFile(id), application);
+		fs.writeFileSync(RegistryPath.mappingEnvFile(id), env);
+		fs.writeFileSync(RegistryPath.mappingHostFile(id), host);
+		fs.writeFileSync(RegistryPath.mappingPortFile(id), port + "");
+
+		await this.updateGateways();
 	}
 }

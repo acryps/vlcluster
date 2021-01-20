@@ -17,7 +17,8 @@ export class Cluster {
 			ping: "/ping",
 			pull: "/pull",
 			startedApplication: "/started",
-			stoppedApplication: "/stopped"
+			stoppedApplication: "/stopped",
+			map: "/map"
 		}
 	}
 

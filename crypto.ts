@@ -51,6 +51,10 @@ export class Crypto {
 		return name.replace(/[^\-\_\@0-9a-zA-Z]/g, "");
 	}
 
+	static sanitizeHostname(name: string) {
+		return name.replace(/[^\-\_\@0-9a-zA-Z]/g, "");
+	}
+
 	static getRandomPort() {
 		return new Promise<number>(done => {
 			const server = net.createServer(() => {});

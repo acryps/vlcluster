@@ -20,6 +20,30 @@ export class RegistryPath {
 		return path.join(this.rootDirectory, "applications");
 	}
 
+	static get mappingsDirectory() {
+		return path.join(this.rootDirectory, "domains");
+	}
+
+	static mappingDirectory(id: string) {
+		return path.join(this.applicationsDirectory, id);
+	}
+
+	static mappingHostFile(id: string) {
+		return path.join(this.mappingDirectory(id), "host");
+	}
+
+	static mappingPortFile(id: string) {
+		return path.join(this.mappingDirectory(id), "port");
+	}
+
+	static mappingApplicationFile(id: string) {
+		return path.join(this.mappingDirectory(id), "application");
+	}
+
+	static mappingEnvFile(id: string) {
+		return path.join(this.mappingDirectory(id), "env");
+	}
+
 	static applicationDirectory(name: string) {
 		return path.join(this.applicationsDirectory, Crypto.sanitizeApplicationName(name));
 	}
