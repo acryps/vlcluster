@@ -314,13 +314,20 @@ export class WorkerServer {
 				stdio: "ignore"
 			});
 			
-			stopProcess.on("exit", () => {
+			stopProcess.on("exit", async () => {
 				// remove instance files
 				fs.rmSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
 				fs.rmSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
 				fs.rmSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
 				
 				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
+
+				await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.stoppedApplication}`, {
+					method: "POST",
+					headers: {
+						"cluster-instance": instance
+					}
+				}).then(r => r.json());
 
 				finished("stopped ", this.logger.i(instance));
 	
