@@ -15,6 +15,7 @@ export class RegistryServer {
 	runningWorkers: ChildWorker[] = [];
 
 	pendingStartRequests: StartRequest[] = [];
+	pendingStopRequests: StopRequest[] = [];
 
 	constructor() {
 		if (!RegistryServer.isInstalled()) {
@@ -287,6 +288,16 @@ export class RegistryServer {
 
 			res.json({});
 		});
+
+		app.post(Cluster.api.registry.stoppedApplication, (req, res) => {
+			const instance = req.headers["cluster-instance"];
+
+			const request = this.pendingStopRequests.find(i => i.instance == instance);
+
+			if (request) {
+				request.oncomplete();
+			}
+		});
 	}
 
 	async upgrade(application: string, version: string, env: string) {
@@ -374,15 +385,47 @@ export class RegistryServer {
 		});
 	}
 
-	stop(application: string, version: string, env: string) {
+	async stop(application: string, version: string, env: string) {
 		this.logger.log("STOP", this.logger.aev(application, version, env));
 
-		return new Promise(done => {
-			for (let worker of fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))) {
-				for (let instance of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))) {
-					console.log("running on ", instance, " - ", worker);
-				}
+		for (let worker of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))]) {
+			for (let instance of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))]) {
+				await this.stopInstance(application, version, env, worker, instance);
 			}
+		}
+	}
+
+	async stopInstance(application: string, version: string, env: string, workerName: string, instance: string) {
+		const worker = this.runningWorkers.find(w => w.name == workerName);
+
+		if (!worker) {
+			this.logger.log("skipping shutdown of ", this.logger.wi(workerName, instance), ". worker down");
+
+			return;
+		}
+		
+		await this.logger.process(["stopping ", this.logger.wi(workerName, instance)], async finished => {
+			await new Promise<void>(done => {
+				const request = new StopRequest();
+				request.instance = instance;
+		
+				this.pendingStopRequests.push(request);
+				worker.messageQueue.push(request);
+				
+				request.oncomplete = () => {
+					// remove instance file
+					fs.rmSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
+
+					// remove worker directory if no other instances are running
+					if (!fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version)).length) {
+						fs.rmdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
+					}
+
+					finished("stopped ", this.logger.wi(workerName, instance));
+
+					done();
+				};
+			});
 		});
 	}
 

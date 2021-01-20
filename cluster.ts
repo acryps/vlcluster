@@ -16,7 +16,8 @@ export class Cluster {
 			upgrade: "/upgrade",
 			ping: "/ping",
 			pull: "/pull",
-			startedApplication: "/started"
+			startedApplication: "/started",
+			stoppedApplication: "/stopped"
 		}
 	}
 
