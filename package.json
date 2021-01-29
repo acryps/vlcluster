@@ -1,6 +1,6 @@
 {
 	"name": "vlcluster",
-	"version": "5.0.6",
+	"version": "5.0.7",
 	"description": "VLCluster",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
