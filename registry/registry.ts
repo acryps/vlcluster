@@ -412,13 +412,17 @@ export class RegistryServer {
 				}
 			}
 
-			routes.push({
-				application,
-				env,
-				host,
-				port,
-				instances
-			});
+			if (instances.length) {
+				routes.push({
+					application,
+					env,
+					host,
+					port,
+					instances
+				});
+			} else {
+				this.logger.log("no instances of ", this.logger.ae(application, env), " running, skipped");
+			}
 		}
 
 		for (let gateway of fs.readdirSync(RegistryPath.gatewaysDirectory)) {
