@@ -17,7 +17,7 @@ export class GatewayServer {
             endpoint: string,
 			port: number
         }[]
-    }[];
+    }[] = [];
 
     constructor(public name: string) {
         this.clusterHost = fs.readFileSync(GatewayPath.gatewayClusterHostFile(name)).toString();
@@ -63,8 +63,6 @@ export class GatewayServer {
 
             res.json({});
         });
-
-        this.reloadServer();
     }
 
     async reloadServer() {
