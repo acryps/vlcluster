@@ -1,0 +1,7 @@
+.vscode
+tsconfig.json
+client
+gateway
+registry
+worker
+*.ts
