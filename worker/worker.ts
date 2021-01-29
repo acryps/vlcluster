@@ -113,7 +113,9 @@ export class WorkerServer {
 				cpuUsage: this.cpuUsage,
 				endpoint: this.endpoint
 			})
-		}).then(res => res.json()).then(res => {
+		}).then(res => res.text()).then(res => {
+			console.log(res);
+
 			for (let request of res.start as StartRequest[]) {
 				this.start(request.application, request.version, request.env, request.instance);
 			}
