@@ -7,7 +7,8 @@
 	"scripts": {
 		"install": "tsc",
 		"preversion": "git pull",
-		"postversion": "git push"
+		"postversion": "git push",
+		"prepare": "tsc"
 	},
 	"bin": {
 		"vlcluster": "bin/index.js"
