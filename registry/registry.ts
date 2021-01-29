@@ -426,7 +426,7 @@ export class RegistryServer {
 
 			this.logger.log("upgrading ", this.logger.g(gateway), "...");
 
-			await fetch(`http://${host}:${Cluster.port}/${Cluster.api.gateway.reload}`, {
+			await fetch(`http://${host}:${Cluster.port}${Cluster.api.gateway.reload}`, {
 				method: "POST",
 				headers: {
 					"cluster-key": key
