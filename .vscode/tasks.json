@@ -7,7 +7,7 @@
 			"label": "Create Version",
 			"detail": "Publish vlcluster to npm",
 			"type": "shell",
-			"command": "npm version ${input:version-type} && npm publish",
+			"command": "npm version ${input:version-type}",
 			"problemMatcher": []
 		}
 	],
