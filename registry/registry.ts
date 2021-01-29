@@ -1,13 +1,12 @@
 import { Crypto } from "../crypto";
 import { Cluster } from "../cluster";
-
+import * as fetch from "node-fetch";
 import * as fs from "fs";
 import { Logger } from "../log";
 import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
 import { StartRequest } from "./messages/start";
 import { StopRequest } from "./messages/stop";
-import { strict } from "assert";
 
 export class RegistryServer {
 	key: string;
@@ -419,8 +418,23 @@ export class RegistryServer {
 				port,
 				instances
 			});
-			
-			
+		}
+
+		for (let gateway of fs.readdirSync(RegistryPath.gatewaysDirectory)) {
+			const host = fs.readFileSync(RegistryPath.gatewayHostFile(gateway)).toString();
+			const key = fs.readFileSync(RegistryPath.gatewayKeyFile(gateway)).toString();
+
+			this.logger.log("upgrading ", this.logger.g(gateway), "...");
+
+			await fetch(`http://${host}:${Cluster.port}/${Cluster.api.gateway.reload}`, {
+				method: "POST",
+				headers: {
+					"cluster-key": key
+				},
+				body: JSON.stringify(routes)
+			}).then(r => r.json());
+
+			this.logger.log("upgraded ", this.logger.g(gateway));
 		}
 	}
 

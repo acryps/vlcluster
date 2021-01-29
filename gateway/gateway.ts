@@ -8,7 +8,16 @@ export class GatewayServer {
     clusterHost: string;
     endpointHost: string;
 
-    routes: [];
+    routes: {
+        application: string,
+		env: string,
+		host: string,
+		port: number,
+		instances: {
+            endpoint: string,
+			port: number
+        }[]
+    }[];
 
     constructor(public name: string) {
         this.clusterHost = fs.readFileSync(GatewayPath.gatewayClusterHostFile(name)).toString();
@@ -40,6 +49,12 @@ export class GatewayServer {
 
     register(app) {
         app.post(Cluster.api.gateway.reload, async (req, res) => {
+            const key = req.headers["cluster-key"];
+
+            if (key != fs.readFileSync(GatewayPath.gatewayClusterKeyFile(this.name)).toString()) {
+                return res.sendStatus(500);
+            }
+
             this.routes = req.body;
 
             console.log("** GATEWAY RELOAD!!");
@@ -53,21 +68,24 @@ export class GatewayServer {
     }
 
     async reloadServer() {
-        /*let configuration = "";
-        const upstream = `${application.replace(/[^a-z0-9]/g, "")}_${env.replace(/[^a-z0-9]/g, "")}_stream`;
+        let configuration = "";
 
-        configuration += `upstream ${upstream} { ${instances.map(i => `server ${i.worker.endpoint}:${i.port};`).join(" ")} }`;
-        configuration += `server { listen ${port}; location / { proxy_pass http://${upstream} } }`;*/
+        for (let route of this.routes) {
+            const upstream = `${route.application.replace(/[^a-z0-9]/g, "")}_${route.env.replace(/[^a-z0-9]/g, "")}_stream`;
+
+            configuration += `upstream ${route.upstream} { ${route.instances.map(i => `server ${i.worker.endpoint}:${i.port};`).join(" ")} }`;
+            configuration += `server { listen ${route.port}; location / { proxy_pass http://${upstream} } }`;
+        }
 
         console.log(this.routes);
 
-        fs.writeFileSync(GatewayPath.nginxFile(this.name), `server { listen: 9090; }`);
+        fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);
 
-        /*await new Promise<void>(done => {
+        await new Promise<void>(done => {
             const reloadProcess = spawn("nginx", ["-s", "reload"]);
 
             reloadProcess.on("exit", () => done());
-        })*/
+        });
     }
 
     static getInstalledGateways() {
