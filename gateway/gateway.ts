@@ -68,6 +68,8 @@ export class GatewayServer {
     async reloadServer() {
         let configuration = "";
 
+        console.log(this.routes);
+
         for (let route of this.routes) {
             // create upstream
             const upstream = `${route.application.replace(/[^a-z0-9]/g, "")}_${route.env.replace(/[^a-z0-9]/g, "")}_stream`;
@@ -76,8 +78,6 @@ export class GatewayServer {
             // create proxy to upstream
             configuration += `server { listen ${route.port}; location / { proxy_pass http://${upstream} } }`;
         }
-
-        console.log(this.routes);
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);
 

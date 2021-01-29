@@ -429,6 +429,7 @@ export class RegistryServer {
 			await fetch(`http://${host}:${Cluster.port}${Cluster.api.gateway.reload}`, {
 				method: "POST",
 				headers: {
+					"content-type": "application/json",
 					"cluster-key": key
 				},
 				body: JSON.stringify(routes)
