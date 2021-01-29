@@ -262,6 +262,7 @@ export class RegistryServer {
 				worker.cpuUsage = cpuUsage;
 				worker.lastSeen = now;
 				worker.up = true;
+				worker.endpoint = endpoint;
 			}
 
 			const messages = [...worker.messageQueue];
