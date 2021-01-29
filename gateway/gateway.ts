@@ -76,7 +76,7 @@ export class GatewayServer {
             configuration += `upstream ${upstream} { ${route.instances.map(i => `server ${i.endpoint}:${i.port};`).join(" ")} }`;
 
             // create proxy to upstream
-            configuration += `server { listen ${route.port}; server_name ${route.host}; location / { proxy_pass http://${upstream} } }`;
+            configuration += `server { listen ${route.port}; server_name ${route.host}; location / { proxy_pass http://${upstream}; } } `;
         }
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);
