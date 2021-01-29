@@ -16,7 +16,7 @@ export class GatewayServer {
     }
 
     static async create(clusterHost: string, clusterKey: string, name: string, endpointHost: string) {
-        const response = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createGateway}`, {
+        const response = await fetch(`http://${clusterHost}:${Cluster.port}${Cluster.api.registry.createGateway}`, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json"
