@@ -7,6 +7,7 @@ import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
 import { StartRequest } from "./messages/start";
 import { StopRequest } from "./messages/stop";
+import { strict } from "assert";
 
 export class RegistryServer {
 	key: string;
@@ -56,6 +57,28 @@ export class RegistryServer {
 		fs.writeFileSync(RegistryPath.clientKeyFile(name), key);
 
 		this.logger.log("created client");
+
+		return key;
+	}
+
+	createGateway(name: string, host: string) {
+		const key = Crypto.createKey();
+
+		this.logger.log(`creating gateway ${name}`);
+
+		if (fs.existsSync(RegistryPath.gatewayDirectory(name))) {
+			throw new Error(`gateway '${name}' already exists!`);
+		}
+
+		if (!fs.existsSync(RegistryPath.gatewaysDirectory)) {
+			fs.mkdirSync(RegistryPath.gatewaysDirectory);
+		}
+
+		fs.mkdirSync(RegistryPath.gatewayDirectory(name));
+		fs.writeFileSync(RegistryPath.gatewayHostFile(name), host);
+		fs.writeFileSync(RegistryPath.gatewayKeyFile(name), key);
+
+		this.logger.log("created gateway");
 
 		return key;
 	}
@@ -112,6 +135,18 @@ export class RegistryServer {
 			res.json({
 				key,
 				name: this.name
+			});
+		});
+
+		app.post(Cluster.api.registry.createGateway, (req, res) => {
+			if (this.key != req.body.key) {
+				throw new Error(`invalid key login attepted`);
+			}
+
+			const key = this.createGateway(req.body.name, req.body.host);
+
+			res.json({
+				key
 			});
 		});
 
@@ -348,6 +383,8 @@ export class RegistryServer {
 	async updateGateways() {
 		console.log("UPDATE GATEWAYS");
 
+		const routes = [];
+
 		for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
 			const host = fs.readFileSync(RegistryPath.mappingHostFile(id)).toString();
 			const port = +fs.readFileSync(RegistryPath.mappingPortFile(id)).toString();
@@ -356,7 +393,7 @@ export class RegistryServer {
 
 			const latestVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
 
-			const instances: ChildInstance[] = [];
+			const instances = [];
 
 			for (let worker of this.runningWorkers) {
 				if (worker.endpoint) {
@@ -364,31 +401,26 @@ export class RegistryServer {
 						const instance = worker.instances[id];
 
 						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
-							instances.push(instance);
-						} else {
-							this.logger.log("outdated version ", this.logger.w(worker.name), "");
+							instances.push({
+								endpoint: instance.worker.endpoint,
+								port: instance.port
+							});
 						}
 					}
 				} else {
 					this.logger.log("no endpoint set, skipped ", this.logger.w(worker.name), "");
 				}
 			}
-			
-			console.log(`
-			
-			server {
-				listen ${port};
 
-				server_name ${host};
-
-				upstream main {
-					${instances.map(i => `server ${i.worker.endpoint}:${i.port}`)}
-				}
-
-				location / {}
-			}
+			routes.push({
+				application,
+				env,
+				host,
+				port,
+				instances
+			});
 			
-			`);
+			
 		}
 	}
 

@@ -44,6 +44,22 @@ export class RegistryPath {
 		return path.join(this.mappingDirectory(id), "env");
 	}
 
+	static get gatewaysDirectory() {
+		return path.join(this.rootDirectory, "gateways");
+	}
+
+	static gatewayDirectory(name: string) {
+		return path.join(this.gatewaysDirectory, Crypto.sanitizeGatewayName(name));
+	}
+
+	static gatewayKeyFile(name: string) {
+		return path.join(this.gatewayDirectory(name), "key");
+	}
+
+	static gatewayHostFile(name: string) {
+		return path.join(this.gatewayDirectory(name), "host");
+	}
+
 	static applicationDirectory(name: string) {
 		return path.join(this.applicationsDirectory, Crypto.sanitizeApplicationName(name));
 	}

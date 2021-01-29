@@ -45,10 +45,15 @@ export class Daemon {
 		}
 
 		for (let cluster of GatewayServer.getInstalledGateways()) {
+			if (process.env.USER !== "root") {
+				logger.warn("gateways must be run as root!");
+
+				return process.exit(1);
+			}
+
 			await logger.process(["starting gateway for ", logger.c(cluster)], async finished => {
 				const gateway = new GatewayServer(cluster);
-
-				await gateway.register();
+				await gateway.register(this.server);
 
 				finished("started gateway ", logger.cg(cluster, gateway.name));
 			});

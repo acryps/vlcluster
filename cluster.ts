@@ -12,6 +12,7 @@ export class Cluster {
 		registry: {
 			createWorker: "/init/worker",
 			createClient: "/init/client",
+			createGateway: "/init/gateway",
 			push: "/push",
 			upgrade: "/upgrade",
 			ping: "/ping",
@@ -19,6 +20,10 @@ export class Cluster {
 			startedApplication: "/started",
 			stoppedApplication: "/stopped",
 			map: "/map"
+		},
+
+		gateway: {
+			reload: "/reload"
 		}
 	}
 
@@ -43,7 +48,7 @@ export class Cluster {
 	}
 
 	static get logo() {
-		if (new Date().getMonth() == 9 && new Date().getDate() == 31) {
+		if ((new Date().getMonth() == 9 && new Date().getDate() == 31) || (new Date().getMonth() == 2 && new Date().getDate() == 19)) {
 			return ` ▌ ▐·▄▄▌   ▄▄· ▄▄▌  ▄• ▄▌.▄▄ · ▄▄▄▄▄▄▄▄ .▄▄▄  \n▪█·█▌██•  ▐█ ▌▪██•  █▪██▌▐█ ▀. •██  ▀▄.▀·▀▄ █·\n▐█▐█•██▪  ██ ▄▄██▪  █▌▐█▌▄▀▀▀█▄ ▐█.▪▐▀▀▪▄▐▀▀▄ \n ███ ▐█▌▐▌▐███▌▐█▌▐▌▐█▄█▌▐█▄▪▐█ ▐█▌·▐█▄▄▌▐█•█▌\n. ▀  .▀▀▀ ·▀▀▀ .▀▀▀  ▀▀▀  ▀▀▀▀  ▀▀▀  ▀▀▀ .▀  ▀`;
 		}
 
