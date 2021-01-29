@@ -15,7 +15,7 @@ export class Daemon {
 
 		process.stdout.write(`\u001b[1m${Cluster.logo}  \u001b[2m${Cluster.version}\u001b[0m\n\n`);
 
-		logger.log("starting vlcluster daemon server");
+		logger.log("starting vlcluster daemon in '", Cluster.localDirectory, "'");
 
 		this.server = express();
 		this.server.use(express.json());
