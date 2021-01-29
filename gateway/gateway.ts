@@ -71,9 +71,11 @@ export class GatewayServer {
         let configuration = "";
 
         for (let route of this.routes) {
+            // create upstream
             const upstream = `${route.application.replace(/[^a-z0-9]/g, "")}_${route.env.replace(/[^a-z0-9]/g, "")}_stream`;
+            configuration += `upstream ${upstream} { ${route.instances.map(i => `server ${i.endpoint}:${i.port};`).join(" ")} }`;
 
-            configuration += `upstream ${route.upstream} { ${route.instances.map(i => `server ${i.worker.endpoint}:${i.port};`).join(" ")} }`;
+            // create proxy to upstream
             configuration += `server { listen ${route.port}; location / { proxy_pass http://${upstream} } }`;
         }
 
