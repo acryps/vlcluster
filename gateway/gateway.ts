@@ -63,8 +63,6 @@ export class GatewayServer {
 
             this.routes = req.body;
 
-            console.log("** GATEWAY RELOAD!!");
-
             await this.reloadServer();
 
             res.json({});
@@ -73,6 +71,8 @@ export class GatewayServer {
 
     async reloadServer() {
         let configuration = "";
+
+        this.logger.log("updating routes...");
 
         for (let route of this.routes) {
             this.logger.log("routing ", this.logger.hp(route.host, route.port), " to");
@@ -85,7 +85,7 @@ export class GatewayServer {
             for (let instance of route.instances) {
                 configuration += `server ${instance.endpoint}:${instance.port};`;
 
-                this.logger.log(" upstream ", this.logger.hp(instance.endpoint, instance.port));
+                this.logger.log("↳ upstream ", this.logger.hp(instance.endpoint, instance.port));
             }
             
             configuration += "}";
@@ -96,10 +96,16 @@ export class GatewayServer {
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);
 
+        this.logger.log("reloading proxy server...");
+
         await new Promise<void>(done => {
             const reloadProcess = spawn("nginx", ["-s", "reload"]);
 
-            reloadProcess.on("exit", () => done());
+            reloadProcess.on("exit", () => {
+                this.logger.log("routes updated");
+
+                done();
+            });
         });
     }
 
