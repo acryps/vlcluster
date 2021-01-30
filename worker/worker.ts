@@ -94,6 +94,8 @@ export class WorkerServer {
 	}
 
 	async startPing() {
+		await this.ping();
+
 		setInterval(() => {
 			this.ping();
 		}, Cluster.pingInterval);

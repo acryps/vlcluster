@@ -25,6 +25,10 @@ export class Daemon {
 			});
 		});
 
+		this.server.listen(Cluster.port, () => {
+			logger.log("daemon server started");
+		});
+
 		if (RegistryServer.isInstalled()) {
 			await logger.process(["starting registry"], async finished => {
 				const registry = new RegistryServer();
@@ -57,9 +61,5 @@ export class Daemon {
 				finished("started gateway ", logger.cg(cluster, gateway.name));
 			});
 		}
-
-		this.server.listen(Cluster.port, () => {
-			logger.log("daemon server started");
-		});
 	}
 }
