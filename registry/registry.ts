@@ -381,7 +381,7 @@ export class RegistryServer {
 	}
 
 	async updateGateways() {
-		console.log("UPDATE GATEWAYS");
+		this.logger.log("updating gateways...");
 
 		const routes = [];
 
@@ -442,6 +442,8 @@ export class RegistryServer {
 
 			this.logger.log("upgraded ", this.logger.g(gateway));
 		}
+
+		this.logger.log("updated gateways...");
 	}
 
 	async upgrade(application: string, version: string, env: string) {

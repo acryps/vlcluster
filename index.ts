@@ -44,6 +44,7 @@ export async function main() {
 						break;
 					}
 
+					// vlcluster init registry <name>
 					case "registry": {
 						const key = await RegistryServer.create(parameters[0]);
 
@@ -51,6 +52,7 @@ export async function main() {
 						return process.exit(0);
 					}
 
+					// vlcluster init worker <host> <name> <key>
 					case "worker": {
 						const registry = await WorkerServer.create(parameters[0], parameters[1], parameters[2]);
 						
@@ -58,6 +60,7 @@ export async function main() {
 						return process.exit(0);
 					}
 
+					// vlcluster init endpoint <cluster> <host>
 					case "endpoint": {
 						const worker = new WorkerServer(parameters[0]);
 						worker.setLocalPath(parameters[1]);
@@ -66,16 +69,19 @@ export async function main() {
 						return process.exit(0);
 					}
 
+					// vlcluster init gateway <clusterHost> <clusterKey> <name> <endpointHost>
 					case "gateway": {
 						await GatewayServer.create(parameters[0], parameters[1], parameters[2], parameters[3]);
 
 						console.log(`gateway created`);
 						return process.exit(0);
 					}
-				}
 
-				console.error("invalid init");
-				return process.exit(1);
+					default: {
+						console.error("invalid init");
+						return process.exit(1);
+					}
+				}
 
 				break;
 			}
