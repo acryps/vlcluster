@@ -8,7 +8,7 @@ export class Logger {
     constructor(public unit: string) {
         const hash = sha.sha512(unit);
 
-        this.color = (hash.split("").reduce((a, c) => a + parseInt(c, 16), 0) * 2743 + 41) % 210 + 18;
+        this.color = (hash.split("").reduce((a, c) => a + parseInt(c, 16), 0) * 2743 + 41) % 230;
     }
 
     log(...text: string[]) {
