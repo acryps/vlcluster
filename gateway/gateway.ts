@@ -1,12 +1,16 @@
 import { spawn } from "child_process";
 import * as fs from "fs";
+import { sha512 } from "js-sha512";
 import * as fetch from "node-fetch";
 import { Cluster } from "../cluster";
+import { Logger } from "../log";
 import { GatewayPath } from "./paths";
 
 export class GatewayServer {
     clusterHost: string;
     endpointHost: string;
+
+    logger: Logger;
 
     routes: {
         application: string,
@@ -22,6 +26,8 @@ export class GatewayServer {
     constructor(public name: string) {
         this.clusterHost = fs.readFileSync(GatewayPath.gatewayClusterHostFile(name)).toString();
         this.endpointHost = fs.readFileSync(GatewayPath.gatewayEndpointHostFile(name)).toString();
+
+        this.logger = new Logger("gateway");
     }
 
     static async create(clusterHost: string, clusterKey: string, name: string, endpointHost: string) {
@@ -68,12 +74,21 @@ export class GatewayServer {
     async reloadServer() {
         let configuration = "";
 
-        console.log(this.routes);
-
         for (let route of this.routes) {
+            this.logger.log("routing ", this.logger.hp(route.host, route.port), " to");
+
             // create upstream
-            const upstream = `${route.application.replace(/[^a-z0-9]/g, "")}_${route.env.replace(/[^a-z0-9]/g, "")}_stream`;
-            configuration += `upstream ${upstream} { ${route.instances.map(i => `server ${i.endpoint}:${i.port};`).join(" ")} }`;
+            const upstream = `stream_${sha512(JSON.stringify(route))}`;
+            configuration += `upstream ${upstream} { `;
+            
+            // add instances
+            for (let instance of route.instances) {
+                configuration += `server ${instance.endpoint}:${instance.port};`;
+
+                this.logger.log(" upstream ", this.logger.hp(instance.endpoint, instance.port));
+            }
+            
+            configuration += "}";
 
             // create proxy to upstream
             configuration += `server { listen ${route.port}; server_name ${route.host}; location / { proxy_pass http://${upstream}; } } `;
