@@ -649,7 +649,7 @@ export class RegistryServer {
 					fs.mkdirSync(RegistryPath.mappingWebSocketsDirectory(id));
 				}
 
-				fs.writeFileSync(RegistryPath.mappingWebSocketFile(id, socketPath), socketPath);
+				fs.writeFileSync(RegistryPath.mappingWebSocketFile(id, Crypto.nameHash(socketPath)), socketPath);
 
 				await this.updateGateways();
 
