@@ -655,7 +655,7 @@ export class RegistryServer {
 
 				return {
 					application: fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString(),
-					env: fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString()
+					env: fs.readFileSync(RegistryPath.mappingEnvFile(id)).toString()
 				};
 			}
 		}
