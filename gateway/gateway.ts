@@ -79,17 +79,17 @@ export class GatewayServer {
 
             // create upstream
             const upstream = `stream_${sha512(JSON.stringify(route))}`;
-            configuration += `upstream ${upstream}{hash $remote_addr consistent;`;
+            configuration += `upstream ${upstream} {\n\thash $remote_addr consistent;\n\t`;
             
             // add instances
             for (let instance of route.instances) {
-                configuration += `server ${instance.endpoint}:${instance.port};`;
+                configuration += `\n\tserver ${instance.endpoint}:${instance.port};`;
 
                 this.logger.log("↳ upstream ", this.logger.hp(instance.endpoint, instance.port));
             }
             
             // create proxy to upstream
-            configuration += `}stream{server{listen ${route.port};server_name ${route.host};proxy_pass http://${upstream};}}`;
+            configuration += `}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\tproxy_pass ${upstream};\n}\n\n`;
         }
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);
