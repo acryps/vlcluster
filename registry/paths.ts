@@ -49,7 +49,7 @@ export class RegistryPath {
 	}
 
 	static mappingWebSocketFile(id: string, socketPath: string) {
-		return path.join(this.mappingDirectory(id), Crypto.nameHash(socketPath));
+		return path.join(this.mappingWebSocketsDirectory(id), Crypto.nameHash(socketPath));
 	}
 
 	static get gatewaysDirectory() {
