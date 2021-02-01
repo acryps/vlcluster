@@ -465,7 +465,7 @@ export class RegistryServer {
 			this.logger.log("upgraded ", this.logger.g(gateway));
 		}
 
-		this.logger.log("updated gateways...");
+		this.logger.log("updated gateways");
 	}
 
 	async upgrade(application: string, version: string, env: string) {
