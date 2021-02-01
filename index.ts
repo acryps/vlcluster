@@ -131,6 +131,11 @@ export async function main() {
 
 						return process.exit(0);
 					}
+
+					default: {
+						console.error("invalid map");
+						return process.exit(1);
+					}
 				}
 			}
 
@@ -138,6 +143,11 @@ export async function main() {
 				const daemon = new Daemon();
 
 				daemon.start();
+			}
+
+			default: {
+				console.error("invalid command");
+				return process.exit(1);
 			}
 		}
 	} catch (e) {
