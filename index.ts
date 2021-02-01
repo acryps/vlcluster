@@ -127,7 +127,7 @@ export async function main() {
 					// vlcluster map websocket <cluster> <host> <port> <path>
 					case "websocket": {
 						const client = new Client(parameters[0]);
-						await client.mapWebSocket(parameters[1], parameters[2], parameters[3]);
+						await client.mapWebSocket(parameters[1], +parameters[2], parameters[3]);
 
 						return process.exit(0);
 					}
