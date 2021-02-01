@@ -141,8 +141,9 @@ export async function main() {
 
 			case "daemon": {
 				const daemon = new Daemon();
-
 				daemon.start();
+
+				break;
 			}
 
 			default: {
