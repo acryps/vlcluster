@@ -80,7 +80,7 @@ export class GatewayServer {
 
             // create upstream
             const upstream = `stream_${sha512(JSON.stringify(route))}`;
-            configuration += `upstream ${upstream} {\n\thash $remote_addr consistent;\n\t`;
+            configuration += `upstream ${upstream} {`;
             
             // add instances
             for (let instance of route.instances) {
@@ -90,10 +90,10 @@ export class GatewayServer {
             }
             
             // create proxy to upstream
-            configuration += `\n}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
+            configuration += `\n}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
             
             for (let socket of route.sockets) {
-                configuration += `\n\n\tlocation ${socket} {\n\t\tproxy_pass http://backend;\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
+                configuration += `\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
             }
 
             configuration += `\n}\n\n`;
