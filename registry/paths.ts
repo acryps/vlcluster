@@ -44,6 +44,14 @@ export class RegistryPath {
 		return path.join(this.mappingDirectory(id), "env");
 	}
 
+	static mappingWebSocketsDirectory(id: string) {
+		return path.join(this.mappingDirectory(id), "web-sockets");
+	}
+
+	static mappingWebSocketFile(id: string, socketPath: string) {
+		return path.join(this.mappingDirectory(id), Crypto.nameHash(socketPath));
+	}
+
 	static get gatewaysDirectory() {
 		return path.join(this.rootDirectory, "gateways");
 	}

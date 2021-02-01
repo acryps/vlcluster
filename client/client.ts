@@ -178,11 +178,11 @@ export class Client {
 		await this.upgrade(app.application, app.version, env);
 	}
 
-	async map(host: string, port: number, application: string, env: string) {
+	async mapDomain(host: string, port: number, application: string, env: string) {
 		const logger = new Logger("map");
 
-		await logger.process(["mapping ", host, ":" + port, " to ", logger.ae(application, env), "..."], async finished => {
-			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.map}`, {
+		await logger.process(["mapping ", logger.hp(host, port), " to ", logger.ae(application, env), "..."], async finished => {
+			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.map.domain}`, {
 				method: "POST",
 				headers: {
 					...this.authHeaders,
@@ -194,6 +194,24 @@ export class Client {
 			}).then(r => r.json());
 
 			finished("mapped ", host, ":" + port, " to ", logger.ae(application, env));
+		});
+	}
+
+	async mapWebSocket(host: string, port: number, path: string) {
+		const logger = new Logger("map");
+
+		await logger.process(["mapping websocket ", logger.hp(host, port), " on ", path, "..."], async finished => {
+			const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.map.webSocket}`, {
+				method: "POST",
+				headers: {
+					...this.authHeaders,
+					"cluster-host": host,
+					"cluster-port": port,
+					"cluster-websocket": path
+				}
+			}).then(r => r.json());
+
+			finished("mapped websocket ", host, ":" + port, " on ", path, " to ", logger.ae(res.application, res.env));
 		});
 	}
 

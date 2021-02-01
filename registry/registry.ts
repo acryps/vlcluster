@@ -7,6 +7,7 @@ import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
 import { StartRequest } from "./messages/start";
 import { StopRequest } from "./messages/stop";
+import { threadId } from "worker_threads";
 
 export class RegistryServer {
 	key: string;
@@ -208,18 +209,31 @@ export class RegistryServer {
 			res.json({});
 		});
 
-		app.post(Cluster.api.registry.map, async (req, res) => {
+		app.post(Cluster.api.registry.map.domain, async (req, res) => {
 			await this.validateClientAuth(req);
 
 			const host = req.headers["cluster-host"];
 			const port = +req.headers["cluster-port"];
 			const application = req.headers["cluster-application"];
 			const env = req.headers["cluster-env"];
+			const webSocket = req.headers["cluster-websocket"];
 
 			this.logger.log("mapping ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
-			await this.map(host, port, application, env);
+			await this.mapDomain(host, port, application, env);
 
 			res.json({});
+		});
+
+		app.post(Cluster.api.registry.map.webSocket, async (req, res) => {
+			await this.validateClientAuth(req);
+
+			const host = req.headers["cluster-host"];
+			const port = +req.headers["cluster-port"];
+			const path = req.headers["cluster-websocket"];
+
+			this.logger.log("mapping ", this.logger.hp(host, port), " on ", path);
+			
+			res.json(await this.mapWebSocket(host, port, path));
 		});
 
 		app.post(Cluster.api.registry.ping, (req, res) => {
@@ -394,6 +408,7 @@ export class RegistryServer {
 			const latestVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
 
 			const instances = [];
+			const sockets = [];
 
 			for (let worker of this.runningWorkers) {
 				if (worker.endpoint) {
@@ -412,13 +427,20 @@ export class RegistryServer {
 				}
 			}
 
+			if (fs.existsSync(RegistryPath.mappingWebSocketsDirectory(id))) {
+				for (let socket of fs.readdirSync(RegistryPath.mappingWebSocketsDirectory(id))) {
+					sockets.push(fs.readFileSync(RegistryPath.mappingWebSocketFile(id, socket)).toString());
+				}
+			}
+
 			if (instances.length) {
 				routes.push({
 					application,
 					env,
 					host,
 					port,
-					instances
+					instances,
+					sockets
 				});
 			} else {
 				this.logger.log("no instances of ", this.logger.ae(application, env), " running, skipped");
@@ -604,7 +626,7 @@ export class RegistryServer {
 		});
 	}
 
-	async map(host: string, port: number, application: string, env: string) {
+	async mapDomain(host: string, port: number, application: string, env: string) {
 		const id = Crypto.createId();
 
 		fs.mkdirSync(RegistryPath.mappingDirectory(id));
@@ -615,5 +637,29 @@ export class RegistryServer {
 		fs.writeFileSync(RegistryPath.mappingPortFile(id), port + "");
 
 		await this.updateGateways();
+	}
+
+	async mapWebSocket(socketHost: string, socketPort: number, socketPath: string) {
+		for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
+			const host = fs.readFileSync(RegistryPath.mappingHostFile(id)).toString();
+			const port = +fs.readFileSync(RegistryPath.mappingPortFile(id)).toString();
+
+			if (host == socketHost && port == socketPort) {
+				if (!fs.existsSync(RegistryPath.mappingWebSocketsDirectory(id))) {
+					fs.mkdirSync(RegistryPath.mappingWebSocketsDirectory(id));
+				}
+
+				fs.writeFileSync(RegistryPath.mappingWebSocketFile(id, socketPath), socketPath);
+
+				await this.updateGateways();
+
+				return {
+					application: fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString(),
+					env: fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString()
+				};
+			}
+		}
+
+		throw new Error(`No domain '${socketHost}:${socketPort}' registered`);
 	}
 }

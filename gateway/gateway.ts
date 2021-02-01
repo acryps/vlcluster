@@ -89,7 +89,7 @@ export class GatewayServer {
             }
             
             // create proxy to upstream
-            configuration += `}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\tproxy_pass ${upstream};\n}\n\n`;
+            configuration += `\n}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\tlocation / {\n\t\tproxy_pass ${upstream};\n\t}\n}\n\n`;
         }
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);

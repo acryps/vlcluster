@@ -19,7 +19,10 @@ export class Cluster {
 			pull: "/pull",
 			startedApplication: "/started",
 			stoppedApplication: "/stopped",
-			map: "/map"
+			map: {
+				domain: "/map/domain",
+				webSocket: "/map/ws"
+			}
 		},
 
 		gateway: {

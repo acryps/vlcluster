@@ -114,12 +114,24 @@ export async function main() {
 				return process.exit(0);
 			}
 
-			// vlcluster map <cluster> <host> <port> <application> <env>
 			case "map": {
-				const client = new Client(parameters[0]);
-				await client.map(parameters[1], +parameters[2], parameters[3], parameters[4]);
+				switch (parameters.shift()) {
+					// vlcluster map domain <cluster> <host> <port> <application> <env>
+					case "domain": {
+						const client = new Client(parameters[0]);
+						await client.mapDomain(parameters[1], +parameters[2], parameters[3], parameters[4]);
+		
+						return process.exit(0);
+					}
 
-				return process.exit(0);
+					// vlcluster map websocket <cluster> <host> <port> <path>
+					case "websocket": {
+						const client = new Client(parameters[0]);
+						await client.mapWebSocket(parameters[1], parameters[2], parameters[3]);
+
+						return process.exit(0);
+					}
+				}
 			}
 
 			case "daemon": {
