@@ -145,7 +145,7 @@ export class RegistryPath {
 	}
 
 	static get variablesDirectory() {
-		return path.join(this.rootDirectory, "variabled");
+		return path.join(this.rootDirectory, "variables");
 	}
 
 	static variableDirectory(id) {
