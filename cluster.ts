@@ -22,7 +22,8 @@ export class Cluster {
 			map: {
 				domain: "/map/domain",
 				webSocket: "/map/ws"
-			}
+			},
+			set: "/set"
 		},
 
 		gateway: {

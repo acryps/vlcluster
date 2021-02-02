@@ -115,7 +115,7 @@ export class WorkerServer {
 			})
 		}).then(res => res.json()).then(res => {
 			for (let request of res.start as StartRequest[]) {
-				this.start(request.application, request.version, request.env, request.instance);
+				this.start(request.application, request.version, request.env, request.instance, request.variables);
 			}
 
 			for (let request of res.stop as StopRequest[]) {
@@ -163,7 +163,7 @@ export class WorkerServer {
 		}));
 	}
 
-	async start(application: string, version: string, env: string, instance: string) {
+	async start(application: string, version: string, env: string, instance: string, variables: any) {
 		const state = new WorkerInstance();
 		state.application = application;
 		state.version = version;
@@ -210,6 +210,9 @@ export class WorkerServer {
 				"--env", `CLUSTER_WORKER=${this.name}`,
 				"--env", `CLUSTER_REGISTRY=${this.host}`,
 				"--env", `CLUSTER_ENV=${env}`,
+				...Object.keys(variables).map(name => [
+					"--env", `${name}=${variables[name]}`
+				]).flat(),
 				"--expose", internalPort.toString(), // export container port to docker interface
 				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
 				"--name", instance, // tag container

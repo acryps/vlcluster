@@ -103,6 +103,7 @@ export class RegistryServer {
 		fs.mkdirSync(RegistryPath.clientsDirectory);
 		fs.mkdirSync(RegistryPath.applicationsDirectory);
 		fs.mkdirSync(RegistryPath.mappingsDirectory);
+		fs.mkdirSync(RegistryPath.variablesDirectory);
 
 		return key;
 	}
@@ -209,6 +210,20 @@ export class RegistryServer {
 			res.json({});
 		});
 
+		app.post(Cluster.api.registry.set, async (req, res) => {
+			await this.validateClientAuth(req);
+
+			const name = req.headers["cluster-name"];
+			const value = req.headers["cluster-value"];
+			const application = req.headers["cluster-application"];
+			const env = req.headers["cluster-env"];
+
+			this.logger.log("setting ", name, " to ", value, " for ", this.logger.ae(application || "*", env || "*"));
+			await this.set(name, value, application, env);
+
+			res.json({});
+		});
+
 		app.post(Cluster.api.registry.map.domain, async (req, res) => {
 			await this.validateClientAuth(req);
 
@@ -216,7 +231,6 @@ export class RegistryServer {
 			const port = +req.headers["cluster-port"];
 			const application = req.headers["cluster-application"];
 			const env = req.headers["cluster-env"];
-			const webSocket = req.headers["cluster-websocket"];
 
 			this.logger.log("mapping ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
 			await this.mapDomain(host, port, application, env);
@@ -532,6 +546,27 @@ export class RegistryServer {
 			request.version = version;
 			request.env = env;
 			request.instance = instance;
+			request.variables = {};
+
+			// resolve variables
+			for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
+				const name = fs.readFileSync(RegistryPath.variableNameFile(variable)).toString();
+				const value = fs.readFileSync(RegistryPath.variableValueFile(variable)).toString();
+
+				if (fs.existsSync(RegistryPath.variableApplicationFile(variable))) {
+					if (fs.readFileSync(RegistryPath.variableApplicationFile(variable)).toString() == application) {
+						if (fs.existsSync(RegistryPath.variableEnvFile(variable))) {
+							if (fs.readFileSync(RegistryPath.variableEnvFile(variable)).toString() == env) {
+								request.variables[name] = value;
+							}
+						} else {
+							request.variables[name] = value;
+						}
+					}
+				} else {
+					request.variables[name] = value;
+				}
+			}
 
 			this.pendingStartRequests.push(request);
 
@@ -624,6 +659,23 @@ export class RegistryServer {
 				done();
 			}, 500);
 		});
+	}
+
+	async set(name: string, value: string, application: string, env: string) {
+		const id = Crypto.createId();
+
+		fs.mkdirSync(RegistryPath.variableDirectory(id));
+
+		fs.writeFileSync(RegistryPath.variableNameFile(id), name);
+		fs.writeFileSync(RegistryPath.variableValueFile(id), value);
+
+		if (application) {
+			fs.writeFileSync(RegistryPath.variableApplicationFile(id), application);
+		}
+
+		if (env) {
+			fs.writeFileSync(RegistryPath.variableEnvFile(id), env);
+		}
 	}
 
 	async mapDomain(host: string, port: number, application: string, env: string) {

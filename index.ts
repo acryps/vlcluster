@@ -114,6 +114,19 @@ export async function main() {
 				return process.exit(0);
 			}
 
+			// vlcluster set <cluster> <name> <value> [<application>] [<env>]
+			case "set": {
+				const client = new Client(parameters[0]);
+				await client.set(
+					parameters[1],
+					parameters[2],
+					parameters[3],
+					parameters[4]
+				);
+
+				return process.exit(0);
+			}
+
 			case "map": {
 				switch (parameters.shift()) {
 					// vlcluster map domain <cluster> <host> <port> <application> <env>

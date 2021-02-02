@@ -178,6 +178,25 @@ export class Client {
 		await this.upgrade(app.application, app.version, env);
 	}
 
+	async set(name: string, value: string, application: string, env: string) {
+		const logger = new Logger("set");
+
+		await logger.process(["setting ", name, " to ", value, " on ", logger.ae(application || "*", env || "*"), "..."], async finished => {
+			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.set}`, {
+				method: "POST",
+				headers: {
+					...this.authHeaders,
+					"cluster-name": name,
+					"cluster-value": value,
+					"cluster-application": application,
+					"cluster-env": env
+				}
+			}).then(r => r.json());
+
+			finished("set ", name, " to ", value, " on ", logger.ae(application || "*", env || "*"));
+		});
+	}
+
 	async mapDomain(host: string, port: number, application: string, env: string) {
 		const logger = new Logger("map");
 

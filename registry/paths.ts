@@ -143,4 +143,28 @@ export class RegistryPath {
 	static clientKeyFile(name: string) {
 		return path.join(this.clientDirectory(name), "key");
 	}
+
+	static get variablesDirectory() {
+		return path.join(this.rootDirectory, "variabled");
+	}
+
+	static variableDirectory(id) {
+		return path.join(this.variablesDirectory, id);
+	}
+
+	static variableNameFile(id) {
+		return path.join(this.variableDirectory(id), "name");
+	}
+
+	static variableValueFile(id) {
+		return path.join(this.variableDirectory(id), "value");
+	}
+
+	static variableApplicationFile(id) {
+		return path.join(this.variableDirectory(id), "application");
+	}
+
+	static variableEnvFile(id) {
+		return path.join(this.variableDirectory(id), "env");
+	}
 }
