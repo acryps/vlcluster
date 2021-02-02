@@ -199,21 +199,26 @@ export class WorkerServer {
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
 
+			variables.PORT = internalPort;
+			variables.CLUSTER_APPLICATION = application;
+			variables.CLUSTER_INTERNAL_PORT = internalPort;
+			variables.CLUSTER_EXTERNAL_PORT = externalPort;
+			variables.CLUSTER_VERSION = version;
+			variables.CLUSTER_INSTANCE = instance;
+			variables.CLUSTER_NAME = this.clusterName;
+			variables.CLUSTER_WORKER = this.name;
+			variables.CLUSTER_REGISTRY = this.host;
+			variables.CLUSTER_ENV = env;
+
+			const variableArguments = [];
+
+			for (let name in variables) {
+				variableArguments.push("--env", `${name}=${variables[name]}`);
+			}
+
 			const runProcess = spawn("docker", [
 				"run",
-				"--env", `PORT=${internalPort}`, // add port env variable
-				"--env", `CLUSTER_APPLICATION=${application}`,
-				"--env", `CLUSTER_INTERNAL_PORT=${internalPort}`,
-				"--env", `CLUSTER_EXTERNAL_PORT=${externalPort}`,
-				"--env", `CLUSTER_VERSION=${version}`,
-				"--env", `CLUSTER_INSTANCE=${instance}`,
-				"--env", `CLUSTER_NAME=${this.clusterName}`,
-				"--env", `CLUSTER_WORKER=${this.name}`,
-				"--env", `CLUSTER_REGISTRY=${this.host}`,
-				"--env", `CLUSTER_ENV=${env}`,
-				...Object.keys(variables).map(name => [
-					"--env", `${name}=${variables[name]}`
-				]).flat(),
+				...variableArguments,
 				"--expose", internalPort.toString(), // export container port to docker interface
 				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
 				"--name", instance, // tag container
