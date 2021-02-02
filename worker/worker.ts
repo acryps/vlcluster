@@ -88,7 +88,8 @@ export class WorkerServer {
 				fs.readFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance)).toString(),
 				fs.readFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance)).toString(),
 				fs.readFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance)).toString(),
-				instance
+				instance,
+				JSON.parse(fs.readFileSync(WorkerPath.instanceVariablesFile(this.clusterName, instance)).toString())
 			);
 		}
 	}
@@ -234,6 +235,7 @@ export class WorkerServer {
 					fs.writeFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance), application);
 					fs.writeFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance), version);
 					fs.writeFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance), env);
+					fs.writeFileSync(WorkerPath.instanceVariablesFile(this.clusterName, instance), JSON.stringify(variables));
 				}
 				
 				this.logger.process(["reporting start ", this.logger.aev(application, env, version), " to registry"], async finished => {

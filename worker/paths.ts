@@ -47,4 +47,8 @@ export class WorkerPath {
     static instanceEnvFile(clusterName: string, instance: string) {
 		return path.join(this.instanceDirectory(clusterName, instance), "env");
 	}
+
+	static instanceVariablesFile(clusterName: string, instance: string) {
+		return path.join(this.instanceDirectory(clusterName, instance), "variables");
+	}
 }
