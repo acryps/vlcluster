@@ -382,6 +382,7 @@ export class WorkerServer {
 				fs.unlinkSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
 				fs.unlinkSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
 				fs.unlinkSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
+				fs.unlinkSync(WorkerPath.instanceVariablesFile(this.clusterName, instance));
 				
 				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
 
