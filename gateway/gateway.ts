@@ -94,6 +94,8 @@ export class GatewayServer {
             
             for (let socket of route.sockets) {
                 configuration += `\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
+            
+                this.logger.log("  ↳ websocket on ", socket);
             }
 
             configuration += `\n}\n\n`;

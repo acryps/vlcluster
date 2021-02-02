@@ -155,11 +155,9 @@ export class WorkerServer {
 
 			res.body.pipe(loadProcess.stdin);
 
-			res.body.on("finish", () => {
-				loadProcess.on("exit", async () => {
-					finished("loaded ", this.logger.av(application, version));
-					done();
-				});
+			loadProcess.on("exit", async () => {
+				finished("loaded ", this.logger.av(application, version));
+				done();
 			});
 		}));
 	}
