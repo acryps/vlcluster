@@ -380,10 +380,10 @@ export class RegistryServer {
 
 			worker.instances[instance] = state;
 
-			await this.updateGateways();
-
 			if (!request) {
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
+
+				await this.updateGateways();
 
 				res.json({});
 
@@ -507,11 +507,13 @@ export class RegistryServer {
 		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
 
 		// install application on new worker
-		// the start will automatically upgrade the gateways if successful
 		await this.start(application, version, env);
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
+
+		// wait for gateway upgrades
+		this.updateGateways();
 		
 		// stop dangeling versions
 		if (dangelingVersion) {
