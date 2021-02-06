@@ -29,6 +29,21 @@ export class Daemon {
 			logger.log("daemon server started");
 		});
 
+		for (let cluster of GatewayServer.getInstalledGateways()) {
+			if (process.env.USER !== "root") {
+				logger.warn("gateways must be run as root!");
+
+				return process.exit(1);
+			}
+
+			await logger.process(["starting gateway for ", logger.c(cluster)], async finished => {
+				const gateway = new GatewayServer(cluster);
+				await gateway.register(this.server);
+
+				finished("started gateway ", logger.cg(cluster, gateway.name));
+			});
+		}
+
 		if (RegistryServer.isInstalled()) {
 			await logger.process(["starting registry"], async finished => {
 				const registry = new RegistryServer();
@@ -44,21 +59,6 @@ export class Daemon {
 				await worker.register();
 
 				finished("started worker ", logger.cw(cluster, worker.name));
-			});
-		}
-
-		for (let cluster of GatewayServer.getInstalledGateways()) {
-			if (process.env.USER !== "root") {
-				logger.warn("gateways must be run as root!");
-
-				return process.exit(1);
-			}
-
-			await logger.process(["starting gateway for ", logger.c(cluster)], async finished => {
-				const gateway = new GatewayServer(cluster);
-				await gateway.register(this.server);
-
-				finished("started gateway ", logger.cg(cluster, gateway.name));
 			});
 		}
 	}
