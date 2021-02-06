@@ -358,7 +358,7 @@ export class RegistryServer {
 			});
 		});
 
-		app.post(Cluster.api.registry.startedApplication, (req, res) => {
+		app.post(Cluster.api.registry.startedApplication, async (req, res) => {
 			const workerName = req.headers["cluster-worker"];
 			const instance = req.headers["cluster-instance"];
 			const env = req.headers["cluster-env"];
@@ -380,7 +380,7 @@ export class RegistryServer {
 
 			worker.instances[instance] = state;
 
-			this.updateGateways();
+			await this.updateGateways();
 
 			if (!request) {
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
@@ -507,13 +507,11 @@ export class RegistryServer {
 		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
 
 		// install application on new worker
+		// the start will automatically upgrade the gateways if successful
 		await this.start(application, version, env);
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
-
-		// wait for gateway updates
-		await this.updateGateways();
 		
 		// stop dangeling versions
 		if (dangelingVersion) {
