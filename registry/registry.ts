@@ -230,7 +230,7 @@ export class RegistryServer {
 			const application = req.headers["cluster-name"];
 			const env = req.headers["cluster-env"];
 			
-			res.json(await this.getVariables(application, env));
+			res.json(this.getVariables(application, env));
 		});
 
 		app.post(Cluster.api.registry.map.domain, async (req, res) => {
@@ -555,7 +555,7 @@ export class RegistryServer {
 			request.version = version;
 			request.env = env;
 			request.instance = instance;
-			request.variables = await this.getVariables(application, env);
+			request.variables = this.getVariables(application, env);
 			this.pendingStartRequests.push(request);
 
 			request.oncomplete = status => {
@@ -579,7 +579,7 @@ export class RegistryServer {
 		});
 	}
 	
-	async getVariables(application: string, env: string) {
+	getVariables(application: string, env: string) {
 		const variables = {};
 		
 		for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
