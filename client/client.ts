@@ -234,7 +234,7 @@ export class Client {
 		});
 	}
 	
-	async showVars(application: string, env: string) {
+	async listVars(application: string, env: string) {
 		const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.vars}`, {
 			method: "POST",
 			headers: {

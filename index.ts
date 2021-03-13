@@ -129,7 +129,7 @@ export async function main() {
 			
 			case "vars": {
 				const client = new Client(parameters[0]);
-				await client.vars(
+				await client.listVars(
 					parameters[1],
 					parameters[2]
 				);
