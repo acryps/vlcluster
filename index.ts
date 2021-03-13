@@ -126,6 +126,16 @@ export async function main() {
 
 				return process.exit(0);
 			}
+			
+			case "vars": {
+				const client = new Client(parameters[0]);
+				await client.vars(
+					parameters[1],
+					parameters[2]
+				);
+
+				return process.exit(0);
+			}
 
 			case "map": {
 				switch (parameters.shift()) {

@@ -223,6 +223,15 @@ export class RegistryServer {
 
 			res.json({});
 		});
+		
+		app.post(Cluster.api.registry.vars, async (req, res) => {
+			await this.validateClientAuth(req);
+			
+			const application = req.headers["cluster-name"];
+			const env = req.headers["cluster-env"];
+			
+			res.json(await this.getVariables(application, env));
+		});
 
 		app.post(Cluster.api.registry.map.domain, async (req, res) => {
 			await this.validateClientAuth(req);
@@ -546,28 +555,7 @@ export class RegistryServer {
 			request.version = version;
 			request.env = env;
 			request.instance = instance;
-			request.variables = {};
-
-			// resolve variables
-			for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
-				const name = fs.readFileSync(RegistryPath.variableNameFile(variable)).toString();
-				const value = fs.readFileSync(RegistryPath.variableValueFile(variable)).toString();
-
-				if (fs.existsSync(RegistryPath.variableApplicationFile(variable))) {
-					if (fs.readFileSync(RegistryPath.variableApplicationFile(variable)).toString() == application) {
-						if (fs.existsSync(RegistryPath.variableEnvFile(variable))) {
-							if (fs.readFileSync(RegistryPath.variableEnvFile(variable)).toString() == env) {
-								request.variables[name] = value;
-							}
-						} else {
-							request.variables[name] = value;
-						}
-					}
-				} else {
-					request.variables[name] = value;
-				}
-			}
-
+			request.variables = await this.getVariables(application, env);
 			this.pendingStartRequests.push(request);
 
 			request.oncomplete = status => {
@@ -589,6 +577,31 @@ export class RegistryServer {
 
 			worker.messageQueue.push(request);
 		});
+	}
+	
+	async getVariables(application: string, env: string) {
+		const variables = {};
+		
+		for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
+			const name = fs.readFileSync(RegistryPath.variableNameFile(variable)).toString();
+			const value = fs.readFileSync(RegistryPath.variableValueFile(variable)).toString();
+
+			if (fs.existsSync(RegistryPath.variableApplicationFile(variable))) {
+				if (fs.readFileSync(RegistryPath.variableApplicationFile(variable)).toString() == application) {
+					if (fs.existsSync(RegistryPath.variableEnvFile(variable))) {
+						if (fs.readFileSync(RegistryPath.variableEnvFile(variable)).toString() == env) {
+							variables[name] = value;
+						}
+					} else {
+						variables[name] = value;
+					}
+				}
+			} else {
+				variables[name] = value;
+			}
+		}
+		
+		return variables;
 	}
 
 	async stop(application: string, version: string, env: string) {

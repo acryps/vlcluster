@@ -233,6 +233,21 @@ export class Client {
 			finished("mapped websocket ", host, ":" + port, " on ", path, " to ", logger.ae(res.application, res.env));
 		});
 	}
+	
+	async showVars(application: string, env: string) {
+		const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.vars}`, {
+			method: "POST",
+			headers: {
+				...this.authHeaders,
+				"cluster-name": application,
+				"cluster-env": env
+			}
+		}).then(r => r.json());
+		
+		for (let name in res) {
+			console.log(`${name}: ${res[name]}`);
+		}
+	}
 
 	get authHeaders() {
 		return {
