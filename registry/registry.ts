@@ -421,7 +421,7 @@ export class RegistryServer {
 			const host = req.headers["cluster-host"];
 			const port = req.headers["cluster-port"];
 
-			for (let id in fs.readdirSync(RegistryPath.mappingsDirectory)) {
+			for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
 				if (fs.readFileSync(RegistryPath.mappingHostFile(id)).toString() == host) {
 					fs.writeFileSync(RegistryPath.mappingSSLFile(id), port);
 
