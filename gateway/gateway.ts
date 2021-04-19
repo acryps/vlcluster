@@ -18,6 +18,8 @@ export class GatewayServer {
 		host: string,
 		port: number,
 		instances: {
+			id: string,
+			worker: string,
             endpoint: string,
 			port: number
 		}[],
@@ -97,34 +99,45 @@ export class GatewayServer {
 
             // create upstream
             const upstream = `stream_${sha512(JSON.stringify(route))}`;
-            configuration += `upstream ${upstream} {`;
+			configuration += `# upstreams for ${route.application}[${route.env}]:\nupstream ${upstream} {`;
+			
+			this.logger.log(" served from")
             
             // add instances
             for (let instance of route.instances) {
-                configuration += `\n\tserver ${instance.endpoint}:${instance.port};`;
+                configuration += `\n\tserver ${instance.endpoint}:${instance.port}; # upstream to instance ${instance.id} on ${instance.worker}`;
 
-                this.logger.log("↳ upstream ", this.logger.hp(instance.endpoint, instance.port));
+                this.logger.log("  ↳ upstream ", this.logger.hp(instance.endpoint, instance.port));
             }
 			
 			// create proxy to upstream
-			configuration += `\n}\n\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
+			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};\n\n\t# default proxy\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
 			
+			this.logger.log(" server");
+
 			if (route.ssl) {
-				configuration += `\n\n\tssl_certificate ${GatewayPath.letsencryptFullchain(route.host)};`;
+				configuration += `\n\n\t# ssl configuration`
+				configuration += `\n\tssl_certificate ${GatewayPath.letsencryptFullchain(route.host)};`;
 				configuration += `\n\tssl_certificate_key ${GatewayPath.letsencryptPrivateKey(route.host)};`;
 				configuration += `\n\tinclude ${GatewayPath.letsencryptOptions()};`;
 				configuration += `\n\tssl_dhparam ${GatewayPath.letsencryptDHParams()};`;
 
-				this.logger.log("  ↳ secured by ssl");
+				this.logger.log("  ↳ secured with ssl");
 			}
 
+			this.logger.log("  ↳ default proxy on '/'");
+
             for (let socket of route.sockets) {
-                configuration += `\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
+                configuration += `\n\n\t# socket proxy\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
             
                 this.logger.log("  ↳ websocket on ", socket);
 			}
 
-            configuration += `\n}\n\n`;
+			configuration += `\n}\n\n`;
+			
+			if (route.ssl) {
+				configuration += `# http to https upgrade for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\treturn 301 https://$host$request_uri;\n}\n\n`;
+			}
         }
 
         fs.writeFileSync(GatewayPath.nginxFile(this.name), configuration);

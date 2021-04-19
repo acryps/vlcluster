@@ -460,6 +460,8 @@ export class RegistryServer {
 
 						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
 							instances.push({
+								id: id,
+								worker: worker.name,
 								endpoint: instance.worker.endpoint,
 								port: instance.port
 							});
