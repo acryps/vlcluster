@@ -162,6 +162,23 @@ export async function main() {
 				}
 			}
 
+			case "ssl": {
+				switch (parameters.shift()) {
+					case "enable": {
+						const client = new Client(parameters[0]);
+						await client.enableSSL(parameters[1], +parameters[2] || 443);
+
+						return process.exit(0);
+					}
+
+					default: {
+						console.error("invalid ssl command");
+
+						return process.exit(1);
+					}
+				}
+			}
+
 			case "daemon": {
 				const daemon = new Daemon();
 				daemon.start();

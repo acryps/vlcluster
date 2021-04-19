@@ -44,6 +44,10 @@ export class RegistryPath {
 		return path.join(this.mappingDirectory(id), "env");
 	}
 
+	static mappingSSLFile(id: string) {
+		return path.join(this.mappingDirectory(id), "ssl");
+	}
+
 	static mappingWebSocketsDirectory(id: string) {
 		return path.join(this.mappingDirectory(id), "web-sockets");
 	}

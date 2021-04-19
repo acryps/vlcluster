@@ -55,5 +55,25 @@ export class GatewayPath {
 
     static gatewayDomainMappingEnvFile(name: string, domain: string, application: string, env: string) {
 		return path.join(this.gatewayDomainMappingDirectory(name, domain, application, env), "env");
-    }
+	}
+	
+	static letsencryptRoot(host: string) {
+		return path.join("/etc/letsencrypt/live/", host);
+	}
+
+	static letsencryptFullchain(host: string) {
+		return path.join(this.letsencryptRoot(host), "fullchain.pem");
+	}
+
+	static letsencryptPrivateKey(host: string) {
+		return path.join(this.letsencryptRoot(host), "privkey.pem");
+	}
+
+	static letsencryptOptions() {
+		return "/etc/letsencrypt/options-ssl-nginx.conf";
+	}
+
+	static letsencryptDHParams() {
+		return "/etc/letsencrypt/ssl-dhparams.pem";
+	}
 }

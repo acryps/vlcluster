@@ -230,7 +230,24 @@ export class Client {
 				}
 			}).then(r => r.json());
 
-			finished("mapped websocket ", host, ":" + port, " on ", path, " to ", logger.ae(res.application, res.env));
+			finished("mapped websocket ", logger.hp(host, port), " on ", path, " to ", logger.ae(res.application, res.env));
+		});
+	}
+
+	async enableSSL(host: string, port: number) {
+		const logger = new Logger("ssl");
+
+		await logger.process(["enabling ssl for ", logger.hp(host, port)], async finished => {
+			await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ssl.enable}`, {
+				method: "POST",
+				headers: {
+					...this.authHeaders,
+					"cluster-host": host,
+					"cluster-port": port,
+				}
+			}).then(r => r.json());
+
+			finished("enabled ssl for ", logger.hp(host, port), ". deploy new version to enable SSL");
 		});
 	}
 	

@@ -205,9 +205,10 @@ export class RegistryServer {
 			}
 
 			this.logger.log("upgrading to ", this.logger.av(application, version));
-			await this.upgrade(application, version, env);
+			
+			const isNewEnv = await this.upgrade(application, version, env);
 
-			res.json({});
+			res.json(isNewEnv);
 		});
 
 		app.post(Cluster.api.registry.set, async (req, res) => {
@@ -415,6 +416,25 @@ export class RegistryServer {
 
 			res.json({});
 		});
+
+		app.post(Cluster.api.registry.ssl.enable, (req, res) => {
+			const host = req.headers["cluster-host"];
+			const port = req.headers["cluster-port"];
+
+			for (let id in fs.readdirSync(RegistryPath.mappingsDirectory)) {
+				if (fs.readFileSync(RegistryPath.mappingHostFile(id)).toString() == host) {
+					fs.writeFileSync(RegistryPath.mappingSSLFile(id), port);
+
+					res.json({});
+
+					return;
+				}
+			}
+
+			res.json({
+				error: "Domain not used!"
+			});
+		});
 	}
 
 	async updateGateways() {
@@ -457,14 +477,20 @@ export class RegistryServer {
 			}
 
 			if (instances.length) {
-				routes.push({
+				const route = {
 					application,
 					env,
 					host,
 					port,
 					instances,
 					sockets
-				});
+				} as any;
+
+				if (fs.existsSync(RegistryPath.mappingSSLFile(id))) {
+					route.ssl = +fs.readFileSync(RegistryPath.mappingSSLFile(id)).toString();
+				}
+
+				routes.push(route);
 			} else {
 				this.logger.log("no instances of ", this.logger.ae(application, env), " running, skipped");
 			}
@@ -494,11 +520,15 @@ export class RegistryServer {
 	async upgrade(application: string, version: string, env: string) {
 		this.logger.log("upgrade ", this.logger.aev(application, env, version));
 		
+		let isNewEnv;
+		
 		if (!fs.existsSync(RegistryPath.applicationEnvDirectory(application, env))) {
 			fs.mkdirSync(RegistryPath.applicationEnvDirectory(application, env));
 			fs.mkdirSync(RegistryPath.applicationEnvActiveVersionsDirectory(application, env));
 
 			this.logger.log("new env ", this.logger.ae(application, env));
+			
+			isNewEnv = true;
 		}
 
 		if (fs.existsSync(RegistryPath.applicationEnvDangelingVersionFile(application, env))) {
@@ -530,6 +560,8 @@ export class RegistryServer {
 
 			fs.unlinkSync(RegistryPath.applicationEnvDangelingVersionFile(application, env));
 		}
+		
+		return isNewEnv;
 	}
 
 	start(application: string, version: string, env: string) {

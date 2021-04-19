@@ -24,7 +24,10 @@ export class Cluster {
 				webSocket: "/map/ws"
 			},
 			set: "/set",
-			vars: "/vars"
+			vars: "/vars",
+			ssl: {
+				enable: "/ssl/enable"
+			}
 		},
 
 		gateway: {

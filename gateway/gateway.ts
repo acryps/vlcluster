@@ -7,7 +7,7 @@ import { Logger } from "../log";
 import { GatewayPath } from "./paths";
 
 export class GatewayServer {
-    clusterHost: string;
+	clusterHost: string;
     endpointHost: string;
 
     logger: Logger;
@@ -20,7 +20,8 @@ export class GatewayServer {
 		instances: {
             endpoint: string,
 			port: number
-        }[],
+		}[],
+		ssl: number,
         sockets: []
     }[] = [];
 
@@ -67,16 +68,32 @@ export class GatewayServer {
             await this.reloadServer();
 
             res.json({});
-        });
+		});
     }
 
     async reloadServer() {
-        let configuration = "";
+		let configuration = "";
 
         this.logger.log("updating routes...");
 
         for (let route of this.routes) {
-            this.logger.log("routing ", this.logger.hp(route.host, route.port), " to");
+			this.logger.log("routing ", this.logger.hp(route.host, route.port), " to");
+			
+			if (route.ssl) {
+				if (!fs.existsSync(GatewayPath.letsencryptRoot(route.host))) {
+					this.logger.log("obtaining ssl for ", this.logger.hp(route.host, route.port));
+
+					const process = spawn("certbot", [
+						"-d", route.host, // obtain for domain
+						"certonly", // only obtain cert, we match domain on our own
+						"--nginx" // using nginx plugin
+					]);
+
+					await new Promise(done => {
+						process.on("exit", () => done());
+					});
+				}
+			}
 
             // create upstream
             const upstream = `stream_${sha512(JSON.stringify(route))}`;
@@ -88,15 +105,24 @@ export class GatewayServer {
 
                 this.logger.log("↳ upstream ", this.logger.hp(instance.endpoint, instance.port));
             }
-            
-            // create proxy to upstream
-            configuration += `\n}\n\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
-            
+			
+			// create proxy to upstream
+			configuration += `\n}\n\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
+			
+			if (route.ssl) {
+				configuration += `\n\n\tssl_certificate ${GatewayPath.letsencryptFullchain(route.host)};`;
+				configuration += `\n\tssl_certificate_key ${GatewayPath.letsencryptPrivateKey(route.host)};`;
+				configuration += `\n\tinclude ${GatewayPath.letsencryptOptions()};`;
+				configuration += `\n\tssl_dhparam ${GatewayPath.letsencryptDHParams()};`;
+
+				this.logger.log("  ↳ secured by ssl");
+			}
+
             for (let socket of route.sockets) {
                 configuration += `\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
             
                 this.logger.log("  ↳ websocket on ", socket);
-            }
+			}
 
             configuration += `\n}\n\n`;
         }
