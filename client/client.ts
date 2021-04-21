@@ -39,7 +39,7 @@ export class Client {
 				key,
 				username
 			})
-		}).then(r => r.text());
+		}).then(r => r.json());
 
 		console.log(result);
 
