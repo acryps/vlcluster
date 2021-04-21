@@ -41,8 +41,6 @@ export class Client {
 			})
 		}).then(r => r.json());
 
-		console.log(result);
-
 		logger.log("welcome to ", logger.c(result.name), "!");
 
 		if (!fs.existsSync(Client.clusterDirectory(result.name))) {
