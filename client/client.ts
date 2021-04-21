@@ -39,7 +39,9 @@ export class Client {
 				key,
 				username
 			})
-		}).then(r => r.json());
+		}).then(r => r.text());
+
+		console.log(result);
 
 		logger.log("welcome to ", logger.c(result.name), "!");
 
