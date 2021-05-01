@@ -111,7 +111,7 @@ export class GatewayServer {
             }
 			
 			// create proxy to upstream
-			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};\n\n\t# default proxy\n\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
+			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};`;
 			
 			this.logger.log(" server");
 
@@ -125,13 +125,14 @@ export class GatewayServer {
 				this.logger.log("  ↳ secured with ssl");
 			}
 
-			this.logger.log("  ↳ default proxy on '/'");
-
             for (let socket of route.sockets) {
                 configuration += `\n\n\t# socket proxy\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
             
                 this.logger.log("  ↳ websocket on ", socket);
 			}
+
+			this.logger.log("  ↳ default proxy on '/'");
+			configuration += `\n\n\t# default proxy\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
 
 			configuration += `\n}\n\n`;
 			
