@@ -126,7 +126,7 @@ export class GatewayServer {
 			}
 
             for (let socket of route.sockets) {
-                configuration += `\n\n\t# socket proxy\n\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t}`;
+                configuration += `\n\n\t# socket proxy\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t\t\n\t\t# disable socket timeout\n\t\tproxy_connect_timeout 7d;\n\t\tproxy_send_timeout 7d;\n\t\tproxy_read_timeout 7d;\n\t}`;
             
                 this.logger.log("  ↳ websocket on ", socket);
 			}
