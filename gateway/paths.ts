@@ -14,7 +14,7 @@ export class GatewayPath {
 	}
 
 	static nginxIncludeFile(name: string) {
-		return "/" + path.join("etc", "nginx", "sites-enabled", `${Crypto.sanitizeGatewayName(name)}.include`);
+		return "/" + path.join("etc", "nginx", "snippets", `${Crypto.sanitizeGatewayName(name)}.include`);
 	}
 
     static gatewayDirectory(name: string) {
