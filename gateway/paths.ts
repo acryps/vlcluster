@@ -13,6 +13,10 @@ export class GatewayPath {
 		return "/" + path.join("etc", "nginx", "sites-enabled", Crypto.sanitizeGatewayName(name));
 	}
 
+	static nginxIncludeFile(name: string) {
+		return "/" + path.join("etc", "nginx", "sites-enabled", `${Crypto.sanitizeGatewayName(name)}.include`);
+	}
+
     static gatewayDirectory(name: string) {
 		return path.join(this.rootDirectory, Crypto.sanitizeGatewayName(name));
 	}
