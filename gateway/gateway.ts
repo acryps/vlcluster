@@ -132,7 +132,7 @@ export class GatewayServer {
 			}
 
 			this.logger.log("  ↳ default proxy on '/'");
-			configuration += `\n\n\t# custom include file (will not be overwritten)\n\tinclude ${this.name}.include;\n\n\t# default proxy\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
+			configuration += `\n\n\t# custom include file (will not be overwritten)\n\tinclude ${GatewayPath.nginxIncludeFile(this.name)};\n\n\t# default proxy\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}`;
 
 			configuration += `\n}\n\n`;
 			
