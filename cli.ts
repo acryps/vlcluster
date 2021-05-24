@@ -29,10 +29,12 @@ export class CLI {
                     console.log(index, name, process.argv);
 
                     if (index != -1) {
+                        // return null if the parameter has no value set
                         if (process.argv[index + 2] && process.argv[index + 2][0] != "-") {
                             return done(null);
                         }
                         
+                        // return parameter value
                         return done(process.argv[index + 1]);
                     }
                 }
