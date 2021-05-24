@@ -16,6 +16,8 @@ export class InstancesClient {
             }
         }).then(r => r.json());
 
+        console.log(application, env);
+
         if (application && application != "*") {
             instances = instances.filter(i => i.application == application);
         }
