@@ -435,6 +435,28 @@ export class RegistryServer {
 				error: "Domain not used!"
 			});
 		});
+
+		app.post(Cluster.api.registry.instances.list, async (req, res) => {
+			await this.validateClientAuth(req);
+
+			const instances = [];
+
+			for (let worker of this.runningWorkers) {
+				for (let id in worker.instances) {
+					const instance = worker.instances[id];
+
+					instances.push({
+						instance: id,
+						application: instance.application,
+						version: instance.version,
+						env: instance.env,
+						port: instance.port
+					});
+				}
+			}
+
+			res.json(instances);
+		})
 	}
 
 	async updateGateways() {

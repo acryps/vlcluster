@@ -23,6 +23,9 @@ export class Cluster {
 				domain: "/map/domain",
 				webSocket: "/map/ws"
 			},
+			instances: {
+				list: "/instances/list"
+			},
 			set: "/set",
 			vars: "/vars",
 			ssl: {

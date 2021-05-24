@@ -5,11 +5,14 @@ import { Cluster } from "../cluster";
 import { spawn } from "child_process";
 import { Logger } from "../log";
 import { hostname } from "os";
+import { InstancesClient } from "./instances";
 
 export class Client {
 	host: string;
 	key: string;
 	username: string;
+
+	instances = new InstancesClient(this);
 
 	constructor(public clusterName: string) {
 		if (!Client.hasCluster(clusterName)) {

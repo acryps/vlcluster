@@ -19,6 +19,37 @@ export class Logger {
         process.stdout.write(`\x1b[48;5;190m\x1b[1;30m[! ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
     }
 
+    table(data: any[]) {
+        if (!Array.isArray(data)) {
+            data = Object.keys(data).map(k => ({
+                key: k,
+                value: data[k]
+            }));
+        }
+
+        const keys = {};
+
+        for (let item of data) {
+            for (let key in item) {
+                const len = `${item[key]}`.length;
+
+                if (key in keys) {
+                    if (keys[key] < len) {
+                        keys[key] = len;
+                    }
+                } else {
+                    keys[key] = len;
+                }
+            }
+        }
+
+        process.stdout.write(`${Object.keys(keys).map(key => key.padStart(keys[key], " ")).join("  ")}\n`);
+        
+        for (let item of data) {
+            process.stdout.write(`${Object.keys(keys).map(key => `${key in item ? item[key] : ""}`.padStart(keys[key], " ")).join("  ")}\n`);
+        }
+    }
+
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
         let i = 0;
 

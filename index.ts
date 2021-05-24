@@ -10,6 +10,7 @@ import { Client } from "./client/client";
 import { Worker } from "cluster";
 import { GatewayServer } from "./gateway/gateway";
 import { CLI } from "./cli";
+import { Logger } from "./log";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -38,7 +39,6 @@ export async function main() {
 						break;
 					}
 
-					// vlcluster init registry <name>
 					case "registry": {
 						const key = await RegistryServer.create(
 							await CLI.getArgument(["-n", "--name"], "Registry name")
@@ -49,7 +49,6 @@ export async function main() {
 						return process.exit(0);
 					}
 
-					// vlcluster init worker <host> <key> <name>
 					case "worker": {
 						const registry = await WorkerServer.create(
 							await CLI.getArgument(["-h", "--hostname"], "Registry hostname"),
@@ -61,7 +60,6 @@ export async function main() {
 						return process.exit(0);
 					}
 
-					// vlcluster init endpoint <cluster> <host>
 					case "endpoint": {
 						await new WorkerServer(
 							await CLI.getClusterName()
@@ -73,7 +71,6 @@ export async function main() {
 						return process.exit(0);
 					}
 
-					// vlcluster init gateway <clusterHost> <clusterKey> <name> <endpointHost>
 					case "gateway": {
 						await GatewayServer.create(
 							await CLI.getArgument(["--cluster-hostname"], "Cluster hostname"),
@@ -124,7 +121,6 @@ export async function main() {
 				return process.exit(0);
 			}
 
-			// vlcluster deploy <cluster> <env> [<cwd>]
 			case "deploy": {
 				await new Client(
 					await CLI.getClusterName()
@@ -136,7 +132,6 @@ export async function main() {
 				return process.exit(0);
 			}
 
-			// vlcluster set <cluster> <name> <value> [<application>] [<env>]
 			case "var": {
 				switch (parameters.shift()) {
 					case "set": {
@@ -160,15 +155,22 @@ export async function main() {
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
 
-						for (let key in vars) {
-							console.log(`${
-								key.padStart(Math.max(...Object.keys(vars).map(v => v.length)), " ")
-							}  ${
-								vars[key]
-							}`);
-						}
+						new Logger("varlist").table(vars);
 		
 						return process.exit(0);
+					}
+				}
+			}
+
+			case "instance": {
+				switch (parameters.shift()) {
+					case "list": {
+						await new Client(
+							await CLI.getClusterName()
+						).instances.list(
+							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
+							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
+						);
 					}
 				}
 			}
