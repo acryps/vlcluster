@@ -28,9 +28,9 @@ export async function main() {
 						console.log(`welcome to vlcluster!`);
 
 						await Client.create(
-							await CLI.getArgument(["e", "email"], "Your email"), 
-							await CLI.getArgument(["h", "hostname"], "Registry hostname"),
-							await CLI.getArgument(["k", "key"], "Registry key")
+							await CLI.getArgument(["-e", "--email"], "Your email"), 
+							await CLI.getArgument(["-h", "--hostname"], "Registry hostname"),
+							await CLI.getArgument(["-k", "--key"], "Registry key")
 						)
 
 						return process.exit(0);
@@ -41,7 +41,7 @@ export async function main() {
 					// vlcluster init registry <name>
 					case "registry": {
 						const key = await RegistryServer.create(
-							await CLI.getArgument(["n", "name"], "Registry name")
+							await CLI.getArgument(["-n", "--name"], "Registry name")
 						);
 
 						console.log(`created registry!\n\nprivate key: ${key}\nStore this key safely!`);
@@ -52,9 +52,9 @@ export async function main() {
 					// vlcluster init worker <host> <key> <name>
 					case "worker": {
 						const registry = await WorkerServer.create(
-							await CLI.getArgument(["h", "hostname"], "Registry hostname"),
-							await CLI.getArgument(["k", "key"], "Registry key"),
-							await CLI.getArgument(["n", "name"], "Worker name")
+							await CLI.getArgument(["-h", "--hostname"], "Registry hostname"),
+							await CLI.getArgument(["-k", "--key"], "Registry key"),
+							await CLI.getArgument(["-n", "--name"], "Worker name")
 						);
 						
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
@@ -66,7 +66,7 @@ export async function main() {
 						await new WorkerServer(
 							await CLI.getClusterName()
 						).setLocalPath(
-							await CLI.getArgument(["h", "hostname"], "Endpoint hostname")
+							await CLI.getArgument(["-h", "--hostname"], "Endpoint hostname")
 						);
 
 						console.log(`local path assigned`);
@@ -76,10 +76,10 @@ export async function main() {
 					// vlcluster init gateway <clusterHost> <clusterKey> <name> <endpointHost>
 					case "gateway": {
 						await GatewayServer.create(
-							await CLI.getArgument(["cluster-hostname"], "Cluster hostname"),
-							await CLI.getArgument(["cluster-key"], "Cluster key"),
-							await CLI.getArgument(["n", "name"], "Gateway name"),
-							await CLI.getArgument(["endpoint-hostname"], "Endpoint host")
+							await CLI.getArgument(["--cluster-hostname"], "Cluster hostname"),
+							await CLI.getArgument(["--cluster-key"], "Cluster key"),
+							await CLI.getArgument(["-n", "--name"], "Gateway name"),
+							await CLI.getArgument(["--endpoint-hostname"], "Endpoint host")
 						);
 
 						console.log(`gateway created`);
@@ -96,7 +96,7 @@ export async function main() {
 			}
 
 			case "build": {
-				await Client.build(await CLI.getArgument([1, "p", "project-path"]) || ".");
+				await Client.build(await CLI.getArgument([1, "-p", "--project-path"]) || ".");
 
 				return process.exit(0);
 			}
@@ -105,8 +105,8 @@ export async function main() {
 				await new Client(
 					await CLI.getClusterName()
 				).push(
-					await CLI.getArgument([1, "a", "application"], "Application name"),
-					await CLI.getArgument([2, "v", "version"], "Application version")
+					await CLI.getArgument([1, "-a", "--application"], "Application name"),
+					await CLI.getArgument([2, "-v", "--version"], "Application version")
 				);
 
 				return process.exit(0);
@@ -116,9 +116,9 @@ export async function main() {
 				await new Client(
 					await CLI.getClusterName()
 				).upgrade(
-					await CLI.getArgument([1, "a", "application"], "Application name"),
-					await CLI.getArgument([2, "v", "version"], "Application version"),
-					await CLI.getArgument([3, "e", "env"], "Environnement")
+					await CLI.getArgument([1, "-a", "--application"], "Application name"),
+					await CLI.getArgument([2, "-v", "--version"], "Application version"),
+					await CLI.getArgument([3, "-e", "--env"], "Environnement")
 				);
 
 				return process.exit(0);
@@ -129,8 +129,8 @@ export async function main() {
 				await new Client(
 					await CLI.getClusterName()
 				).deploy(
-					await CLI.getArgument([2, "p", "project-path"]) || ".", 
-					await CLI.getArgument([1, "a", "application"], "Application name"),
+					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
+					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 				);
 
 				return process.exit(0);

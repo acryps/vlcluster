@@ -24,7 +24,7 @@ export class CLI {
                         return done(args[name]);
                     }
                 } else if (typeof name == "string") {
-                    const index = process.argv.indexOf(name.length == 1 ? `-${name}` : `--${name}`);
+                    const index = process.argv.indexOf(name);
 
                     console.log(index, name, process.argv);
 
