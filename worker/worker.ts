@@ -48,7 +48,7 @@ export class WorkerServer {
 		await this.startInstances();
 	}
 
-	static async create(host: string, name: string, key: string) {
+	static async create(host: string, key: string, name: string) {
 		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
 			method: "POST",
 			headers: {

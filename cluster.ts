@@ -45,6 +45,10 @@ export class Cluster {
 		return this.joinAndCreate(this.rootDirectory, "clusters");
 	}
 
+	static get activeClusterNameFile() {
+		return path.join(this.rootDirectory, "active-cluster");
+	}
+
 	static joinAndCreate(...components) {
 		const dir = path.join(...components);
 

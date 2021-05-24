@@ -9,6 +9,7 @@ import { WorkerServer } from "./worker/worker";
 import { Client } from "./client/client";
 import { Worker } from "cluster";
 import { GatewayServer } from "./gateway/gateway";
+import { CLI } from "./cli";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -18,11 +19,6 @@ export async function main() {
 		fs.mkdirSync(Cluster.rootDirectory);
 	}
 
-	const cli = readline.createInterface({
-		input: process.stdin,
-  		output: process.stdout
-	});
-
 	try {
 		switch (parameters.shift()) {
 			case "init": {
@@ -30,31 +26,36 @@ export async function main() {
 					case undefined:
 					case "client": {
 						console.log(`welcome to vlcluster!`);
-						
-						cli.question("Enter your email address: ", email => {
-							cli.question("Enter your vlcluster registry hostname: ", hostname => {
-								cli.question("Enter your vlcluster registry key: ", async key => {
-									await Client.create(email, hostname, key);
 
-									process.exit(0);
-								});
-							});
-						});
+						await Client.create(
+							await CLI.getArgument(["e", "email"], "Your email"), 
+							await CLI.getArgument(["h", "hostname"], "Registry hostname"),
+							await CLI.getArgument(["k", "key"], "Registry key")
+						)
+
+						return process.exit(0);
 
 						break;
 					}
 
 					// vlcluster init registry <name>
 					case "registry": {
-						const key = await RegistryServer.create(parameters[0]);
+						const key = await RegistryServer.create(
+							await CLI.getArgument(["n", "name"], "Registry name")
+						);
 
 						console.log(`created registry!\n\nprivate key: ${key}\nStore this key safely!`);
+						
 						return process.exit(0);
 					}
 
-					// vlcluster init worker <host> <name> <key>
+					// vlcluster init worker <host> <key> <name>
 					case "worker": {
-						const registry = await WorkerServer.create(parameters[0], parameters[1], parameters[2]);
+						const registry = await WorkerServer.create(
+							await CLI.getArgument(["h", "hostname"], "Registry hostname"),
+							await CLI.getArgument(["k", "key"], "Registry key"),
+							await CLI.getArgument(["n", "name"], "Worker name")
+						);
 						
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
 						return process.exit(0);
@@ -62,8 +63,11 @@ export async function main() {
 
 					// vlcluster init endpoint <cluster> <host>
 					case "endpoint": {
-						const worker = new WorkerServer(parameters[0]);
-						worker.setLocalPath(parameters[1]);
+						await new WorkerServer(
+							await CLI.getClusterName()
+						).setLocalPath(
+							await CLI.getArgument(["h", "hostname"], "Endpoint hostname")
+						);
 
 						console.log(`local path assigned`);
 						return process.exit(0);
@@ -71,7 +75,12 @@ export async function main() {
 
 					// vlcluster init gateway <clusterHost> <clusterKey> <name> <endpointHost>
 					case "gateway": {
-						await GatewayServer.create(parameters[0], parameters[1], parameters[2], parameters[3]);
+						await GatewayServer.create(
+							await CLI.getArgument(["cluster-hostname"], "Cluster hostname"),
+							await CLI.getArgument(["cluster-key"], "Cluster key"),
+							await CLI.getArgument(["n", "name"], "Gateway name"),
+							await CLI.getArgument(["endpoint-hostname"], "Endpoint host")
+						);
 
 						console.log(`gateway created`);
 						return process.exit(0);
@@ -87,54 +96,81 @@ export async function main() {
 			}
 
 			case "build": {
-				await Client.build(parameters[0] || ".");
+				await Client.build(await CLI.getArgument([1, "p", "project-path"]) || ".");
 
 				return process.exit(0);
 			}
 
 			case "push": {
-				const client = new Client(parameters[0]);
-				await client.push(parameters[1], parameters[2]);
+				await new Client(
+					await CLI.getClusterName()
+				).push(
+					await CLI.getArgument([1, "a", "application"], "Application name"),
+					await CLI.getArgument([2, "v", "version"], "Application version")
+				);
 
 				return process.exit(0);
 			}
 
 			case "upgrade": {
-				const client = new Client(parameters[0]);
-				await client.upgrade(parameters[1], parameters[2], parameters[3]);
+				await new Client(
+					await CLI.getClusterName()
+				).upgrade(
+					await CLI.getArgument([1, "a", "application"], "Application name"),
+					await CLI.getArgument([2, "v", "version"], "Application version"),
+					await CLI.getArgument([3, "e", "env"], "Environnement")
+				);
 
 				return process.exit(0);
 			}
 
 			// vlcluster deploy <cluster> <env> [<cwd>]
 			case "deploy": {
-				const client = new Client(parameters[0]);
-				await client.deploy(parameters[2] || ".", parameters[1]);
+				await new Client(
+					await CLI.getClusterName()
+				).deploy(
+					await CLI.getArgument([2, "p", "project-path"]) || ".", 
+					await CLI.getArgument([1, "a", "application"], "Application name"),
+				);
 
 				return process.exit(0);
 			}
 
 			// vlcluster set <cluster> <name> <value> [<application>] [<env>]
-			case "set": {
-				const client = new Client(parameters[0]);
-				await client.set(
-					parameters[1],
-					parameters[2],
-					parameters[3],
-					parameters[4]
-				);
+			case "var": {
+				switch (parameters.shift()) {
+					case "set": {
+						await new Client(
+							await CLI.getClusterName()
+						).set(
+							await CLI.getArgument([2, "-n", "--name"], "Variable name"),
+							await CLI.getArgument([3, "-v", "--value"], "Variable name"),
+							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
+							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
+						);
+		
+						return process.exit(0);
+					}
 
-				return process.exit(0);
-			}
-			
-			case "vars": {
-				const client = new Client(parameters[0]);
-				await client.listVars(
-					parameters[1],
-					parameters[2]
-				);
+					case "get": {
+						const vars = await new Client(
+							await CLI.getClusterName()
+						).getVariables(
+							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
+							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
+						);
 
-				return process.exit(0);
+						for (let key in vars) {
+							console.log(`${
+								key.padStart(Math.max(...Object.keys(vars).map(v => v.length)), " ")
+							} ${
+								vars[key]
+							}`);
+						}
+		
+						return process.exit(0);
+					}
+				}
 			}
 
 			case "map": {

@@ -251,7 +251,7 @@ export class Client {
 		});
 	}
 	
-	async listVars(application: string, env: string) {
+	async getVariables(application: string, env: string) {
 		const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.vars}`, {
 			method: "POST",
 			headers: {
@@ -261,9 +261,7 @@ export class Client {
 			}
 		}).then(r => r.json());
 		
-		for (let name in res) {
-			console.log(`${name}: ${res[name]}`);
-		}
+		return res;
 	}
 
 	get authHeaders() {
