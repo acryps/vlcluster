@@ -29,7 +29,7 @@ export class CLI {
                     console.log(index, name, process.argv);
 
                     if (index != -1) {
-                        if (process.argv[index + 1] && process.argv[index + 1][0] != "-") {
+                        if (process.argv[index + 2] && process.argv[index + 2][0] != "-") {
                             return done(null);
                         }
                         
