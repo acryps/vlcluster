@@ -16,6 +16,8 @@ export class InstancesClient {
             }
         }).then(r => r.json());
 
+        console.log(instances);
+
         if (application && application != "*") {
             instances = instances.filter(i => i.application == application);
         }
@@ -24,6 +26,6 @@ export class InstancesClient {
             instances = instances.filter(i => i.env == env);
         }
 
-        this.logger.table(instances);
+        return instances;
     }
 }
