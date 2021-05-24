@@ -126,7 +126,7 @@ export async function main() {
 					await CLI.getClusterName()
 				).deploy(
 					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
-					await CLI.getArgument([1, "-a", "--application"], "Application name"),
+					await CLI.getArgument([1, "-e", "--env"], "Environnement"),
 				);
 
 				return process.exit(0);

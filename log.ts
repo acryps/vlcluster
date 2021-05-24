@@ -38,17 +38,17 @@ export class Logger {
                         keys[key] = len;
                     }
                 } else {
-                    keys[key] = len;
+                    keys[key] = Math.max(key.length, len);
                 }
             }
         }
 
         process.stdout.write(`┌─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┬─")}─┐\n`);
-        process.stdout.write(`│ ${Object.keys(keys).map(key => key.padStart(keys[key], " ")).join(" │ ")} │\n`);
+        process.stdout.write(`│ ${Object.keys(keys).map(key => key.padEnd(keys[key], " ")).join(" │ ")} │\n`);
         process.stdout.write(`├─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┼─")}─┤\n`);
         
         for (let item of data) {
-            process.stdout.write(`│ ${Object.keys(keys).map(key => `${key in item ? item[key] : ""}`.padStart(keys[key], " ")).join(" │ ")} │\n`);
+            process.stdout.write(`│ ${Object.keys(keys).map(key => `${key in item ? item[key] : ""}`.padEnd(keys[key], " ")).join(" │ ")} │\n`);
         }
 
         process.stdout.write(`└─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┴─")}─┘\n`);

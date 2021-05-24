@@ -26,16 +26,17 @@ export class CLI {
                 } else if (typeof name == "string") {
                     const index = process.argv.indexOf(name);
 
-                    console.log(index, name, process.argv);
-
                     if (index != -1) {
-                        // return null if the parameter has no value set
-                        if (process.argv[index + 1] && process.argv[index + 1][0] == "-") {
+                        if (process.argv[index + 1]) {
+                            // return null if the parameter has no value set
+                            if (process.argv[index + 1][0] == "-") {
+                                return done(null);
+                            } else {
+                                return done(process.argv[index + 1]);
+                            }
+                        } else {
                             return done(null);
                         }
-                        
-                        // return parameter value
-                        return done(process.argv[index + 1]);
                     }
                 }
             }
