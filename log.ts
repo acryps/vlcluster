@@ -43,11 +43,15 @@ export class Logger {
             }
         }
 
-        process.stdout.write(`${Object.keys(keys).map(key => key.padStart(keys[key], " ")).join("  ")}\n`);
+        process.stdout.write(`┌─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┬─")}─┐\n`);
+        process.stdout.write(`│ ${Object.keys(keys).map(key => key.padStart(keys[key], " ")).join(" │ ")} │\n`);
+        process.stdout.write(`├─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┼─")}─┤\n`);
         
         for (let item of data) {
-            process.stdout.write(`${Object.keys(keys).map(key => `${key in item ? item[key] : ""}`.padStart(keys[key], " ")).join("  ")}\n`);
+            process.stdout.write(`│ ${Object.keys(keys).map(key => `${key in item ? item[key] : ""}`.padStart(keys[key], " ")).join(" │ ")} │\n`);
         }
+
+        process.stdout.write(`└─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┴─")}─┘\n`);
     }
 
     async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
