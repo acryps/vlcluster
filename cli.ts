@@ -30,7 +30,7 @@ export class CLI {
 
                     if (index != -1) {
                         // return null if the parameter has no value set
-                        if (process.argv[index + 2] && process.argv[index + 2][0] == "-") {
+                        if (process.argv[index + 1] && process.argv[index + 1][0] == "-") {
                             return done(null);
                         }
                         
