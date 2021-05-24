@@ -171,6 +171,8 @@ export async function main() {
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
+
+						return process.exit();
 					}
 				}
 			}
