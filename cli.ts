@@ -26,6 +26,8 @@ export class CLI {
                 } else if (typeof name == "string") {
                     const index = process.argv.indexOf(name.length == 1 ? `-${name}` : `--${name}`);
 
+                    console.log(index, name, process.argv);
+
                     if (index != -1) {
                         if (process.argv[index + 1] && process.argv[index + 1][0] != "-") {
                             return done(null);
@@ -37,8 +39,12 @@ export class CLI {
             }
 
             if (prompt) {
+                const input = readline.createInterface(process.stdin, process.stdout);
+
                 if (Array.isArray(prompt)) {
-                    readline.createInterface(process.stdin, process.stdout).question(`${prompt[0]} (${prompt[1]} = ${prompt[2]}}): `, res => {
+                    input.question(`${prompt[0]} (${prompt[1]} = ${prompt[2]}}): `, res => {
+                        input.close();
+
                         if (res == prompt[1]) {
                             done(prompt[3]);
                         } else {
@@ -46,7 +52,11 @@ export class CLI {
                         }
                     });
                 } else {
-                    readline.createInterface(process.stdin, process.stdout).question(`${prompt}: `, res => done(res));
+                    input.question(`${prompt}: `, res => {
+                        input.close();
+                        
+                        done(res)
+                    });
                 }
             } else {
                 done(null);

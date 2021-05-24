@@ -163,7 +163,7 @@ export async function main() {
 						for (let key in vars) {
 							console.log(`${
 								key.padStart(Math.max(...Object.keys(vars).map(v => v.length)), " ")
-							} ${
+							}  ${
 								vars[key]
 							}`);
 						}
