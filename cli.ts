@@ -20,8 +20,8 @@ export class CLI {
                         }
                     }
 
-                    if (args[name]) {
-                        return done(args[name]);
+                    if (args[name + 1]) {
+                        return done(args[name + 1]);
                     }
                 } else if (typeof name == "string") {
                     const index = process.argv.indexOf(name);

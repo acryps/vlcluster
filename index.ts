@@ -147,7 +147,7 @@ export async function main() {
 						return process.exit(0);
 					}
 
-					case "get": {
+					case "list": {
 						const vars = await new Client(
 							await CLI.getClusterName()
 						).getVariables(
@@ -155,7 +155,7 @@ export async function main() {
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
 
-						new Logger("varlist").table(vars);
+						new Logger("var list").table(vars);
 		
 						return process.exit(0);
 					}
@@ -165,7 +165,7 @@ export async function main() {
 			case "instance": {
 				switch (parameters.shift()) {
 					case "list": {
-						this.logger.table(await new Client(
+						new Logger("instance list").table(await new Client(
 							await CLI.getClusterName()
 						).instances.list(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),

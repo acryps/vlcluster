@@ -25,5 +25,10 @@ vlcluster deploy [-c | --cluster <registry hostname>] [[ -e | --env ] <environne
 ### Variables
 ```
 vlcluster var set [-c | --cluster <registry hostname>] [[ -n | --name ] <name>] [[ -v | --value ] <value>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
-vlcluster var get [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster var list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+```
+
+### Instance Management
+```
+vlcluster instance list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
