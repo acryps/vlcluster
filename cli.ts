@@ -1,7 +1,7 @@
 import * as readline from "readline";
 import * as fs from "fs";
 
-import { Cluster } from "./cluster";
+import { Cluster } from "./shared/cluster";
 
 export class CLI {
     static async getArgument(names: (string | number)[], prompt?: string | [string, string, string, string]): Promise<string> {

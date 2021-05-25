@@ -1,7 +1,7 @@
-import { Cluster } from "../cluster";
+import { Cluster } from "../shared/cluster";
 
 import * as path from "path";
-import { Crypto } from "../crypto";
+import { Crypto } from "../shared/crypto";
 
 export class RegistryPath {
     static get rootDirectory() {

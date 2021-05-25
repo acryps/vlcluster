@@ -1,14 +1,14 @@
-import { Cluster } from "../cluster";
-import * as fetch from "node-fetch";
+import { Cluster } from "../shared/cluster";
 import * as fs from "fs";
 import { cpuUsage } from "os-utils";
 import { spawn } from "child_process";
-import { Crypto } from "../crypto";
+import { Crypto } from "../shared/crypto";
 import { WorkerInstance } from "./instance-state";
 import { Logger } from "../log";
 import { WorkerPath } from "./paths";
 import { StartRequest } from "../registry/messages/start";
 import { StopRequest } from "../registry/messages/stop";
+import { Request } from "../shared/request";
 
 export class WorkerServer {
 	key: string;
@@ -49,16 +49,10 @@ export class WorkerServer {
 	}
 
 	static async create(host: string, key: string, name: string) {
-		const result = await fetch(`http://${host}:${Cluster.port}${Cluster.api.registry.createWorker}`, {
-			method: "POST",
-			headers: {
-				"content-type": "application/json"
-			},
-			body: JSON.stringify({
-				key,
-				name
-			})
-		}).then(r => r.json());
+		const result = await new Request(host, Cluster.api.registry.create.worker)
+			.append("key", key)
+			.append("name", name)
+			.send<{ name, key }>();
 
 		if (!fs.existsSync(WorkerPath.rootDirectory)) {
 			fs.mkdirSync(WorkerPath.rootDirectory);
@@ -103,28 +97,24 @@ export class WorkerServer {
 	}
 
 	async ping() {
-		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.ping}`, {
-			method: "POST", 
-			headers: {
-				"content-type": "application/json"
-			},
-			body: JSON.stringify({
-				name: this.name,
-				key: this.key,
-				cpuUsage: this.cpuUsage,
-				endpoint: this.endpoint
-			})
-		}).then(res => res.json()).then(res => {
-			for (let request of res.start as StartRequest[]) {
+		try {
+			const response = await new Request(this.host, Cluster.api.registry.ping)
+				.append("name", this.name)
+				.append("key", this.key)
+				.append("cpu-usage", this.cpuUsage)
+				.append("endpoint", this.endpoint)
+				.send<{ start: StartRequest[], stop: StopRequest[] }>();
+
+			for (let request of response.start) {
 				this.start(request.application, request.version, request.env, request.instance, request.variables);
 			}
 
-			for (let request of res.stop as StopRequest[]) {
+			for (let request of response.stop) {
 				this.stop(request.instance);
 			}
-		}).catch(error => {
-			this.logger.log("ping failed! ", error.message);
-		});
+		} catch (error) {
+			this.logger.warn("ping failed! ", error.message);
+		}
 	}
 
 	startCPUMonitoring() {
@@ -143,20 +133,16 @@ export class WorkerServer {
 				]
 			});
 
-			const res = await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.pull}`, {
-				method: "POST",
-				headers: {
-					"cluster-application": application,
-					"cluster-version": version,
-					"cluster-key": this.key,
-					"cluster-worker": this.name
-				}
-			});
-
-			res.body.pipe(loadProcess.stdin);
+			new Request(this.host, Cluster.api.registry.pull)
+				.append("application", application)
+				.append("version", version)
+				.append("key", this.key)
+				.append("worker", this.name)
+				.pipe(loadProcess.stdin);
 
 			loadProcess.on("exit", async () => {
 				finished("loaded ", this.logger.av(application, version));
+
 				done();
 			});
 		}));
@@ -220,7 +206,7 @@ export class WorkerServer {
 				"--expose", internalPort.toString(), // export container port to docker interface
 				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
 				"--name", instance, // tag container
-				"-d", // detatch
+				"-d", // detatch (run in background)
 				`${application}:${version}`
 			], {
 				stdio: [
@@ -258,17 +244,14 @@ export class WorkerServer {
 	}
 
 	async reportInstanceStart(application: string, version: string, env: string, instance: string, externalPort: number) {
-		await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.startedApplication}`, {
-			method: "POST",
-			headers: {
-				"cluster-instance": instance,
-				"cluster-worker": this.name,
-				"cluster-application": application,
-				"cluster-env": env,
-				"cluster-verison": version,
-				"cluster-port": externalPort
-			}
-		}).then(r => r.json());
+		await new Request(this.host, Cluster.api.registry.instances.report.stopped)
+			.append("instance", instance)
+			.append("worker", this.name)
+			.append("application", application)
+			.append("env", env)
+			.append("version", version)
+			.append("port", externalPort)
+			.send();
 	}
 
 	hasLoadedImage(application: string, version: string) {
@@ -384,12 +367,8 @@ export class WorkerServer {
 				
 				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
 
-				await fetch(`http://${this.host}:${Cluster.port}${Cluster.api.registry.stoppedApplication}`, {
-					method: "POST",
-					headers: {
-						"cluster-instance": instance
-					}
-				}).then(r => r.json());
+				await new Request(this.host, Cluster.api.registry.instances.report.stopped)
+					.append("instance", instance);
 
 				finished("stopped ", this.logger.i(instance));
 	

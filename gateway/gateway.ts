@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
 import * as fs from "fs";
 import { sha512 } from "js-sha512";
-import * as fetch from "node-fetch";
-import { Cluster } from "../cluster";
+import { Cluster } from "../shared/cluster";
 import { Logger } from "../log";
 import { GatewayPath } from "./paths";
+import { Request } from "../shared/request";
 
 export class GatewayServer {
 	clusterHost: string;
@@ -35,17 +35,11 @@ export class GatewayServer {
     }
 
     static async create(clusterHost: string, clusterKey: string, name: string, endpointHost: string) {
-        const response = await fetch(`http://${clusterHost}:${Cluster.port}${Cluster.api.registry.createGateway}`, {
-			method: "POST",
-			headers: {
-				"content-type": "application/json"
-			},
-			body: JSON.stringify({
-                key: clusterKey,
-                name,
-                host: endpointHost
-			})
-		}).then(r => r.json());
+		const response = await new Request(clusterHost, Cluster.api.registry.create.gateway)
+			.append("key", clusterKey)
+			.append("name", name)
+			.append("host", endpointHost)
+			.send<{ key }>();
 
 		if (!fs.existsSync(GatewayPath.rootDirectory)) {
 			fs.mkdirSync(GatewayPath.rootDirectory);
@@ -92,7 +86,7 @@ export class GatewayServer {
 					]);
 
 					await new Promise(done => {
-						process.on("exit", () => done());
+						process.on("exit", () => done(null));
 					});
 				}
 			}

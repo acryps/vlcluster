@@ -1,8 +1,7 @@
-import { appendFile } from "fs";
 import * as path from "path";
 
-import { Cluster } from "../cluster";
-import { Crypto } from "../crypto";
+import { Cluster } from "../shared/cluster";
+import { Crypto } from "../shared/crypto";
 
 export class GatewayPath {
     static get rootDirectory() {

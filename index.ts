@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as readline from "readline";
 import { RegistryServer } from "./registry/registry";
-import { Cluster } from "./cluster";
+import { Cluster } from "./shared/cluster";
 import { Daemon } from "./daemon";
 import { WorkerServer } from "./worker/worker";
 import { Client } from "./client/client";
@@ -11,6 +11,8 @@ import { Worker } from "cluster";
 import { GatewayServer } from "./gateway/gateway";
 import { CLI } from "./cli";
 import { Logger } from "./log";
+import { DeployClientController } from "./client/controllers/deploy";
+import { CreateRegistryController } from "./registry/controllers/create";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -40,7 +42,7 @@ export async function main() {
 					}
 
 					case "registry": {
-						const key = await RegistryServer.create(
+						const key = await CreateRegistryController.registry(
 							await CLI.getArgument(["-n", "--name"], "Registry name")
 						);
 
@@ -84,7 +86,7 @@ export async function main() {
 					}
 
 					default: {
-						console.error("invalid init");
+						console.error("invalid init command");
 						return process.exit(1);
 					}
 				}
@@ -93,7 +95,7 @@ export async function main() {
 			}
 
 			case "build": {
-				await Client.build(await CLI.getArgument([1, "-p", "--project-path"]) || ".");
+				await DeployClientController.build(await CLI.getArgument([1, "-p", "--project-path"]) || ".");
 
 				return process.exit(0);
 			}
@@ -101,7 +103,7 @@ export async function main() {
 			case "push": {
 				await new Client(
 					await CLI.getClusterName()
-				).push(
+				).deploy.push(
 					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 					await CLI.getArgument([2, "-v", "--version"], "Application version")
 				);
@@ -112,7 +114,7 @@ export async function main() {
 			case "upgrade": {
 				await new Client(
 					await CLI.getClusterName()
-				).upgrade(
+				).deploy.upgrade(
 					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 					await CLI.getArgument([2, "-v", "--version"], "Application version"),
 					await CLI.getArgument([3, "-e", "--env"], "Environnement")
@@ -124,7 +126,7 @@ export async function main() {
 			case "deploy": {
 				await new Client(
 					await CLI.getClusterName()
-				).deploy(
+				).deploy.deploy(
 					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
 					await CLI.getArgument([1, "-e", "--env"], "Environnement"),
 				);
@@ -137,7 +139,7 @@ export async function main() {
 					case "set": {
 						await new Client(
 							await CLI.getClusterName()
-						).set(
+						).variables.set(
 							await CLI.getArgument([2, "-n", "--name"], "Variable name"),
 							await CLI.getArgument([3, "-v", "--value"], "Variable name"),
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
@@ -150,7 +152,7 @@ export async function main() {
 					case "list": {
 						const vars = await new Client(
 							await CLI.getClusterName()
-						).getVariables(
+						).variables.list(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
@@ -174,6 +176,11 @@ export async function main() {
 
 						return process.exit();
 					}
+
+					default: {
+						console.error("invalid instance command");
+						return process.exit(1);
+					}
 				}
 			}
 
@@ -181,22 +188,33 @@ export async function main() {
 				switch (parameters.shift()) {
 					// vlcluster map domain <cluster> <host> <port> <application> <env>
 					case "domain": {
-						const client = new Client(parameters[0]);
-						await client.mapDomain(parameters[1], +parameters[2], parameters[3], parameters[4]);
+						await new Client(
+							await CLI.getClusterName()
+						).map.domain(
+							await CLI.getArgument(["-h", "--host"], "Host"),
+							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
+							await CLI.getArgument(["-a", "--application"], "Application"),
+							await CLI.getArgument(["-e", "--env"], "Environnement"),
+						);
 		
 						return process.exit(0);
 					}
 
 					// vlcluster map websocket <cluster> <host> <port> <path>
 					case "websocket": {
-						const client = new Client(parameters[0]);
-						await client.mapWebSocket(parameters[1], +parameters[2], parameters[3]);
+						await new Client(
+							await CLI.getClusterName()
+						).map.webSocket(
+							await CLI.getArgument(["-h", "--host"], "Host"),
+							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
+							await CLI.getArgument(["-l", "--location"], "Location (example: /socket)"),
+						);
 
 						return process.exit(0);
 					}
 
 					default: {
-						console.error("invalid map");
+						console.error("invalid map command");
 						return process.exit(1);
 					}
 				}
@@ -205,8 +223,12 @@ export async function main() {
 			case "ssl": {
 				switch (parameters.shift()) {
 					case "enable": {
-						const client = new Client(parameters[0]);
-						await client.enableSSL(parameters[1], +parameters[2] || 443);
+						await new Client(
+							await CLI.getClusterName()
+						).ssl.enable(
+							await CLI.getArgument(["-h", "--host"], "Host"),
+							+await CLI.getArgument(["-p", "--port"], "Port (default 443)"),
+						);
 
 						return process.exit(0);
 					}

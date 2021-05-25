@@ -10,24 +10,31 @@ export class Cluster {
 
 	static api = {
 		registry: {
-			createWorker: "/init/worker",
-			createClient: "/init/client",
-			createGateway: "/init/gateway",
+			create: {
+				worker: "/init/worker",
+				client: "/init/client",
+				gateway: "/init/gateway",
+			},
 			push: "/push",
 			upgrade: "/upgrade",
 			ping: "/ping",
 			pull: "/pull",
-			startedApplication: "/started",
-			stoppedApplication: "/stopped",
 			map: {
 				domain: "/map/domain",
 				webSocket: "/map/ws"
 			},
 			instances: {
-				list: "/instances/list"
+				list: "/instances/list",
+
+				report: {
+					started: "/instance/report/started",
+					stopped: "/instance/report/stopped"
+				}
 			},
-			set: "/set",
-			vars: "/vars",
+			variables: {
+				set: "/variables/set",
+				list: "/variables/list",
+			},
 			ssl: {
 				enable: "/ssl/enable"
 			}

@@ -1,7 +1,7 @@
 import * as express from "express";
 import * as fs from "fs";
 import { RegistryServer } from "./registry/registry";
-import { Cluster } from "./cluster";
+import { Cluster } from "./shared/cluster";
 import { WorkerServer } from "./worker/worker";
 import { Logger } from "./log";
 import { GatewayServer } from "./gateway/gateway";
