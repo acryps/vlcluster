@@ -12,7 +12,7 @@ export class CLI {
 
                     for (let i = 0; i < process.argv.length; i++) {
                         if (process.argv[i][0] == "-") {
-                            if (process.argv[i + 1] && process.argv[i + 1][0] == "-") {
+                            if (process.argv[i + 1] && process.argv[i + 1][0] != "-") {
                                 i++;
                             }
                         } else {
