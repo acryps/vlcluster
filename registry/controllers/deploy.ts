@@ -15,10 +15,10 @@ export class DeployRegistryController {
     constructor(private registry: RegistryServer) {}
 
     register(app) {
-        app.post(Cluster.api.registry.push, async (req, res) => {
-            const application = req.headers["cluster-application"];
-			const version = req.headers["cluster-version"];
-			const imageName = req.headers["cluster-image-name"];
+        new Handler(app, Cluster.api.registry.push, async (params, req) => {
+            const application = params.application;
+			const version = params.version;
+			const imageName = params["image-name"];
 
             if (!application) {
                 throw new Error("no application name");
@@ -39,9 +39,7 @@ export class DeployRegistryController {
             }
 
             if (fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
-                return res.json({
-					error: `version '${version}' of application '${application}' already exists!`
-				});
+                throw new Error(`version '${version}' of application '${application}' already exists!`);
             }
 
             fs.mkdirSync(RegistryPath.applicationVersionDirectory(application, version));
@@ -51,10 +49,10 @@ export class DeployRegistryController {
             req.pipe(fs.createWriteStream(RegistryPath.applicationVersionImageSourceFile(application, version)));
 
             return await new Promise(done => {
-                this.logger.log("saved ", this.logger.av(application, version), " image");
+				req.on("end", () => {
+					this.logger.log("saved ", this.logger.av(application, version), " image");
 
-                res.json({
-					data: {}
+					done({});
 				});
             });
         });
