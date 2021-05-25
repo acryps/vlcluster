@@ -39,7 +39,7 @@ export class DeployRegistryController {
             }
 
             if (fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
-                res.json({
+                return res.json({
 					error: `version '${version}' of application '${application}' already exists!`
 				});
             }

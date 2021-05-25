@@ -70,7 +70,7 @@ export class DeployClientController {
 				]
 			});
 
-			const request = await new Request(this.client.host, Cluster.api.registry.push)
+			/*const request = await new Request(this.client.host, Cluster.api.registry.push)
 				.auth(this.client.username, this.client.key)
 				.append("application", application)
 				.append("version", version)
@@ -79,8 +79,30 @@ export class DeployClientController {
 				.send();
 
 			await new Promise<void>(done => {
-				saveProcess.on("close", async () => {
+				saveProcess.on("exit", async () => {
 					await request;
+
+					finished(logger.av(application, version), " pushed");
+
+					done();
+				});
+			});*/
+
+			const uploader = require("node")(`http://${this.host}:${Cluster.port}${Cluster.api.registry.push}`, {
+				method: "POST", 
+				headers: {
+					"cluster-username": this.client.username,
+					"cluster-key": this.client.key,
+					"cluster-application": application,
+					"cluster-version": version,
+					"cluster-image-name": imageName
+				},
+				body: saveProcess.stdout
+			}).then(r => r.json());
+
+			await new Promise<void>(done => {
+				saveProcess.on("close", async () => {
+					await uploader;
 
 					finished(logger.av(application, version), " pushed");
 
