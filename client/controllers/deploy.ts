@@ -80,6 +80,8 @@ export class DeployClientController {
 
 			await new Promise<void>(done => {
 				saveProcess.on("close", async () => {
+					await request;
+
 					finished(logger.av(application, version), " pushed");
 
 					done();
