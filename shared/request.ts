@@ -42,7 +42,13 @@ export class Request {
     }
 
     send<TResult = {}>() {
-        return this.constructRequest().then(r => r.json()) as TResult;
+        return this.constructRequest().then(r => r.json()).then(res => {
+            if ("error" in res) {
+                throw new Error(res.error);
+            } else {
+                return res.data as TResult;
+            }
+        });
     }
 
     async pipe(stream) {
