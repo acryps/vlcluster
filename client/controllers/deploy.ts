@@ -70,7 +70,7 @@ export class DeployClientController {
 				]
 			});
 
-			const request = await new Request(this.client.host, Cluster.api.registry.push)
+			await new Request(this.client.host, Cluster.api.registry.push)
 				.auth(this.client.username, this.client.key)
 				.append("application", application)
 				.append("version", version)
