@@ -70,7 +70,7 @@ export class DeployClientController {
 				]
 			});
 
-			await new Request(this.client.host, Cluster.api.registry.push)
+			const request = new Request(this.client.host, Cluster.api.registry.push)
 				.auth(this.client.username, this.client.key)
 				.append("application", application)
 				.append("version", version)
@@ -78,7 +78,9 @@ export class DeployClientController {
 				.appendBody(saveProcess.stdout)
 				.send();
 
-			await new Promise<void>(done => {
+			await new Promise<void>((done, reject) => {
+				request.catch(error => reject(error));
+
 				saveProcess.on("close", async () => {
 					finished(logger.av(application, version), " pushed");
 
