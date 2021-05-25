@@ -244,7 +244,7 @@ export class WorkerServer {
 	}
 
 	async reportInstanceStart(application: string, version: string, env: string, instance: string, externalPort: number) {
-		await new Request(this.host, Cluster.api.registry.instances.report.stopped)
+		await new Request(this.host, Cluster.api.registry.instances.report.started)
 			.append("instance", instance)
 			.append("worker", this.name)
 			.append("application", application)
