@@ -52,7 +52,7 @@ export class Request {
     }
 
     async pipe(stream) {
-        const request = this.constructRequest();
+        const request = await this.constructRequest();
 
         request.body.pipe(stream);
     }
