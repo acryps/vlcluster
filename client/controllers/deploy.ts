@@ -79,9 +79,7 @@ export class DeployClientController {
 				.send();
 
 			await new Promise<void>(done => {
-				saveProcess.on("exit", async () => {
-					await request;
-
+				saveProcess.on("close", async () => {
 					finished(logger.av(application, version), " pushed");
 
 					done();

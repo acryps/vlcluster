@@ -34,8 +34,6 @@ export class Request {
     }
 
     private constructRequest() {
-        console.log(`! ${this.api} ${Object.keys(this.data).join(", ")} ${this.body ? `${this.body}`.substr(0, 10) : "#"}`)
-
         return fetch(`http://${this.endpoint}:${Cluster.port}${this.api}`, {
             method: "POST", 
             headers: this.data,
