@@ -88,7 +88,7 @@ export class DeployClientController {
 				});
 			});*/
 
-			const uploader = require("node")(`http://${this.host}:${Cluster.port}${Cluster.api.registry.push}`, {
+			const uploader = require("node")(`http://${this.client.host}:${Cluster.port}${Cluster.api.registry.push}`, {
 				method: "POST", 
 				headers: {
 					"cluster-username": this.client.username,
