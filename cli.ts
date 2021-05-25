@@ -69,7 +69,7 @@ export class CLI {
 
     static async getClusterName(): Promise<string> {
         if (process.argv.includes("-c") || process.argv.includes("--cluster")) {
-            const cluster = await this.getArgument(["c", "cluster"]);
+            const cluster = await this.getArgument(["-c", "--cluster"]);
             this.setActiveCluster(cluster);
 
             return cluster;
@@ -78,7 +78,7 @@ export class CLI {
         try {
             return fs.readFileSync(Cluster.activeClusterNameFile).toString();
         } catch {
-            const cluster = await this.getArgument(["c", "cluster"], "Cluster name");
+            const cluster = await this.getArgument(["-c", "--cluster"], "Cluster name");
             this.setActiveCluster(cluster);
 
             return cluster;
