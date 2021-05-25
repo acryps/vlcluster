@@ -78,6 +78,6 @@ export class Cluster {
 	}
 
 	static get version() {
-		return require("../package.json").version;
+		return require("../../package.json").version;
 	}
 }
