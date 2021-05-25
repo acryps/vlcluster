@@ -2,7 +2,7 @@ import { Cluster } from "./cluster";
 import * as fetch from "node-fetch";
 
 export class Request {
-    data: {};
+    data = {};
     body: any;
 
     constructor(private endpoint: string, private api: string) {}
