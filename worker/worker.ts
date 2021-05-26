@@ -198,6 +198,8 @@ export class WorkerServer {
 
 			for (let variable of variables) {
 				variableArguments.push("--env", `${variable.name}=${variable.value}`);
+
+				this.logger.log(`${variable.name} = ${variable.value}`);
 			}
 
 			const runProcess = spawn("docker", [
