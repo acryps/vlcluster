@@ -47,5 +47,7 @@ export class RegistryServer {
 		this.deploy.register(app);
 		this.instances.register(app);
 		this.variables.register(app);
+		this.ssl.register(app);
+		this.map.register(app);
 	}
 }
