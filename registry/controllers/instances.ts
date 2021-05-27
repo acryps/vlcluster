@@ -256,6 +256,14 @@ export class InstancesRegistryController {
 
 				this.logger.log("stopped ", this.logger.wi(workerName, instance));
 
+                for (let worker of this.runningWorkers) {
+                    for (let runningInstance in worker.instances) {
+                        if (runningInstance == instance) {
+                            delete worker.instances[instance];
+                        }
+                    }
+                }
+
 				done();
 			};
 		});
