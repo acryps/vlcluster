@@ -4,7 +4,7 @@ import { cpuUsage } from "os-utils";
 import { spawn } from "child_process";
 import { Crypto } from "../shared/crypto";
 import { WorkerInstance } from "./instance-state";
-import { Logger } from "../log";
+import { Logger } from "../shared/log";
 import { WorkerPath } from "./paths";
 import { StartRequest } from "../registry/messages/start";
 import { StopRequest } from "../registry/messages/stop";

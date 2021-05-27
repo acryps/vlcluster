@@ -1,7 +1,7 @@
 import * as fs from "fs";
 
 import { Cluster } from "../shared/cluster";
-import { Logger } from "../log";
+import { Logger } from "../shared/log";
 import { InstancesClientController } from "./controllers/instances";
 import { Request } from "../shared/request";
 import { ClientPath } from "./paths";

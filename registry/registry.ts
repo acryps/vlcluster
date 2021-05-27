@@ -2,7 +2,7 @@ import { Crypto } from "../shared/crypto";
 import { Cluster } from "../shared/cluster";
 import * as fetch from "node-fetch";
 import * as fs from "fs";
-import { Logger } from "../log";
+import { Logger } from "../shared/log";
 import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
 import { StartRequest } from "./messages/start";

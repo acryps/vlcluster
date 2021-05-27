@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import path = require("path");
 import fs = require("fs");
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { Cluster } from "../../shared/cluster";
 import { Request } from "../../shared/request";
 import { Client } from "../client";

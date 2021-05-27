@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { RegistryServer } from "./registry/registry";
 import { Cluster } from "./shared/cluster";
 import { WorkerServer } from "./worker/worker";
-import { Logger } from "./log";
+import { Logger } from "./shared/log";
 import { GatewayServer } from "./gateway/gateway";
 
 export class Daemon {

@@ -1,4 +1,4 @@
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { Cluster } from "../../shared/cluster";
 import { Crypto } from "../../shared/crypto";
 import { StartRequest } from "../messages/start";

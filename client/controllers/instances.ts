@@ -1,6 +1,6 @@
 import { Client } from "../client";
 import * as fetch from "node-fetch";
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { Cluster } from "../../shared/cluster";
 import { Request } from "../../shared/request";
 

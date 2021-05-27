@@ -1,4 +1,4 @@
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { Crypto } from "../../shared/crypto";
 import { RegistryPath } from "../paths";
 import { RegistryServer } from "../registry";

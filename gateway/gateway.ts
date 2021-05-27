@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import * as fs from "fs";
 import { sha512 } from "js-sha512";
 import { Cluster } from "../shared/cluster";
-import { Logger } from "../log";
+import { Logger } from "../shared/log";
 import { GatewayPath } from "./paths";
 import { Request } from "../shared/request";
 

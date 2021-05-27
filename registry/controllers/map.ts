@@ -1,4 +1,4 @@
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { RegistryServer } from "../registry";
 import fs = require("fs");
 import { Crypto } from "../../shared/crypto";

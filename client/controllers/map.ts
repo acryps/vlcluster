@@ -1,4 +1,4 @@
-import { Logger } from "../../log";
+import { Logger } from "../../shared/log";
 import { Cluster } from "../../shared/cluster";
 import { Request } from "../../shared/request";
 import { Client } from "../client";
