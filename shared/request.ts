@@ -8,7 +8,9 @@ export class Request {
     constructor(private endpoint: string, private api: string) {}
 
     append(key: string, value: string | number) {
-        this.data[`cluster-${key}`] = value;
+        if (value !== null && value !== undefined) {
+            this.data[`cluster-${key}`] = value;
+        }
 
         return this;
     }
