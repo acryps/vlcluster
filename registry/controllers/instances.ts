@@ -165,8 +165,6 @@ export class InstancesRegistryController {
             const application = params.application;
             const env = params.env;
 
-            const instances = [];
-
             for (let worker of this.runningWorkers) {
                 for (let id in worker.instances) {
                     const instance = worker.instances[id];

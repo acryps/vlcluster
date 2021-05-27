@@ -184,10 +184,10 @@ export async function main() {
 
 						const logger = new Logger("restart");
 
-						await logger.process(["restarting ", logger.ae(application, env)], async done => {
+						await logger.process(["restarting ", logger.ae(application || "*", env || "*")], async done => {
 							await client.instances.restart(application, env);
 
-							done();
+							done("restarted", logger.ae(application || "*", env || "*"));
 						});
 
 						return process.exit();
