@@ -254,7 +254,7 @@ export async function main() {
 			}
 		}
 	} catch (e) {
-		process.stderr.write(`\x1b[1;31m\x1b[1;30m${e.message || e}\x1b[0m`);
+		process.stderr.write(`\x1b[48;5;160m\x1b[38;5;231m${e.message || e}\x1b[0m`);
 
 		process.exit(1);
 	}
