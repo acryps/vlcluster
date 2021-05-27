@@ -254,7 +254,7 @@ export async function main() {
 			}
 		}
 	} catch (e) {
-		console.error(e);
+		console.error(e.message);
 		process.exit(1);
 	}
 }
