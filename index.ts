@@ -249,7 +249,7 @@ export async function main() {
 			}
 
 			default: {
-				console.error("invalid command");
+				console.error("invalid vlcluster command");
 				return process.exit(1);
 			}
 		}
