@@ -10,7 +10,7 @@ import { Client } from "./client/client";
 import { Worker } from "cluster";
 import { GatewayServer } from "./gateway/gateway";
 import { CLI } from "./cli";
-import { Logger } from "./log";
+import { Logger } from "./shared/log";
 import { DeployClientController } from "./client/controllers/deploy";
 import { CreateRegistryController } from "./registry/controllers/create";
 
@@ -254,7 +254,8 @@ export async function main() {
 			}
 		}
 	} catch (e) {
-		console.error(e.message);
+		process.stderr.write(`\x1b[41;5;190m\x1b[1;30m${e.message || e}\x1b[0m`);
+
 		process.exit(1);
 	}
 }
