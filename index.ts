@@ -177,6 +177,22 @@ export async function main() {
 						return process.exit();
 					}
 
+					case "restart": {
+						const client = new Client(await CLI.getClusterName());
+						const application = await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]);
+						const env = await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]);
+
+						const logger = new Logger("restart");
+
+						await logger.process(["restarting ", logger.ae(application, env)], async done => {
+							await client.instances.restart(application, env);
+
+							done();
+						});
+
+						return process.exit();
+					}
+
 					default: {
 						console.error("invalid instance command");
 						return process.exit(1);

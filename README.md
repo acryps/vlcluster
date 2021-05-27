@@ -31,6 +31,7 @@ vlcluster var list [-c | --cluster <registry hostname>] [-a | --application [ <
 ### Instance Management
 ```
 vlcluster instance list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster instance restart [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
 
 ### Domain Mapping

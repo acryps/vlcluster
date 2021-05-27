@@ -24,4 +24,12 @@ export class InstancesClientController {
 
         return instances;
     }
+
+    async restart(application: string, env: string) {
+        await new Request(this.client.host, Cluster.api.registry.instances.restart)
+            .auth(this.client.username, this.client.key)
+            .append("application", application)
+            .append("env", env)
+            .send();
+    }
 }

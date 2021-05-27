@@ -25,6 +25,7 @@ export class Cluster {
 			},
 			instances: {
 				list: "/instances/list",
+				restart: "/instances/restart",
 
 				report: {
 					started: "/instance/report/started",

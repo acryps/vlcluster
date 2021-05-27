@@ -59,8 +59,6 @@ export class VariablesRegistryController {
 				}
 			}
 
-			console.log(add ? "ADD" : "NOADD", variable.name, variable.value, `${application}=${variable.application}`, `${env}=${variable.env}`);
-			
 			if (add) {
 				variables.push(variable);
 			}

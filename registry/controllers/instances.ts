@@ -159,11 +159,38 @@ export class InstancesRegistryController {
             }
 
             return instances;
-        })
+        });
+
+        new Handler(app, Cluster.api.registry.instances.restart, async params => {
+            const application = params.application;
+            const env = params.env;
+
+            const instances = [];
+
+            for (let worker of this.runningWorkers) {
+                for (let id in worker.instances) {
+                    const instance = worker.instances[id];
+                    let restart = true;
+
+                    if (application && instance.application != application) {
+                        restart = false;
+                    }
+
+                    if (env && instance.env != env) {
+                        restart = false;
+                    }
+
+                    if (restart) {
+                        await this.start(instance.application, instance.version, instance.env);
+                        await this.stopInstance(instance.application, instance.version, instance.env, instance.worker.name, instance.id);
+                    }
+                }
+            }
+        });
     }
 
     start(application: string, version: string, env: string) {
-		const instance = Crypto.createId();
+		const instance = Crypto.createId(application, version, env);
 
 		return new Promise<StartRequest>(done => {
 			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
