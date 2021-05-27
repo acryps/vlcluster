@@ -58,6 +58,8 @@ export class VariablesRegistryController {
 					add = false;
 				}
 			}
+
+			console.log(add ? "ADD" : "NOADD", variable.name, variable.value);
 			
 			if (add) {
 				variables.push(variable);
