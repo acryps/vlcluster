@@ -33,21 +33,20 @@ export class VariablesRegistryController {
     }
 
     list(application: string, env: string) {
-		const variables = [];
+		const variables: Variable[] = [];
 		
 		for (let id of fs.readdirSync(RegistryPath.variablesDirectory)) {
 			let add = true;
 
-			const variable = {
-				id,
-				name: fs.readFileSync(RegistryPath.variableNameFile(id)).toString(),
-				value: fs.readFileSync(RegistryPath.variableValueFile(id)).toString(),
-			} as { id, name, value, application?, env? };
+			const variable = new Variable();
+			variable.id = id;
+			variable.name = fs.readFileSync(RegistryPath.variableNameFile(id)).toString();
+			variable.value = fs.readFileSync(RegistryPath.variableValueFile(id)).toString();
 
 			if (fs.existsSync(RegistryPath.variableApplicationFile(id))) {
 				variable.application = fs.readFileSync(RegistryPath.variableApplicationFile(id)).toString();
 
-				if (application && application != variable.application) {
+				if (application && variable.application && application != variable.application) {
 					add = false;
 				}
 			}
@@ -55,7 +54,7 @@ export class VariablesRegistryController {
 			if (fs.existsSync(RegistryPath.variableEnvFile(id))) {
 				variable.env = fs.readFileSync(RegistryPath.variableEnvFile(id)).toString();
 
-				if (env && env != variable.env) {
+				if (env && variable.env && env != variable.env) {
 					add = false;
 				}
 			}
@@ -66,6 +65,32 @@ export class VariablesRegistryController {
 		}
 		
 		return variables;
+	}
+
+	constructActive(application: string, env: string) {
+		const variables = this.list(application, env).sort((a, b) => {
+			if (a.name == b.name) {
+				if (a.application == b.application) {
+					if (a.env == b.env) {
+						return 0;
+					} else {
+						return a.env ? 1 : -1;
+					}
+				} else {
+					return a.application ? 1 : -1;
+				}
+			} else {
+				return a.name > b.name ? 1 : -1;
+			}
+		});
+
+		const constructed = {};
+
+		for (let variable of variables) {
+			constructed[variable.name] = variable.value;
+		}
+
+		return constructed;
 	}
 
     async set(name: string, value: string, application: string, env: string) {
@@ -84,4 +109,12 @@ export class VariablesRegistryController {
 			fs.writeFileSync(RegistryPath.variableEnvFile(id), env);
 		}
 	}
+}
+
+export class Variable {
+	id: string;
+	name: string;
+	value: string;
+	application?: string;
+	env?: string
 }

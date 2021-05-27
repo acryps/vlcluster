@@ -185,7 +185,7 @@ export class InstancesRegistryController {
 			request.version = version;
 			request.env = env;
 			request.instance = instance;
-			request.variables = this.registry.variables.list(application, env);
+			request.variables = this.registry.variables.constructActive(application, env);
 
 			this.pendingStartRequests.push(request);
 
