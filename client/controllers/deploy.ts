@@ -11,7 +11,7 @@ export class DeployClientController {
 
     constructor(public client: Client) {}
 
-    static async build(directory: string, dockerfile: string) {
+    static async build(directory: string, dockerfile?: string) {
 		const logger = new Logger("build");
 		const packagePath = path.join(directory, "package.json");
 
