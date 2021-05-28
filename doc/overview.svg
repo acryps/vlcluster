@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="548px" height="246px" viewBox="0 0 548 246" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Artboard</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="112" height="102"></rect>
+    </defs>
+    <g id="Artboard" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" stroke="#000000" fill="#FFFFFF" opacity="0.5" x="426.5" y="94.5" width="121" height="51"></rect>
+        <rect id="Rectangle" stroke="#000000" fill="#FFFFFF" x="414.5" y="83.5" width="121" height="51"></rect>
+        <rect id="Rectangle" fill="#151AAB" x="414" y="0" width="122" height="43"></rect>
+        <text id="Gateways" font-family="SFMono-Bold, SF Mono" font-size="12" font-weight="bold" fill="#000000">
+            <tspan x="445" y="113">Gateways</tspan>
+        </text>
+        <g id="Rectangle-3" transform="translate(212.000000, 67.000000)">
+            <g id="Group-2">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <rect stroke="#000000" x="-0.5" y="-0.5" width="113" height="103"></rect>
+                <g opacity="0.37478783" mask="url(#mask-2)">
+                    <g transform="translate(9.000000, 87.000000)">
+                        <rect id="Rectangle" stroke="#000000" stroke-width="1" fill="#FFFFFF" fill-rule="evenodd" x="0.5" y="0.5" width="92" height="23"></rect>
+                        <text id="Instance" stroke="none" fill="none" font-family="SFMono-Bold, SF Mono" font-size="10" font-weight="bold">
+                            <tspan x="10.3333333" y="16" fill="#000000">Instance</tspan>
+                        </text>
+                    </g>
+                </g>
+            </g>
+            <g transform="translate(9.000000, 29.000000)" id="Group-2">
+                <rect id="Rectangle" stroke="#000000" fill="#FFFFFF" x="0.5" y="0.5" width="92" height="23"></rect>
+                <text id="Instance" font-family="SFMono-Bold, SF Mono" font-size="10" font-weight="bold" fill="#000000">
+                    <tspan x="10.3333333" y="16">Instance</tspan>
+                </text>
+            </g>
+            <g opacity="0.720182873" transform="translate(9.000000, 58.000000)" id="Group">
+                <g id="Group-2">
+                    <rect id="Rectangle" stroke="#000000" fill="#FFFFFF" x="0.5" y="0.5" width="92" height="23"></rect>
+                    <text id="Instance" font-family="SFMono-Bold, SF Mono" font-size="10" font-weight="bold" fill="#000000">
+                        <tspan x="10.3333333" y="16">Instance</tspan>
+                    </text>
+                </g>
+            </g>
+        </g>
+        <text id="Workers" font-family="SFMono-Bold, SF Mono" font-size="12" font-weight="bold" fill="#000000">
+            <tspan x="221" y="87">Workers</tspan>
+        </text>
+        <text id="Users" font-family="SFMono-Bold, SF Mono" font-size="12" font-weight="bold" fill="#FFFFFF">
+            <tspan x="456" y="26">Users</tspan>
+        </text>
+        <path id="Line" d="M476,43 L476,75 L480,75 L475.5,84 L471,75 L475,75 L475,43 L476,43 Z" fill="#151AAB" fill-rule="nonzero"></path>
+        <path id="Line" d="M323,104 L323,108 L414,108 L414,109 L323,109 L323,113 L314,108.5 L323,104 Z" fill="#151AAB" fill-rule="nonzero"></path>
+        <rect id="Rectangle" fill="#00894D" x="0" y="194" width="122" height="52"></rect>
+        <text id="Developer-(Client)" font-family="SFMono-Bold, SF Mono" font-size="12" font-weight="bold" fill="#FFFFFF">
+            <tspan x="27.6191406" y="219">Developer</tspan>
+            <tspan x="41.21875" y="233" font-size="8">(Client)</tspan>
+        </text>
+        <rect id="Rectangle" stroke="#000000" fill="#FFFFFF" x="0.5" y="66.5" width="121" height="51"></rect>
+        <text id="Registry" font-family="SFMono-Bold, SF Mono" font-size="12" font-weight="bold" fill="#000000">
+            <tspan x="31" y="96">Registry</tspan>
+        </text>
+        <text id="Web-Requests" font-family="SFMono-Heavy, SF Mono" font-size="7" font-weight="800" fill="#151AAB">
+            <tspan x="481" y="53">Web Requests</tspan>
+        </text>
+        <path id="Line" d="M61.5,118 L66,127 L62,127 L62,195 L61,195 L61,127 L57,127 L61.5,118 Z" fill="#00894D" fill-rule="nonzero"></path>
+        <text id="Docker-Containers" font-family="SFMono-Heavy, SF Mono" font-size="7" font-weight="800" fill="#00894D">
+            <tspan x="67" y="189">Docker Containers</tspan>
+        </text>
+        <path id="Line" d="M202,88 L211,92.5 L202,97 L202,93 L122,93 L122,92 L202,92 L202,88 Z" fill="#00894D" fill-rule="nonzero"></path>
+    </g>
+</svg>
