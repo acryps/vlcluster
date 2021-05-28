@@ -1,5 +1,5 @@
 # vlcluster
-[![npm version](https://badge.fury.io/js/vlcluster.svg)](https://badge.fury.io/js/vlcluster)
+[![npm version](http://badge.acryps.com/npm/vlcluster)](http://badge.acryps.com/go/npm/vlcluster)
 
 Simple docker and nginx-based cluster designed for multi-env web applications.
 
