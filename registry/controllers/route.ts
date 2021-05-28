@@ -7,30 +7,30 @@ import { Handler } from "../../shared/handler";
 import { Cluster } from "../../shared/cluster";
 import { Request } from "../../shared/request";
 
-export class MapRegistryController {
-    logger = new Logger("map");
+export class RouteRegistryController {
+    logger = new Logger("route");
 
     constructor(private registry: RegistryServer) {}
 
     register(app) {
-        new Handler(app, Cluster.api.registry.map.domain, async params => {
+        new Handler(app, Cluster.api.registry.route.domain, async params => {
 			const host = params.host;
 			const port = params.port;
 			const application = params.application;
 			const env = params.env;
 
-			this.logger.log("mapping ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
+			this.logger.log("routing ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
 			await this.domain(host, port, application, env);
 
 			return {};
 		});
 
-		new Handler(app, Cluster.api.registry.map.webSocket, async params => {
+		new Handler(app, Cluster.api.registry.route.webSocket, async params => {
 			const host = params.host;
 			const port = +params.port;
 			const path = params.websocket;
 
-			this.logger.log("mapping ", this.logger.hp(host, port), " on ", path);
+			this.logger.log("routing ", this.logger.hp(host, port), " on ", path);
 			
 			return await this.webSocket(host, port, path);
 		});
@@ -39,33 +39,33 @@ export class MapRegistryController {
     async domain(host: string, port: number, application: string, env: string) {
 		const id = Crypto.createId();
 
-		fs.mkdirSync(RegistryPath.mappingDirectory(id));
+		fs.mkdirSync(RegistryPath.routeDirectory(id));
 
-		fs.writeFileSync(RegistryPath.mappingApplicationFile(id), application);
-		fs.writeFileSync(RegistryPath.mappingEnvFile(id), env);
-		fs.writeFileSync(RegistryPath.mappingHostFile(id), host);
-		fs.writeFileSync(RegistryPath.mappingPortFile(id), port + "");
+		fs.writeFileSync(RegistryPath.routeApplicationFile(id), application);
+		fs.writeFileSync(RegistryPath.routeEnvFile(id), env);
+		fs.writeFileSync(RegistryPath.routeHostFile(id), host);
+		fs.writeFileSync(RegistryPath.routePortFile(id), port + "");
 
 		await this.updateGateways();
 	}
 
 	async webSocket(socketHost: string, socketPort: number, socketPath: string) {
-		for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
-			const host = fs.readFileSync(RegistryPath.mappingHostFile(id)).toString();
-			const port = +fs.readFileSync(RegistryPath.mappingPortFile(id)).toString();
+		for (let id of fs.readdirSync(RegistryPath.routesDirectory)) {
+			const host = fs.readFileSync(RegistryPath.routeHostFile(id)).toString();
+			const port = +fs.readFileSync(RegistryPath.routePortFile(id)).toString();
 
 			if (host == socketHost && port == socketPort) {
-				if (!fs.existsSync(RegistryPath.mappingWebSocketsDirectory(id))) {
-					fs.mkdirSync(RegistryPath.mappingWebSocketsDirectory(id));
+				if (!fs.existsSync(RegistryPath.routeWebSocketsDirectory(id))) {
+					fs.mkdirSync(RegistryPath.routeWebSocketsDirectory(id));
 				}
 
-				fs.writeFileSync(RegistryPath.mappingWebSocketFile(id, Crypto.nameHash(socketPath)), socketPath);
+				fs.writeFileSync(RegistryPath.routeWebSocketFile(id, Crypto.nameHash(socketPath)), socketPath);
 
 				await this.updateGateways();
 
 				return {
-					application: fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString(),
-					env: fs.readFileSync(RegistryPath.mappingEnvFile(id)).toString()
+					application: fs.readFileSync(RegistryPath.routeApplicationFile(id)).toString(),
+					env: fs.readFileSync(RegistryPath.routeEnvFile(id)).toString()
 				};
 			}
 		}
@@ -78,11 +78,11 @@ export class MapRegistryController {
 
 		const routes = [];
 
-		for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
-			const host = fs.readFileSync(RegistryPath.mappingHostFile(id)).toString();
-			const port = +fs.readFileSync(RegistryPath.mappingPortFile(id)).toString();
-			const env = fs.readFileSync(RegistryPath.mappingEnvFile(id)).toString();
-			const application = fs.readFileSync(RegistryPath.mappingApplicationFile(id)).toString();
+		for (let id of fs.readdirSync(RegistryPath.routesDirectory)) {
+			const host = fs.readFileSync(RegistryPath.routeHostFile(id)).toString();
+			const port = +fs.readFileSync(RegistryPath.routePortFile(id)).toString();
+			const env = fs.readFileSync(RegistryPath.routeEnvFile(id)).toString();
+			const application = fs.readFileSync(RegistryPath.routeApplicationFile(id)).toString();
 
 			const latestVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
 
@@ -108,9 +108,9 @@ export class MapRegistryController {
 				}
 			}
 
-			if (fs.existsSync(RegistryPath.mappingWebSocketsDirectory(id))) {
-				for (let socket of fs.readdirSync(RegistryPath.mappingWebSocketsDirectory(id))) {
-					sockets.push(fs.readFileSync(RegistryPath.mappingWebSocketFile(id, socket)).toString());
+			if (fs.existsSync(RegistryPath.routeWebSocketsDirectory(id))) {
+				for (let socket of fs.readdirSync(RegistryPath.routeWebSocketsDirectory(id))) {
+					sockets.push(fs.readFileSync(RegistryPath.routeWebSocketFile(id, socket)).toString());
 				}
 			}
 
@@ -124,8 +124,8 @@ export class MapRegistryController {
 					sockets
 				} as any;
 
-				if (fs.existsSync(RegistryPath.mappingSSLFile(id))) {
-					route.ssl = +fs.readFileSync(RegistryPath.mappingSSLFile(id)).toString();
+				if (fs.existsSync(RegistryPath.routeSSLFile(id))) {
+					route.ssl = +fs.readFileSync(RegistryPath.routeSSLFile(id)).toString();
 				}
 
 				routes.push(route);

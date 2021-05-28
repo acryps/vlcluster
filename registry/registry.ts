@@ -1,19 +1,12 @@
-import { Crypto } from "../shared/crypto";
-import { Cluster } from "../shared/cluster";
-import * as fetch from "node-fetch";
 import * as fs from "fs";
 import { Logger } from "../shared/log";
-import { ChildInstance, ChildWorker } from "./worker";
 import { RegistryPath } from "./paths";
-import { StartRequest } from "./messages/start";
-import { StopRequest } from "./messages/stop";
-import { threadId } from "worker_threads";
 import { CreateRegistryController } from "./controllers/create";
 import { DeployRegistryController } from "./controllers/deploy";
 import { InstancesRegistryController } from "./controllers/instances";
 import { VariablesRegistryController } from "./controllers/variables";
 import { SSLRegistryController } from "./controllers/ssl";
-import { MapRegistryController } from "./controllers/map";
+import { RouteRegistryController } from "./controllers/route";
 
 export class RegistryServer {
 	key: string;
@@ -24,7 +17,7 @@ export class RegistryServer {
 	instances = new InstancesRegistryController(this);
 	variables = new VariablesRegistryController(this);
 	ssl = new SSLRegistryController(this);
-	map = new MapRegistryController(this);
+	route = new RouteRegistryController(this);
 
 	constructor() {
 		if (!RegistryServer.isInstalled()) {
@@ -48,6 +41,6 @@ export class RegistryServer {
 		this.instances.register(app);
 		this.variables.register(app);
 		this.ssl.register(app);
-		this.map.register(app);
+		this.route.register(app);
 	}
 }

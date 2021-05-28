@@ -20,40 +20,40 @@ export class RegistryPath {
 		return path.join(this.rootDirectory, "applications");
 	}
 
-	static get mappingsDirectory() {
+	static get routesDirectory() {
 		return path.join(this.rootDirectory, "domains");
 	}
 
-	static mappingDirectory(id: string) {
-		return path.join(this.mappingsDirectory, id);
+	static routeDirectory(id: string) {
+		return path.join(this.routesDirectory, id);
 	}
 
-	static mappingHostFile(id: string) {
-		return path.join(this.mappingDirectory(id), "host");
+	static routeHostFile(id: string) {
+		return path.join(this.routeDirectory(id), "host");
 	}
 
-	static mappingPortFile(id: string) {
-		return path.join(this.mappingDirectory(id), "port");
+	static routePortFile(id: string) {
+		return path.join(this.routeDirectory(id), "port");
 	}
 
-	static mappingApplicationFile(id: string) {
-		return path.join(this.mappingDirectory(id), "application");
+	static routeApplicationFile(id: string) {
+		return path.join(this.routeDirectory(id), "application");
 	}
 
-	static mappingEnvFile(id: string) {
-		return path.join(this.mappingDirectory(id), "env");
+	static routeEnvFile(id: string) {
+		return path.join(this.routeDirectory(id), "env");
 	}
 
-	static mappingSSLFile(id: string) {
-		return path.join(this.mappingDirectory(id), "ssl");
+	static routeSSLFile(id: string) {
+		return path.join(this.routeDirectory(id), "ssl");
 	}
 
-	static mappingWebSocketsDirectory(id: string) {
-		return path.join(this.mappingDirectory(id), "web-sockets");
+	static routeWebSocketsDirectory(id: string) {
+		return path.join(this.routeDirectory(id), "web-sockets");
 	}
 
-	static mappingWebSocketFile(id: string, socketPath: string) {
-		return path.join(this.mappingWebSocketsDirectory(id), socketPath);
+	static routeWebSocketFile(id: string, socketPath: string) {
+		return path.join(this.routeWebSocketsDirectory(id), socketPath);
 	}
 
 	static get gatewaysDirectory() {

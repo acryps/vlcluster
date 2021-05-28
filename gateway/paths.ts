@@ -44,20 +44,20 @@ export class GatewayPath {
 		return path.join(this.gatewayDomainDirectory(name, domain), "hostname");
     }
 
-    static gatewayDomainMappingsDirectory(name: string, domain: string) {
+    static gatewayDomainRoutingDirectory(name: string, domain: string) {
 		return path.join(this.gatewayDomainDirectory(name, domain), "mappings");
     }
 
-    static gatewayDomainMappingDirectory(name: string, domain: string, application: string, env: string) {
-		return path.join(this.gatewayDomainMappingsDirectory(name, domain), Crypto.nameHash(domain, application, env));
+    static gatewayDomainRouteDirectory(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainRoutingDirectory(name, domain), Crypto.nameHash(domain, application, env));
     }
 
-    static gatewayDomainMappingApplicationFile(name: string, domain: string, application: string, env: string) {
-		return path.join(this.gatewayDomainMappingDirectory(name, domain, application, env), "application");
+    static gatewayDomainRouteApplicationFile(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainRouteDirectory(name, domain, application, env), "application");
     }
 
-    static gatewayDomainMappingEnvFile(name: string, domain: string, application: string, env: string) {
-		return path.join(this.gatewayDomainMappingDirectory(name, domain, application, env), "env");
+    static gatewayDomainRouteEnvFile(name: string, domain: string, application: string, env: string) {
+		return path.join(this.gatewayDomainRouteDirectory(name, domain, application, env), "env");
 	}
 	
 	static letsencryptRoot(host: string) {

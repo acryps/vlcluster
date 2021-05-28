@@ -34,10 +34,10 @@ vlcluster instance list [-c | --cluster <registry hostname>] [-a | --applicatio
 vlcluster instance restart [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
 
-### Domain Mapping
+### Routing
 ```
-vlcluster map domain [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>] [-a | --application <application>] [-h | --host <host>] [-e | --env <env>]
-vlcluster map websocket [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>] [-l | --location <location>]
+vlcluster route domain [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>] [-a | --application <application>] [-h | --host <host>] [-e | --env <env>]
+vlcluster route websocket [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>] [-l | --location <location>]
 ```
 
 ### SSL 

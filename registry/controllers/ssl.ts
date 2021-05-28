@@ -15,9 +15,9 @@ export class SSLRegistryController {
             const host = params.host;
             const port = params.port;
 
-            for (let id of fs.readdirSync(RegistryPath.mappingsDirectory)) {
-				if (fs.readFileSync(RegistryPath.mappingHostFile(id)).toString() == host) {
-					fs.writeFileSync(RegistryPath.mappingSSLFile(id), port);
+            for (let id of fs.readdirSync(RegistryPath.routesDirectory)) {
+				if (fs.readFileSync(RegistryPath.routeHostFile(id)).toString() == host) {
+					fs.writeFileSync(RegistryPath.routeSSLFile(id), port);
 
 					return {};
 				}

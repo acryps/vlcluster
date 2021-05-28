@@ -203,13 +203,12 @@ export async function main() {
 				}
 			}
 
-			case "map": {
+			case "route": {
 				switch (parameters.shift()) {
-					// vlcluster map domain <cluster> <host> <port> <application> <env>
 					case "domain": {
 						await new Client(
 							await CLI.getClusterName()
-						).map.domain(
+						).route.domain(
 							await CLI.getArgument(["-h", "--host"], "Host"),
 							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
 							await CLI.getArgument(["-a", "--application"], "Application"),
@@ -219,11 +218,10 @@ export async function main() {
 						return process.exit(0);
 					}
 
-					// vlcluster map websocket <cluster> <host> <port> <path>
 					case "websocket": {
 						await new Client(
 							await CLI.getClusterName()
-						).map.webSocket(
+						).route.webSocket(
 							await CLI.getArgument(["-h", "--host"], "Host"),
 							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
 							await CLI.getArgument(["-l", "--location"], "Location (example: /socket)"),
@@ -233,7 +231,7 @@ export async function main() {
 					}
 
 					default: {
-						console.error("invalid map command");
+						console.error("invalid route command");
 						return process.exit(1);
 					}
 				}

@@ -19,9 +19,9 @@ export class Cluster {
 			upgrade: "/upgrade",
 			ping: "/ping",
 			pull: "/pull",
-			map: {
-				domain: "/map/domain",
-				webSocket: "/map/ws"
+			route: {
+				domain: "/route/domain",
+				webSocket: "/route/ws"
 			},
 			instances: {
 				list: "/instances/list",

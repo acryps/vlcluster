@@ -6,7 +6,7 @@ import { InstancesClientController } from "./controllers/instances";
 import { Request } from "../shared/request";
 import { ClientPath } from "./paths";
 import { DeployClientController } from "./controllers/deploy";
-import { MapClientController } from "./controllers/map";
+import { RouteClientController } from "./controllers/route";
 import { SSLClientController } from "./controllers/ssl";
 import { VariablesClientController } from "./controllers/variables";
 
@@ -17,7 +17,7 @@ export class Client {
 
 	deploy = new DeployClientController(this);
 	instances = new InstancesClientController(this);
-	map = new MapClientController(this);
+	route = new RouteClientController(this);
 	ssl = new SSLClientController(this);
 	variables = new VariablesClientController(this);
 

@@ -45,7 +45,7 @@ export class InstancesRegistryController {
             if (!request) {
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
 
-				await this.registry.map.updateGateways();
+				await this.registry.route.updateGateways();
 
 				return {};
 			}
@@ -100,7 +100,7 @@ export class InstancesRegistryController {
                 } 
             } else {
                 if (!worker.up) {
-                    this.registry.map.updateGateways();
+                    this.registry.route.updateGateways();
                 }
 
                 worker.cpuUsage = cpuUsage;
@@ -119,7 +119,7 @@ export class InstancesRegistryController {
 
                     worker.up = false;
 
-                    this.registry.map.updateGateways();
+                    this.registry.route.updateGateways();
 
                     for (let message of messages) {
                         if (message instanceof StartRequest) {

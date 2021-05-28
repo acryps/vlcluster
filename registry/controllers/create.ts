@@ -27,7 +27,7 @@ export class CreateRegistryController {
 		fs.mkdirSync(RegistryPath.workersDirectory);
 		fs.mkdirSync(RegistryPath.clientsDirectory);
 		fs.mkdirSync(RegistryPath.applicationsDirectory);
-		fs.mkdirSync(RegistryPath.mappingsDirectory);
+		fs.mkdirSync(RegistryPath.routesDirectory);
 		fs.mkdirSync(RegistryPath.variablesDirectory);
 
 		return key;
