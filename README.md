@@ -1,6 +1,6 @@
-# vlcluster
 [![npm version](http://badge.acryps.com/npm/vlcluster)](http://badge.acryps.com/go/npm/vlcluster)
 
+# vlcluster
 Simple docker and nginx-based cluster designed for multi-env web applications.
 
 > vlcluster is currently beeing restructured
