@@ -17,7 +17,7 @@ You can put multiple different node types on the same computer
 ## Setting up the cluster
 We use ubuntu-server on all of our nodes
 
-### Creating the registry
+### Creating the registry
 Run the following commands to create our first registry. We'll call it **mainnet**. You can only have one registry per cluster - but you can have multiple clusters and switch between them! Make sure that your registry has a static ip address or a DNS entry, we'll need it later on to reference the node!
 <pre>
 npm install -g vlcluster
@@ -34,14 +34,14 @@ Store this key safely!
 
 Open a new terminal and run `vlcluster daemon` to start the daemon. Keep this terminal open!
 
-### Setting up our first worker
+### Setting up our first worker
 Now you can either switch to a new machine or install the worker and the registry on the same machine. Run the following commands to create a worker and assign it a `endpoint` address.
 <pre>
 # install packages
 sudo apt install docker.io # install docker (if you don't already have it)
 npm install -g vlcluster
 
-# create worker
+# create worker
 vlcluster init worker -n "worker1" -h <b>registry.example.com</b> -k <b>8cfh8jVXPd4...</b>
 
 # set workers endpoint address
@@ -53,7 +53,7 @@ Restart the `vlcluster daemon` process if your worker is on the same node as the
 ### Creating a gateway
 We want our requests to be able to get to our `instance`s, so let's setup the gateway. You can do this on the same node as your `worker` or `registry`!
 <pre>
-# install packages
+# install packages
 sudo apt install nginx
 npm install -g vlcluster
 
@@ -63,7 +63,7 @@ vlcluster init gateway --name "gateway1" --cluster-hostname <b>registry.example.
 
 If you're on a node that already has a `vlcluster daemon` running, restart the deamon. Start `vlcluster daemon` if this is a new node
 
-### Connecting to the cluster
+### Connecting to the cluster
 Let's get our first app published on our new **mainnet** cluster!
 
 First, let's create a `client`. Open a new terminal on your computer and type
@@ -99,7 +99,7 @@ vlcluster deploy -c mainnet -e <b>test</b>
 vlcluster route domain -c mainnet -h <b>test.example-application.example.com</b> -p 80 -a vlcluster-example -e <b>test</b>
 </pre>
 
-### Variables
+### Variables
 Nobody wants hardcoded database connection strings! Thats why vlcluster allows you to create variables which will be set as ENV-variables in your applications
 
 Just run:
@@ -138,14 +138,14 @@ vlcluster deploy [-c | --cluster <registry hostname>] [[ -e | --env ] <environne
 
 ## Variables
 ```
-vlcluster var set [-c | --cluster <registry hostname>] [[ -n | --name ] <name>] [[ -v | --value ] <value>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
-vlcluster var list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster var set [-c | --cluster <registry hostname>] [[ -n | --name ] <name>] [[ -v | --value ] <value>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster var list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
 
 ## Instance Management
 ```
-vlcluster instance list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
-vlcluster instance restart [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster instance list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster instance restart [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
 
 ## Routing
