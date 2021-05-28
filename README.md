@@ -1,4 +1,6 @@
 # vlcluster
+[![npm version](https://badge.fury.io/js/vlcluster.svg)](https://badge.fury.io/js/vlcluster)
+
 Simple docker and nginx-based cluster designed for multi-env web applications.
 
 > vlcluster is currently beeing restructured
