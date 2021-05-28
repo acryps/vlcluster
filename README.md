@@ -15,7 +15,7 @@ vlcluster init gateway [--cluster-hostname <cluster hostname>] [--cluster-key <c
 
 ### Building and Publishing
 ```
-vlcluster build [[ -p | --project-path ] <project path> = "."]
+vlcluster build [[ -p | --project-path ] <project path> = "."] [[ -d | --dockerfile ] <dockerfile path> = "Dockerfile"]
 vlcluster push [-c | --cluster <registry hostname>] [[ -a | --application ] <application>] [[ -v | --version ] <version>]
 vlcluster upgrade [-c | --cluster <registry hostname>] [[ -a | --application ] <application>] [[ -v | --version ] <version>] [[ -e | --env ] <environnement>]
 

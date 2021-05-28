@@ -95,7 +95,10 @@ export async function main() {
 			}
 
 			case "build": {
-				await DeployClientController.build(await CLI.getArgument([1, "-p", "--project-path"]) || ".");
+				await DeployClientController.build(
+					await CLI.getArgument([1, "-p", "--project-path"]) || ".",
+					await CLI.getArgument([1, "-d", "--dockerfile"])
+				);
 
 				return process.exit(0);
 			}

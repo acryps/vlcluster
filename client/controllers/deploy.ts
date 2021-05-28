@@ -11,7 +11,7 @@ export class DeployClientController {
 
     constructor(public client: Client) {}
 
-    static async build(directory: string) {
+    static async build(directory: string, dockerfile: string) {
 		const logger = new Logger("build");
 		const packagePath = path.join(directory, "package.json");
 
@@ -29,8 +29,21 @@ export class DeployClientController {
 			throw new Error(`no version in ${packagePath} set!`);
 		}
 
+		const args = [
+			"-t", `${packageConfiguration.name}:${packageConfiguration.version}` // tag container
+		];
+
+		// add -f dockerfile option if present
+		if (dockerfile) {
+			args.push("-f", dockerfile);
+		}
+
 		logger.log("building ", logger.av(packageConfiguration.name, packageConfiguration.version), "...");
-		const buildProcess = spawn("docker", ["build", "-t", `${packageConfiguration.name}:${packageConfiguration.version}`, "."], {
+		const buildProcess = spawn("docker", [
+			"build", 
+			...args,
+			"."
+		], {
 			cwd: directory,
 			stdio: [
 				"ignore",
