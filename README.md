@@ -76,7 +76,7 @@ Now enter your email, the hostname of our registry (`registry.example.com` in th
 > You need to have docker installed on your system → [Installation page](https://docs.docker.com/get-docker/)
 
 ### Setting up applications
-Clone [vlcluster example](https://github.com/levvij/) and open a terminal in the project directory
+Clone [vlcluster example](https://github.com/levvij/vlcluster-example) and open a terminal in the project directory
 > Every vlcluster application requires a simple `Dockerfile` and a `package.json` with `name` and `version`
 
 We'll deploy the `vlcluster-example` application to our registry, with the `env` **productive**.
