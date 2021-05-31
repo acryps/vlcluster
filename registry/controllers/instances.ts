@@ -17,7 +17,7 @@ export class InstancesRegistryController {
     pendingStartRequests: StartRequest[] = [];
 	pendingStopRequests: StopRequest[] = [];
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     register(app) {
         new Handler(app, Cluster.api.registry.instances.report.started, async params => {

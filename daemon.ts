@@ -1,5 +1,7 @@
 import * as express from "express";
 import * as fs from "fs";
+import { spawn } from "child_process";
+
 import { RegistryServer } from "./registry/registry";
 import { Cluster } from "./shared/cluster";
 import { WorkerServer } from "./worker/worker";
@@ -61,5 +63,38 @@ export class Daemon {
 				finished("started worker ", logger.cw(cluster, worker.name));
 			});
 		}
+	}
+
+	async install(user) {
+		await this.checkSystemctl();
+
+		fs.writeFileSync("/etc/systemd/system/vlcluster.service", `
+[Unit]
+Description=vlcluster daemon server
+After=network.target
+		
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=user
+ExecStart=${process.cwd()} daemon
+		
+[Install]
+WantedBy=multi-user.target`);
+	}
+
+	checkSystemctl() {
+		return new Promise((done, reject) => {
+			const systemctl = spawn("systemctl", ["--version"]);
+
+			systemctl.on("error", () => {
+				reject("systemctl is required to install vlcluster as a deamon service!");
+			});
+
+			systemctl.on("exit", () => {
+				done(true);
+			});
+		});
 	}
 }

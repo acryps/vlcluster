@@ -187,10 +187,10 @@ export async function main() {
 
 						const logger = new Logger("restart");
 
-						await logger.process(["restarting ", logger.ae(application || "*", env || "*")], async done => {
+						await logger.process(["restarting ", logger.ae(application || "*", env || "*")], async done => {
 							await client.instances.restart(application, env);
 
-							done("restarted ", logger.ae(application || "*", env || "*"));
+							done("restarted ", logger.ae(application || "*", env || "*"));
 						});
 
 						return process.exit();
@@ -255,6 +255,22 @@ export async function main() {
 
 						return process.exit(1);
 					}
+				}
+			}
+
+			case "system": {
+				console.log(`cluster root: ${Cluster.rootDirectory}`);
+				console.log(`arguments:`);
+
+				for (let arg of process.argv) {
+					console.log(`\t${arg}`);
+				}
+
+				console.log(`platform: ${process.platform}`);
+				console.log(`env:`);
+
+				for (let env in process.env) {
+					console.log(`\t${env}: ${process.env[env]}`);
 				}
 			}
 

@@ -161,3 +161,8 @@ SSL certificates are created by [certbot](https://certbot.eff.org/) which needs 
 ```
 vlcluster ssl enable [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>]
 ```
+
+## Utitlity
+```
+vlcluster system # shows cluster system info
+```

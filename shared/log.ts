@@ -54,7 +54,7 @@ export class Logger {
         process.stdout.write(`└─${Object.keys(keys).map(key => "─".repeat(keys[key])).join("─┴─")}─┘\n`);
     }
 
-    async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
+    async process(text: string[] | string, handler: (finished: (...text: string[]) => void) => {}) {
         let i = 0;
 
         text = Array.isArray(text) ? text.join("") : text;

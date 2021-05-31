@@ -9,7 +9,7 @@ import { Cluster } from "../../shared/cluster";
 export class VariablesRegistryController {
     logger = new Logger("variables");
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     register(app) {
         new Handler(app, Cluster.api.registry.variables.set, async params => {
@@ -18,7 +18,7 @@ export class VariablesRegistryController {
 			const application = params.application;
 			const env = params.env;
 
-			this.logger.log("setting ", name, " to ", value, " for ", this.logger.ae(application || "*", env || "*"));
+			this.logger.log("setting ", name, " to ", value, " for ", this.logger.ae(application || "*", env || "*"));
 			await this.set(name, value, application, env);
 
 			return {};

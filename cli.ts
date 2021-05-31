@@ -4,7 +4,7 @@ import * as fs from "fs";
 import { Cluster } from "./shared/cluster";
 
 export class CLI {
-    static async getArgument(names: (string | number)[], prompt?: string | [string, string, string, string]): Promise<string> {
+    static async getArgument(names: (string | number)[], prompt?: string | [string, string, string, string]): Promise<string> {
         return new Promise(done => {
             for (let name of names) {
                 if (typeof name == "number") {

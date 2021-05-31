@@ -12,7 +12,7 @@ import { Crypto } from "../../shared/crypto";
 export class DeployRegistryController {
     logger = new Logger("deploy");
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     register(app) {
         new Handler(app, Cluster.api.registry.push, async (params, req) => {

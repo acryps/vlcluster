@@ -7,7 +7,7 @@ export class Request {
 
     constructor(private endpoint: string, private api: string) {}
 
-    append(key: string, value: string | number) {
+    append(key: string, value: string | number) {
         if (value !== null && value !== undefined) {
             this.data[`cluster-${key}`] = value;
         }
@@ -43,7 +43,7 @@ export class Request {
         });
     }
 
-    send<TResult = {}>() {
+    send<TResult = {}>() {
         return this.constructRequest().then(r => r.json()).then(res => {
             if ("error" in res) {
                 throw new Error(res.error);

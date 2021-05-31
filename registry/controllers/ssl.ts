@@ -8,7 +8,7 @@ import { RegistryPath } from "../paths";
 export class SSLRegistryController {
     logger = new Logger("ssl");
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     register(app) {
         new Handler(app, Cluster.api.registry.ssl.enable, async params => {

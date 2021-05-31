@@ -103,7 +103,7 @@ export class DeployClientController {
 		});
 	}
 
-	async upgrade(application: string, version: string, env: string) {
+	async upgrade(application: string, version: string, env: string) {
 		const logger = new Logger("upgrade");
 		
 		await logger.process(["upgrading ", logger.aev(application, env, version), "..."], async finished => {

@@ -10,7 +10,7 @@ import { Cluster } from "../../shared/cluster";
 export class CreateRegistryController {
     logger = new Logger("create");
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     static async registry(name: string) {
 		// generate key

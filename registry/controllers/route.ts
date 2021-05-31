@@ -10,7 +10,7 @@ import { Request } from "../../shared/request";
 export class RouteRegistryController {
     logger = new Logger("route");
 
-    constructor(private registry: RegistryServer) {}
+    constructor(private registry: RegistryServer) {}
 
     register(app) {
         new Handler(app, Cluster.api.registry.route.domain, async params => {
