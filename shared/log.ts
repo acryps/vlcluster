@@ -97,7 +97,7 @@ export class Logger {
     }
 
     aevi(application: string, env: string, version: string, instance: string) {
-        return `\u001b[1m${application}[${env}]:${version}(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
+        return `\u001b[1m${application}[${env}]:${version}(${instance.substr(0, 20) + (instance.length > 20 ? "…" : "")})\u001b[0m`;
     }
 
     w(worker: string) {
@@ -133,6 +133,6 @@ export class Logger {
     }
 
     wi(worker: string, instance: string) {
-        return `\u001b[1m<${worker}>(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
+        return `\u001b[1m<${worker}>(${instance.substr(0, 20) + (instance.length > 20 ? "…" : "")})\u001b[0m`;
     }
 }
