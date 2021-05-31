@@ -126,7 +126,7 @@ WantedBy=multi-user.target`);
 			const systemctl = spawn("systemctl", ["--version"]);
 
 			systemctl.on("error", () => {
-				reject("systemctl is required to install vlcluster as a deamon service!");
+				reject("systemctl is required to install vlcluster as a daemon service!");
 			});
 
 			systemctl.on("exit", () => {
