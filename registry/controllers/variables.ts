@@ -94,20 +94,35 @@ export class VariablesRegistryController {
 	}
 
     async set(name: string, value: string, application: string, env: string) {
-		const id = Crypto.createId();
+		let id;
 
-		fs.mkdirSync(RegistryPath.variableDirectory(id));
+		// try to find existing variable
+		for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
+			if (
+				fs.readFileSync(RegistryPath.variableNameFile(variable)).toString() == name &&
+				(application ? fs.readFileSync(RegistryPath.variableApplicationFile(variable)).toString() == application : !fs.existsSync(RegistryPath.variableApplicationFile(variable))) &&
+				(env ? fs.readFileSync(RegistryPath.variableEnvFile(variable)).toString() == env : !fs.existsSync(RegistryPath.variableEnvFile(variable)))
+			) {
+				id = variable;
+			}
+		}
 
-		fs.writeFileSync(RegistryPath.variableNameFile(id), name);
+		if (!id) {
+			id = Crypto.createId();
+
+			fs.mkdirSync(RegistryPath.variableDirectory(id));
+			fs.writeFileSync(RegistryPath.variableNameFile(id), name);
+
+			if (application) {
+				fs.writeFileSync(RegistryPath.variableApplicationFile(id), application);
+			}
+	
+			if (env) {
+				fs.writeFileSync(RegistryPath.variableEnvFile(id), env);
+			}
+		}
+		
 		fs.writeFileSync(RegistryPath.variableValueFile(id), value);
-
-		if (application) {
-			fs.writeFileSync(RegistryPath.variableApplicationFile(id), application);
-		}
-
-		if (env) {
-			fs.writeFileSync(RegistryPath.variableEnvFile(id), env);
-		}
 	}
 }
 
