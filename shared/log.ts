@@ -129,7 +129,7 @@ export class Logger {
     }
 
     i(instance: string) {
-        return `\u001b[1m(${instance.substr(0, 8) + (instance.length > 8 ? "…" : "")})\u001b[0m`;
+        return `\u001b[1m(${instance.substr(0, 20) + (instance.length > 20 ? "…" : "")})\u001b[0m`;
     }
 
     wi(worker: string, instance: string) {
