@@ -17,13 +17,13 @@ vlcluster consists of four different node types
 You can put multiple different node types on the same computer
 
 ## Setting up the cluster
-We use ubuntu-server on all of our nodes
+You can use windows, macOS or linux to manage your cluster and uplaod new application, but the `registry`, `workers` and `gateways` require linux with `systemd` (ubuntu, centos, fedora, ...)!
 
 ### Creating the registry
 Run the following commands to create our first registry. We'll call it **mainnet**. You can only have one registry per cluster - but you can have multiple clusters and switch between them! Make sure that your registry has a static ip address or a DNS entry, we'll need it later on to reference the node!
 <pre>
-npm install -g vlcluster
-vlcluster init registry -n "<b>mainnet</b>"
+sudo npm install -g vlcluster
+sudo vlcluster init registry -n "<b>mainnet</b>"
 </pre>
 
 This will create the registry in `~/.vlcluster`. The command will return a **key**. This key will be used later on to create the workers and clients
@@ -34,48 +34,62 @@ private key: <b>8cfh8jVXPd...</b>
 Store this key safely!
 </pre>
 
-Open a new terminal and run `vlcluster daemon` to start the daemon. Keep this terminal open!
+We need to make sure that vlcluster runs, even after a reboot. So, let's install it as a `systemd` service!
+```
+sudo vlcluster daemon install -u root
+```
 
 ### Setting up our first worker
 Now you can either switch to a new machine or install the worker and the registry on the same machine. Run the following commands to create a worker and assign it a `endpoint` address.
 <pre>
 # install packages
 sudo apt install docker.io # install docker (if you don't already have it)
-npm install -g vlcluster
+sudo npm install -g vlcluster
 
 # create worker
-vlcluster init worker -n "worker1" -h <b>registry.example.com</b> -k <b>8cfh8jVXPd4...</b>
+sudo vlcluster init worker -n "worker1" -h <b>registry.example.com</b> -k <b>8cfh8jVXPd4...</b>
 
 # set workers endpoint address
-vlcluster init endpoint -c <b>mainnet</b> -h <b>worker1.example.com</b>
+sudo vlcluster init endpoint -c <b>mainnet</b> -h <b>worker1.example.com</b>
 </pre>
 
-Restart the `vlcluster daemon` process if your worker is on the same node as the registry. If you're using a different node, open a new terminal and run `vlcluster daemon` in it.
+We have to restart the daemon if your worker is *on the same node as the registry*. 
+```
+sudo service vlcluster restart
+```
+
+If you're using a different node, install the vlcluster daemon with `systemd`
+```
+sudo vlcluster daemon install -u root
+```
 
 ### Creating a gateway
 We want our requests to be able to get to our `instance`s, so let's setup the gateway. You can do this on the same node as your `worker` or `registry`!
 <pre>
 # install packages
 sudo apt install nginx
-npm install -g vlcluster
+sudo npm install -g vlcluster
 
 # create gateway
-vlcluster init gateway --name "gateway1" --cluster-hostname <b>registry.example.com</b> --cluster-key <b>8cfh8jVXPd4...</b> --endpoint-hostname <b>gateway1.example.com</b>
+sudo vlcluster init gateway --name "gateway1" --cluster-hostname <b>registry.example.com</b> --cluster-key <b>8cfh8jVXPd4...</b> --endpoint-hostname <b>gateway1.example.com</b>
 </pre>
 
-If you're on a node that already has a `vlcluster daemon` running, restart the deamon. Start `vlcluster daemon` if this is a new node
+Restart the vlcluster daemon or install the daemon with `systemd`, like we did with the worker!
 
 ### Connecting to the cluster
 Let's get our first app published on our new **mainnet** cluster!
 
 First, let's create a `client`. Open a new terminal on your computer and type
 ```
+npm install -g vlcluster
 vlcluster init
 ```
 
 Now enter your email, the hostname of our registry (`registry.example.com` in the example) and paste the key (`8cfh8jVXPd4...` in our example).
 
 > You need to have docker installed on your system → [Installation page](https://docs.docker.com/get-docker/)
+
+You don't need to run vlcluster as a daemon on your client.
 
 ### Setting up applications
 Clone [vlcluster example](https://github.com/levvij/vlcluster-example) and open a terminal in the project directory
@@ -93,7 +107,7 @@ We want to reach the application, right? Let's route your domain name (`example-
 vlcluster route domain -c <b>mainnet</b> -h <b>example-application.example.com</b> -p <b>80</b> -a <b>vlcluster-example</b> -e <b>productive</b>
 </pre>
 
-`example-application.example.com` will automatically be routed to the latest version of `vlcluster-example` running as `productive`.  A simple deploy is all you need now! vlcluster will install the new version, await application start up, update the proxies and then stop the old instances - there is no gap between deploys!
+`example-application.example.com` will automatically be routed to the latest version of `vlcluster-example` running as `productive`.  A simple deploy is all you need now! vlcluster will install the new version, await application start up, update the proxies and then stop the old instances - zero downtime deploys!
 
 Imagine you'd wanna run a <b>test</b> environnement, and have it available on `test.example-application.example.com`. All you'll have to do is just type in those commands:
 <pre>
@@ -127,6 +141,8 @@ vlcluster init registry [-n | --name <registry name>]
 vlcluster init worker [-h | --hostname <registry hostname>] [-k | --key <registry key>] [-n | --name <worker name>]
 vlcluster init endpoint [-c | --cluster <registry hostname>] [-h | --hostname <endpoint hostname>]
 vlcluster init gateway [--cluster-hostname <cluster hostname>] [--cluster-key <cluster key>] [-n | --name <gateway name>] [--endpoint-hostname <endpoint hostname>]
+
+vlcluster daemon install [-u | --user <user>]
 ```
 
 ## Building and Publishing
@@ -165,4 +181,5 @@ vlcluster ssl enable [-c | --cluster <registry hostname>] [-h | --host <host>] [
 ## Utitlity
 ```
 vlcluster system # shows cluster system info
+vlcluster daemon # runs vlcluster daemon
 ```

@@ -65,11 +65,13 @@ export class Daemon {
 		}
 	}
 
-	async install(user) {
+	async install(user: string) {
 		await this.checkSystemctl();
 
-		fs.writeFileSync("/etc/systemd/system/vlcluster.service", `
-[Unit]
+		const executeable = process.argv[1];
+
+		try {
+			fs.writeFileSync("/etc/systemd/system/vlcluster.service", `[Unit]
 Description=vlcluster daemon server
 After=network.target
 		
@@ -77,11 +79,46 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
-User=user
-ExecStart=${process.cwd()} daemon
+StartLimitIntervalSec=0
+User=${user}
+ExecStart=${executeable} daemon
 		
 [Install]
 WantedBy=multi-user.target`);
+		} catch (error) {
+			throw new Error(`Cannot write service file! Are you running as root? (${error})`);
+		}
+
+		await this.startSystemdService();
+		await this.enableSystemdService();
+	}
+
+	startSystemdService() {
+		return new Promise((done, reject) => {
+			const systemctl = spawn("systemctl", ["start", "vlcluster"]);
+
+			systemctl.on("exit", code => {
+				if (code) {
+					reject(`systemctl start failed with exit code: ${code}`);
+				} else {
+					done(true);done(true);
+				}
+			});
+		});
+	}
+
+	enableSystemdService() {
+		return new Promise((done, reject) => {
+			const systemctl = spawn("systemctl", ["enable", "vlcluster"]);
+
+			systemctl.on("exit", code => {
+				if (code) {
+					reject(`systemctl enable failed with exit code: ${code}`);
+				} else {
+					done(true);done(true);
+				}
+			});
+		});
 	}
 
 	checkSystemctl() {

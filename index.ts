@@ -272,11 +272,29 @@ export async function main() {
 				for (let env in process.env) {
 					console.log(`\t${env}: ${process.env[env]}`);
 				}
+
+				break;
 			}
 
 			case "daemon": {
-				const daemon = new Daemon();
-				daemon.start();
+				switch (parameters.shift()) {
+					case "install": {
+						const daemon = new Daemon();
+						await daemon.install(
+							await CLI.getArgument(["-u", "--user"], "User")
+						);
+
+						console.log("installed and started daemon!");
+						console.log("you can check the daemons output with 'journalctl -u vlcluster -f --output cat'");
+
+						break;
+					}
+
+					default: {
+						const daemon = new Daemon();
+						daemon.start();
+					}
+				}
 
 				break;
 			}
