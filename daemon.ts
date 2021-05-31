@@ -101,7 +101,7 @@ WantedBy=multi-user.target`);
 				if (code) {
 					reject(`systemctl start failed with exit code: ${code}`);
 				} else {
-					done(true);done(true);
+					done(true);
 				}
 			});
 		});
@@ -115,7 +115,7 @@ WantedBy=multi-user.target`);
 				if (code) {
 					reject(`systemctl enable failed with exit code: ${code}`);
 				} else {
-					done(true);done(true);
+					done(true);
 				}
 			});
 		});
