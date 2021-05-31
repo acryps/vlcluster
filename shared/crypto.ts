@@ -44,7 +44,7 @@ export class Crypto {
 	}
 
 	static sanitizeInstanceName(name: string) {
-		return name.replace(/[^0-9a-zA-Z]/g, "");
+		return name.replace(/[^0-9a-zA-Z\-\.]/g, "");
 	}
 
 	static sanitizeEnv(name: string) {
