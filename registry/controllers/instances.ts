@@ -240,7 +240,7 @@ export class InstancesRegistryController {
 
 		for (let worker of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))]) {
 			for (let instance of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))]) {
-				await this.stopInstance(application, version, env, worker, instance);
+				await this.stopInstance(application, version, env, worker, fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker, instance)).toString());
 			}
 		}
 
