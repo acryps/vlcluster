@@ -110,6 +110,7 @@ export class GatewayServer {
 			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};`;
 
 			if (route.ssl) {
+				// ssl config from https://ssl-config.mozilla.org/
 				configuration += `\n\n\t# ssl configuration`
 				configuration += `\n\tssl_certificate ${GatewayPath.letsencryptFullchain(route.host)};`;
 				configuration += `\n\tssl_certificate_key ${GatewayPath.letsencryptPrivateKey(route.host)};`;
