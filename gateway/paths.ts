@@ -72,10 +72,6 @@ export class GatewayPath {
 		return path.join(this.letsencryptRoot(host), "privkey.pem");
 	}
 
-	static letsencryptOptions() {
-		return "/etc/letsencrypt/options-ssl-nginx.conf";
-	}
-
 	static letsencryptDHParams() {
 		return "/etc/letsencrypt/ssl-dhparams.pem";
 	}

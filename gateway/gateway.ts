@@ -113,7 +113,12 @@ export class GatewayServer {
 				configuration += `\n\n\t# ssl configuration`
 				configuration += `\n\tssl_certificate ${GatewayPath.letsencryptFullchain(route.host)};`;
 				configuration += `\n\tssl_certificate_key ${GatewayPath.letsencryptPrivateKey(route.host)};`;
-				configuration += `\n\tinclude ${GatewayPath.letsencryptOptions()};`;
+				configuration += `\n\tssl_session_cache shared:le_nginx_SSL:10m;`;
+				configuration += `\n\tssl_session_timeout 1440m;`;
+				configuration += `\n\tssl_session_tickets off;`;
+				configuration += `\n\tssl_protocols TLSv1.2 TLSv1.3;`;
+				configuration += `\n\tssl_prefer_server_ciphers off;`;
+				configuration += `\n\tssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";`;
 				configuration += `\n\tssl_dhparam ${GatewayPath.letsencryptDHParams()};`;
 			}
 
