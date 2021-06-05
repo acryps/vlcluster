@@ -71,8 +71,4 @@ export class GatewayPath {
 	static letsencryptPrivateKey(host: string) {
 		return path.join(this.letsencryptRoot(host), "privkey.pem");
 	}
-
-	static letsencryptDHParams() {
-		return "/etc/letsencrypt/ssl-dhparams.pem";
-	}
 }
