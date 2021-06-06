@@ -1,1 +1,3 @@
-export class QueueMessage {}
+export class QueueMessage {
+    worker: string;
+}

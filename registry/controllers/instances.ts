@@ -135,6 +135,9 @@ export class InstancesRegistryController {
                         this.start(instance.application, instance.version, instance.env, instance.id).then(() => this.registry.route.updateGateways());
                     }
 
+                    this.pendingStartRequests = this.pendingStartRequests.filter(req => req.worker != worker.name);
+                    this.pendingStopRequests = this.pendingStopRequests.filter(req => req.worker != worker.name);
+
                     for (let message of messages) {
                         if (message instanceof StartRequest) {
                             const request = message;
@@ -221,6 +224,7 @@ export class InstancesRegistryController {
 			this.logger.log("requesting start ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
 
 			const request = new StartRequest();
+            request.worker = worker.name;
 			request.application = application;
 			request.version = version;
 			request.env = env;
@@ -276,6 +280,7 @@ export class InstancesRegistryController {
 		await this.logger.log("requesting shutdown ", this.logger.wi(workerName, instance));
 
 		const request = new StopRequest();
+        request.worker = workerName;
 		request.instance = instance;
 		
 		this.pendingStopRequests.push(request);
