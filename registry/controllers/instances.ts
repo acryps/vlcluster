@@ -120,7 +120,7 @@ export class InstancesRegistryController {
                     for (let id in worker.instances) {
                         const instance = worker.instances[id];
 
-                        this.start(instance.application, instance.version, instance.env);
+                        this.start(instance.application, instance.version, instance.env).then(() => this.registry.route.updateGateways());
                     }
 
                     for (let message of messages) {
