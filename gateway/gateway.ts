@@ -76,7 +76,7 @@ export class GatewayServer {
 			this.logger.log(
 				"routing ", 
 				this.logger.hp(route.host, route.port), 
-				" to ", 
+				" → ", 
 				this.logger.ae(route.application, route.env), 
 				` (${route.ssl ? "SSL, " : ""}${route.instances.length} instances${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
 			);

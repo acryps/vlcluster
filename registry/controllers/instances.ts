@@ -6,16 +6,16 @@ import { StopRequest } from "../messages/stop";
 import { RegistryPath } from "../paths";
 import { RegistryServer } from "../registry";
 import fs = require("fs");
-import { ChildInstance, ChildWorker } from "../worker";
+import { ActiveInstance, ActiveWorker } from "../worker";
 import { Handler } from "../../shared/handler";
 
 export class InstancesRegistryController {
     logger = new Logger("instances");
 
-	runningWorkers: ChildWorker[] = [];
-    
-    pendingStartRequests: StartRequest[] = [];
-	pendingStopRequests: StopRequest[] = [];
+	workers: ActiveWorker[] = [];
+
+    startRequests: StartRequest[];
+    stopRequests: StopRequest[];
 
     constructor(private registry: RegistryServer) {}
 
@@ -28,24 +28,26 @@ export class InstancesRegistryController {
 			const application = params.application;
 			const port = +params.port;
 
-            const request = this.pendingStartRequests.find(i => i.instance == instance);
-			const worker = this.runningWorkers.find(w => w.name == workerName);
+			const worker = this.workers.find(w => w.name == workerName);
+            const request = this.startRequests.find(req => req.instance == instance);
 
-            const state = new ChildInstance();
-			state.application = application;
-			state.version = version;
-			state.env = env;
-			state.id = instance;
-			state.port = port;
+            // add instance to running instance list
+            const activeInstance = new ActiveInstance();
+			activeInstance.application = application;
+			activeInstance.version = version;
+			activeInstance.env = env;
+			activeInstance.id = instance;
+			activeInstance.port = port;
 
-			state.worker = worker;
+			activeInstance.worker = worker;
 
-			worker.instances[instance] = state;
+			worker.instances.push(activeInstance);
 
+            // update gateways to expose application if there was no start request (when a worker reconnects)
             if (!request) {
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
 
-				await this.registry.route.updateGateways();
+                await this.registry.route.updateGateways();
 
 				return {};
 			}
@@ -54,7 +56,7 @@ export class InstancesRegistryController {
 
             // check if any instance was started as a backup
             // shut down the backup instances of this instance
-            for (let worker of this.runningWorkers) {
+            for (let worker of this.workers) {
                 for (let id of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
                     const liveInstance = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, id)).toString().split("\n");
 
@@ -64,16 +66,29 @@ export class InstancesRegistryController {
                 }
             }
 
+            this.startRequests.splice(this.startRequests.indexOf(request), 1);
+
 			return {};
         });
 
         new Handler(app, Cluster.api.registry.instances.report.stopped, async params => {
             const instance = params.instance;
-            const request = this.pendingStopRequests.find(i => i.instance == instance);
+            const request = this.stopRequests.find(i => i.instance == instance);
 
             if (request) {
                 request.oncomplete();
             }
+
+            // remove instance from active instances
+            for (let worker of this.workers) {
+                for (let activeInstance of [...worker.instances]) {
+                    if (activeInstance.id == instance) {
+                        worker.instances.splice(worker.instances.indexOf(activeInstance), 1);
+                    }
+                }
+            }
+
+            this.stopRequests.splice(this.stopRequests.indexOf(request), 1);
 
             return {};
         });
@@ -92,19 +107,20 @@ export class InstancesRegistryController {
                 throw new Error("invalid key!");
             }
     
-            let worker = this.runningWorkers.find(s => s.name == name);
+            let worker = this.workers.find(s => s.name == name);
             const now = new Date();
     
             let isNewWorker = false;
 
             if (!worker) {
-                worker = new ChildWorker();
+                // create new active worker
+                worker = new ActiveWorker();
                 worker.name = name;
                 worker.cpuUsage = cpuUsage;
                 worker.lastSeen = now;
                 worker.endpoint = endpoint;
 
-                this.runningWorkers.push(worker);
+                this.workers.push(worker);
 
                 if (endpoint) {
                     this.logger.log("worker login ", this.logger.w(name), " on ", endpoint);
@@ -119,30 +135,34 @@ export class InstancesRegistryController {
                 worker.endpoint = endpoint;
             }
     
-            const messages = [...worker.messageQueue];
-            worker.messageQueue = [];
+            // copy message queue
+            const messages = [...worker.pendingMessages];
+            worker.pendingMessages = [];
 
             // timeout check
             setTimeout(() => {
                 if (worker.lastSeen == now) {
-                    this.logger.log(this.logger.w(name), " ping timed out");
+                    // handle timeout
+                    this.logger.warn(this.logger.w(name), " ping timed out");
 
-                    this.runningWorkers.splice(this.runningWorkers.indexOf(worker), 1);
+                    this.workers.splice(this.workers.indexOf(worker), 1);
 
-                    for (let id in worker.instances) {
-                        const instance = worker.instances[id];
-
-                        this.start(instance.application, instance.version, instance.env, instance.id).then(() => this.registry.route.updateGateways());
+                    // start backup instances for all instances (don't await!)
+                    for (let instance of worker.instances) {
+                        this.startBackupFor(instance);
                     }
 
-                    this.pendingStartRequests = this.pendingStartRequests.filter(req => req.worker != worker.name);
-                    this.pendingStopRequests = this.pendingStopRequests.filter(req => req.worker != worker.name);
+                    // clear all requests from the down worker
+                    this.startRequests = this.startRequests.filter(req => req.worker != worker.name);
+                    this.stopRequests = this.stopRequests.filter(req => req.worker != worker.name);
 
+                    // find alternative workers for pending start requests
+                    // don't create as backup, because they were never started on the worker
                     for (let message of messages) {
                         if (message instanceof StartRequest) {
                             const request = message;
                             
-                            this.logger.log("proposal ", this.logger.aev(request.application, request.env, request.version), " for ", this.logger.w(worker.name), " timed out");
+                            this.logger.warn("proposal ", this.logger.aev(request.application, request.env, request.version), " for ", this.logger.w(worker.name), " timed out");
 
                             this.start(request.application, request.version, request.env).then(() => {
                                 request.oncomplete(request);
@@ -162,16 +182,15 @@ export class InstancesRegistryController {
         new Handler(app, Cluster.api.registry.instances.list, async params => {
             const instances = [];
     
-            for (let worker of this.runningWorkers) {
-                for (let id in worker.instances) {
-                    const instance = worker.instances[id];
-
+            for (let worker of this.workers) {
+                for (let instance of worker.instances) {
                     instances.push({
-                        instance: id,
+                        instance: instance.id,
                         application: instance.application,
                         version: instance.version,
                         env: instance.env,
-                        port: instance.port
+                        port: instance.port,
+                        worker: worker.name,
                     });
                 }
             }
@@ -183,9 +202,8 @@ export class InstancesRegistryController {
             const application = params.application;
             const env = params.env;
 
-            for (let worker of this.runningWorkers) {
-                for (let id in worker.instances) {
-                    const instance = worker.instances[id];
+            for (let worker of this.workers) {
+                for (let instance of worker.instances) {
                     let restart = true;
 
                     if (application && instance.application != application) {
@@ -198,21 +216,31 @@ export class InstancesRegistryController {
 
                     if (restart) {
                         await this.start(instance.application, instance.version, instance.env);
-                        await this.stopInstance(instance.application, instance.version, instance.env, instance.worker.name, instance.id);
+                        
+                        // we don't need to wait for the instance to stop, this can happen in the background
+                        this.stopInstance(instance.application, instance.version, instance.env, instance.worker.name, instance.id);
                     }
                 }
             }
         });
     }
 
+    // start backup instance
+    // will be stopped as soon as the original instance is started again
+    async startBackupFor(instance: ActiveInstance) {
+        await this.start(instance.application, instance.version, instance.env, instance.id);
+    }
+
     start(application: string, version: string, env: string, backupOf: string = null) {
 		const instance = Crypto.createId(application, version, env);
 
 		return new Promise<StartRequest>(done => {
-			const worker = this.runningWorkers.sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
+            // pick worker with the most cpu available
+			const worker = this.workers.sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
 
+            // wait for a worker if none are available
 			if (!worker) {
-				this.logger.log("out of workers to run ", this.logger.aev(application, env, version), "! retrying...");
+				this.logger.warn("out of workers to run ", this.logger.aev(application, env, version), "! retrying...");
 
 				setTimeout(async () => {
 					done(await this.start(application, version, env));
@@ -221,6 +249,7 @@ export class InstancesRegistryController {
 				return;
 			}
 
+            // create start request
 			this.logger.log("requesting start ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
 
 			const request = new StartRequest();
@@ -231,15 +260,17 @@ export class InstancesRegistryController {
 			request.instance = instance;
 			request.variables = this.registry.variables.constructActive(application, env);
 
-			this.pendingStartRequests.push(request);
+			this.startRequests.push(request);
 
+            // wait for request to complete
 			request.oncomplete = status => {
-				request.port = status.port;
+                request.port = status.port;
 
 				if (!fs.existsSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
 					fs.mkdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name));
 				}
 
+                // write id file, add backup if the instance is a backup of another instance
 				fs.writeFileSync(
 					RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance),
 					`${instance}${backupOf ? `\n${backupOf}` : ""}`
@@ -247,29 +278,38 @@ export class InstancesRegistryController {
 
 				this.logger.log("started ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
 
+                // update gateways
+                this.registry.route.updateGateways();
+
 				done(request);
 			};
 
-			worker.messageQueue.push(request);
+			worker.pendingMessages.push(request);
 		});
 	}
 
     async stop(application: string, version: string, env: string) {
 		this.logger.log("shutting down ", this.logger.aev(application, version, env));
 
+        const promises = [];
+
+        // stopping all instances
 		for (let worker of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))]) {
 			for (let instance of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))]) {
                 const name = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker, instance)).toString().split("\n")[0];
 
-				await this.stopInstance(application, version, env, worker, name);
+				promises.push(this.stopInstance(application, version, env, worker, name));
 			}
 		}
+
+        // stop all instances in paralel
+        await Promise.all(promises);
 
 		this.logger.log("shut down ", this.logger.aev(application, version, env));
 	}
 
 	async stopInstance(application: string, version: string, env: string, workerName: string, instance: string) {
-		const worker = this.runningWorkers.find(w => w.name == workerName);
+		const worker = this.workers.find(w => w.name == workerName);
 
 		if (!worker) {
 			this.logger.log("skipping shut down of ", this.logger.wi(workerName, instance), ". worker down");
@@ -283,8 +323,8 @@ export class InstancesRegistryController {
         request.worker = workerName;
 		request.instance = instance;
 		
-		this.pendingStopRequests.push(request);
-		worker.messageQueue.push(request);
+		this.stopRequests.push(request);
+		worker.pendingMessages.push(request);
 		
 		await new Promise<void>(done => {
 			request.oncomplete = () => {
@@ -303,10 +343,11 @@ export class InstancesRegistryController {
 
 				this.logger.log("stopped ", this.logger.wi(workerName, instance));
 
-                for (let worker of this.runningWorkers) {
-                    for (let runningInstance in worker.instances) {
-                        if (runningInstance == instance) {
-                            delete worker.instances[instance];
+                // remove instance from worker
+                for (let worker of this.workers) {
+                    for (let runningInstance of [...worker.instances]) {
+                        if (runningInstance.id == instance) {
+                            worker.instances.splice(worker.instances.indexOf(runningInstance), 1);
                         }
                     }
                 }

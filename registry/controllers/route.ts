@@ -37,7 +37,7 @@ export class RouteRegistryController {
     }
 
     async domain(host: string, port: number, application: string, env: string) {
-		const id = Crypto.createId();
+		const id = Crypto.createId(host);
 
 		fs.mkdirSync(RegistryPath.routeDirectory(id));
 
@@ -89,14 +89,12 @@ export class RouteRegistryController {
 			const instances = [];
 			const sockets = [];
 
-			for (let worker of this.registry.instances.runningWorkers) {
+			for (let worker of this.registry.instances.workers) {
 				if (worker.endpoint) {
-					for (let id in worker.instances) {
-						const instance = worker.instances[id];
-
+					for (let instance of worker.instances) {
 						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
 							instances.push({
-								id: id,
+								id: instance.id,
 								worker: worker.name,
 								endpoint: instance.worker.endpoint,
 								port: instance.port

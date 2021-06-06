@@ -137,14 +137,12 @@ export class DeployRegistryController {
 
 		// install applications on new worker
 		for (let i = 0; i < instances; i++) {
+			// the gateways will automatically be reloaded whenever an application starts
 			await this.registry.instances.start(application, version, env);
 		}
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
-
-		// wait for gateway upgrades
-		this.registry.route.updateGateways();
 		
 		// stop dangeling versions
 		if (dangelingVersion) {
