@@ -172,12 +172,12 @@ export async function main() {
 			case "instance": {
 				switch (parameters.shift()) {
 					case "list": {
-						new Logger("instance list").table(await new Client(
+						await new Client(
 							await CLI.getClusterName()
-						).instances.list(
+						).instances.printList(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
-						));
+						);
 
 						return process.exit();
 					}

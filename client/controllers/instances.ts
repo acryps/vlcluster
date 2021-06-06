@@ -25,6 +25,23 @@ export class InstancesClientController {
         return instances;
     }
 
+    async printList(application: string, env: string) {
+        const instances = await this.list(application, env);
+        const applications = instances.map(i => i.application).filter((c, i, a) => a.indexOf(c) == i);
+
+        for (let application of applications) {
+            this.logger.log(this.logger.a(application));
+
+            for (let env of instances.filter(i => i.application == application).map(i => i.application).filter((c, i, a) => a.indexOf(c) == i)) {
+                this.logger.log(`\t${this.logger.ae(application, env)}`);
+
+                for (let instance of instances.filter(i => i.application == application && i.env == env)) {
+                    this.logger.log(`\t\t${this.logger.aev(application, env, instance.version)} @ ${this.logger.wi(instance.worker, instance.instance)}:${instance.port}`);
+                }
+            }
+        }
+    }
+
     async restart(application: string, env: string) {
         await new Request(this.client.host, Cluster.api.registry.instances.restart)
             .auth(this.client.username, this.client.key)

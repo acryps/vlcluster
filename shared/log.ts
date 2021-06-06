@@ -84,6 +84,10 @@ export class Logger {
         }
     }
 
+    a(application: string) {
+        return `\u001b[1m${application}\u001b[0m`;
+    }
+
     av(application: string, version: string) {
         return `\u001b[1m${application}:${version}\u001b[0m`;
     }
