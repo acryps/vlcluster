@@ -185,7 +185,7 @@ export class InstancesRegistryController {
 		const instance = Crypto.createId(application, version, env);
 
 		return new Promise<StartRequest>(done => {
-			const worker = this.runningWorkers.filter(w => w.up).sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
+			const worker = this.runningWorkers.sort((a, b) => a.cpuUsage - b.cpuUsage)[0];
 
 			if (!worker) {
 				this.logger.log("out of workers to run ", this.logger.aev(application, env, version), "! retrying...");
