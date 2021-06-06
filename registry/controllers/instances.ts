@@ -113,7 +113,11 @@ export class InstancesRegistryController {
 
                     this.runningWorkers.splice(this.runningWorkers.indexOf(worker));
 
-                    this.registry.route.updateGateways();
+                    for (let id in worker.instances) {
+                        const instance = worker.instances[id];
+
+                        this.start(instance.application, instance.version, instance.env);
+                    }
 
                     for (let message of messages) {
                         if (message instanceof StartRequest) {
