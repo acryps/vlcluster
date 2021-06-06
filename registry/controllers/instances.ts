@@ -52,6 +52,18 @@ export class InstancesRegistryController {
 
 			request.oncomplete(request);
 
+            // check if any instance was started as a backup
+            // shut down the backup instances of this instance
+            for (let worker of this.runningWorkers) {
+                for (let id of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
+                    const liveInstance = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, id)).toString().split("\n");
+
+                    if (liveInstance[1] == instance) {
+                        this.stopInstance(application, version, env, worker.name, liveInstance[0]);
+                    }
+                }
+            }
+
 			return {};
         });
 
@@ -120,7 +132,7 @@ export class InstancesRegistryController {
                     for (let id in worker.instances) {
                         const instance = worker.instances[id];
 
-                        this.start(instance.application, instance.version, instance.env).then(() => this.registry.route.updateGateways());
+                        this.start(instance.application, instance.version, instance.env, instance.id).then(() => this.registry.route.updateGateways());
                     }
 
                     for (let message of messages) {
@@ -190,7 +202,7 @@ export class InstancesRegistryController {
         });
     }
 
-    start(application: string, version: string, env: string) {
+    start(application: string, version: string, env: string, backupOf: string = null) {
 		const instance = Crypto.createId(application, version, env);
 
 		return new Promise<StartRequest>(done => {
@@ -226,7 +238,7 @@ export class InstancesRegistryController {
 
 				fs.writeFileSync(
 					RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance),
-					instance
+					`${instance}${backupOf ? `\n${backupOf}` : ""}`
 				);
 
 				this.logger.log("started ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
@@ -243,7 +255,7 @@ export class InstancesRegistryController {
 
 		for (let worker of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version))]) {
 			for (let instance of [...fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker))]) {
-                const name = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker, instance)).toString();
+                const name = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker, instance)).toString().split("\n")[0];
 
 				await this.stopInstance(application, version, env, worker, name);
 			}
