@@ -14,8 +14,8 @@ export class InstancesRegistryController {
 
 	workers: ActiveWorker[] = [];
 
-    startRequests: StartRequest[];
-    stopRequests: StopRequest[];
+    startRequests: StartRequest[] = [];
+    stopRequests: StopRequest[] = [];
 
     constructor(private registry: RegistryServer) {}
 
@@ -27,8 +27,6 @@ export class InstancesRegistryController {
 			const version = params.version; 
 			const application = params.application;
 			const port = +params.port;
-
-            console.log(params);
 
 			const worker = this.workers.find(w => w.name == workerName);
             const request = this.startRequests.find(req => req.instance == instance);
