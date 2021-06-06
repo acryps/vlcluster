@@ -28,6 +28,8 @@ export class InstancesRegistryController {
 			const application = params.application;
 			const port = +params.port;
 
+            console.log(params);
+
 			const worker = this.workers.find(w => w.name == workerName);
             const request = this.startRequests.find(req => req.instance == instance);
 
@@ -190,7 +192,7 @@ export class InstancesRegistryController {
                         version: instance.version,
                         env: instance.env,
                         port: instance.port,
-                        worker: worker.name,
+                        worker: worker.name
                     });
                 }
             }
