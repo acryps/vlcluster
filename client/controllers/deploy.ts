@@ -103,7 +103,7 @@ export class DeployClientController {
 		});
 	}
 
-	async upgrade(application: string, version: string, env: string) {
+	async upgrade(application: string, version: string, env: string, instances: number) {
 		const logger = new Logger("upgrade");
 		
 		await logger.process(["upgrading ", logger.aev(application, env, version), "..."], async finished => {
@@ -112,16 +112,17 @@ export class DeployClientController {
 				.append("application", application)
 				.append("version", version)
 				.append("env", env)
+				.append("instances", instances || 1)
 				.send();
 
 			finished("upgraded ", logger.aev(application, env, version));
 		});
 	}
 
-	async deploy(directory: string, env: string) {
+	async deploy(directory: string, env: string, instances: number) {
 		const app = await DeployClientController.build(directory);
 
 		await this.push(app.application, app.version);
-		await this.upgrade(app.application, app.version, env);
+		await this.upgrade(app.application, app.version, env, instances);
 	}
 }

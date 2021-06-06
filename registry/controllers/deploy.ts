@@ -61,6 +61,7 @@ export class DeployRegistryController {
             const application = params.application;
             const version = params.version;
             const env = params.env;
+			const instances = params.instances;
 
             if (!fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
                 throw new Error("application or version does not exist!");
@@ -68,7 +69,7 @@ export class DeployRegistryController {
 
             this.logger.log("upgrading to ", this.logger.av(application, version));
 
-            return await this.upgrade(application, version, env);
+            return await this.upgrade(application, version, env, instances);
         });
 
         // use native route to return streamed body
@@ -106,7 +107,7 @@ export class DeployRegistryController {
 		});
     }
 
-    async upgrade(application: string, version: string, env: string) {
+    async upgrade(application: string, version: string, env: string, instances: number) {
 		this.logger.log("upgrade ", this.logger.aev(application, env, version));
 		
 		let isNewEnv;
@@ -134,8 +135,10 @@ export class DeployRegistryController {
 
 		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
 
-		// install application on new worker
-		await this.registry.instances.start(application, version, env);
+		// install applications on new worker
+		for (let i = 0; i < instances; i++) {
+			await this.registry.instances.start(application, version, env);
+		}
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);

@@ -120,7 +120,8 @@ export async function main() {
 				).deploy.upgrade(
 					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 					await CLI.getArgument([2, "-v", "--version"], "Application version"),
-					await CLI.getArgument([3, "-e", "--env"], "Environnement")
+					await CLI.getArgument([3, "-e", "--env"], "Environnement"),
+					+(await CLI.getArgument(["-i", "--instances"]) || 1)
 				);
 
 				return process.exit(0);
@@ -132,6 +133,7 @@ export async function main() {
 				).deploy.deploy(
 					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
 					await CLI.getArgument([1, "-e", "--env"], "Environnement"),
+					+(await CLI.getArgument(["-i", "--instances"]) || 1)
 				);
 
 				return process.exit(0);
