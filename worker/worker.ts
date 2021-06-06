@@ -103,7 +103,13 @@ export class WorkerServer {
 				.append("key", this.key)
 				.append("cpu-usage", this.cpuUsage)
 				.append("endpoint", this.endpoint)
-				.send<{ start: StartRequest[], stop: StopRequest[] }>();
+				.send<{ start: StartRequest[], stop: StopRequest[], new: boolean }>();
+
+			if (response.new) {
+				for (let instance of this.instances) {
+					this.reportInstanceStart(instance.application, instance.version, instance.env, instance.instanceId, instance.externalPort);
+				}
+			}
 
 			for (let request of response.start) {
 				this.start(request.application, request.version, request.env, request.instance, request.variables);

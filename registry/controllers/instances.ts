@@ -83,6 +83,8 @@ export class InstancesRegistryController {
             let worker = this.runningWorkers.find(s => s.name == name);
             const now = new Date();
     
+            let isNewWorker = false;
+
             if (!worker) {
                 worker = new ChildWorker();
                 worker.name = name;
@@ -97,6 +99,8 @@ export class InstancesRegistryController {
                 } else {
                     this.logger.log("worker login ", this.logger.w(name));
                 } 
+
+                isNewWorker = true;
             } else {
                 worker.cpuUsage = cpuUsage;
                 worker.lastSeen = now;
@@ -134,6 +138,7 @@ export class InstancesRegistryController {
             }, Cluster.pingTimeout);
 
             return {
+                new: isNewWorker,
                 start: messages.filter(m => m instanceof StartRequest),
                 stop: messages.filter(m => m instanceof StopRequest)
             };
