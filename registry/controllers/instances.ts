@@ -115,7 +115,7 @@ export class InstancesRegistryController {
                 if (worker.lastSeen == now) {
                     this.logger.log(this.logger.w(name), " ping timed out");
 
-                    this.runningWorkers.splice(this.runningWorkers.indexOf(worker));
+                    this.runningWorkers.splice(this.runningWorkers.indexOf(worker), 1);
 
                     for (let id in worker.instances) {
                         const instance = worker.instances[id];
