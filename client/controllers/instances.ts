@@ -32,7 +32,7 @@ export class InstancesClientController {
         for (let application of applications) {
             this.logger.log(this.logger.a(application));
 
-            for (let env of instances.filter(i => i.application == application).map(i => i.application).filter((c, i, a) => a.indexOf(c) == i)) {
+            for (let env of instances.filter(i => i.application == application).map(i => i.env).filter((c, i, a) => a.indexOf(c) == i)) {
                 this.logger.log(`\t${this.logger.ae(application, env)}`);
 
                 for (let instance of instances.filter(i => i.application == application && i.env == env)) {
