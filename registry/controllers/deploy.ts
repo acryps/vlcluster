@@ -61,7 +61,7 @@ export class DeployRegistryController {
             const application = params.application;
             const version = params.version;
             const env = params.env;
-			const instances = params.instances;
+			const instances = params.instances || 1;
 
             if (!fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
                 throw new Error("application or version does not exist!");
