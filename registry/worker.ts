@@ -7,7 +7,6 @@ export class ChildWorker {
     name: string;
 	lastSeen: Date;
 	cpuUsage: number;
-	up: boolean;
 	endpoint: string;
 
 	instances: { [key: string]: ChildInstance } = {};

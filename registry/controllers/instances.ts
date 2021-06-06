@@ -88,7 +88,6 @@ export class InstancesRegistryController {
                 worker.name = name;
                 worker.cpuUsage = cpuUsage;
                 worker.lastSeen = now;
-                worker.up = true;
                 worker.endpoint = endpoint;
 
                 this.runningWorkers.push(worker);
@@ -99,13 +98,8 @@ export class InstancesRegistryController {
                     this.logger.log("worker login ", this.logger.w(name));
                 } 
             } else {
-                if (!worker.up) {
-                    this.registry.route.updateGateways();
-                }
-
                 worker.cpuUsage = cpuUsage;
                 worker.lastSeen = now;
-                worker.up = true;
                 worker.endpoint = endpoint;
             }
     
@@ -117,7 +111,7 @@ export class InstancesRegistryController {
                 if (worker.lastSeen == now) {
                     this.logger.log(this.logger.w(name), " ping timed out");
 
-                    worker.up = false;
+                    this.runningWorkers.splice(this.runningWorkers.indexOf(worker));
 
                     this.registry.route.updateGateways();
 
