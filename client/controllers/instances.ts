@@ -36,7 +36,7 @@ export class InstancesClientController {
                 this.logger.log(`\t${this.logger.ae(application, env)}`);
 
                 for (let instance of instances.filter(i => i.application == application && i.env == env)) {
-                    this.logger.log(`\t\t${this.logger.aev(application, env, instance.version)} @ ${this.logger.wi(instance.worker, instance.instance)}:${instance.port}`);
+                    this.logger.log(`\t\t${this.logger.aev(application, env, instance.version)} @ ${this.logger.wi(instance.worker, instance.instance)}:${instance.port}${instance.backupOf ? ` (BACKUP of ${instance.backupOf})` : ""}`);
                 }
             }
         }

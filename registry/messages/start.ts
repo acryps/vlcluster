@@ -7,6 +7,7 @@ export class StartRequest extends QueueMessage {
     instance: string;
     variables: {};
     port: number;
+    backupOf: string;
 
     oncomplete(status: StartRequest) {}
 }

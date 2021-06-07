@@ -18,6 +18,7 @@ export class ActiveInstance {
 	version: string;
 	env: string;
 	port: number;
+	backupOf: string;
 
 	worker: ActiveWorker;
 }

@@ -38,6 +38,7 @@ export class InstancesRegistryController {
 			activeInstance.env = env;
 			activeInstance.id = instance;
 			activeInstance.port = port;
+            activeInstance.backupOf = request?.backupOf;
 
 			activeInstance.worker = worker;
 
@@ -190,7 +191,8 @@ export class InstancesRegistryController {
                         version: instance.version,
                         env: instance.env,
                         port: instance.port,
-                        worker: worker.name
+                        worker: worker.name,
+                        backup: instance.backupOf
                     });
                 }
             }
@@ -258,6 +260,7 @@ export class InstancesRegistryController {
 			request.version = version;
 			request.env = env;
 			request.instance = instance;
+            request.backupOf = backupOf;
 			request.variables = this.registry.variables.constructActive(application, env);
 
 			this.startRequests.push(request);
