@@ -161,8 +161,6 @@ export class WorkerServer {
 		state.env = env;
 		state.instanceId = instance;
 		state.running = false;
-
-		this.instances.push(state);
 		
 		if (!(await this.hasLoadedImage(application, version))) {
 			await this.pull(application, version);
@@ -177,6 +175,8 @@ export class WorkerServer {
 
 			this.logger.log(this.logger.aevi(application, env, version, instance), " already running");
 
+			this.instances.push(state);
+
 			return;
 		}
 
@@ -188,6 +188,8 @@ export class WorkerServer {
 		return await this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
 			const internalPort = await Crypto.getRandomPort();
 			const externalPort = await Crypto.getRandomPort();
+
+			this.instances.push(state);
 
 			variables.PORT = internalPort;
 			variables.CLUSTER_APPLICATION = application;
@@ -227,6 +229,7 @@ export class WorkerServer {
 
 				if (!fs.existsSync(WorkerPath.instanceDirectory(this.clusterName, instance))) {
 					fs.mkdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
+
 					fs.writeFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance), application);
 					fs.writeFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance), version);
 					fs.writeFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance), env);
