@@ -68,11 +68,13 @@ export class InstancesRegistryController {
             // check if any instance was started as a backup
             // shut down the backup instances of this instance
             for (let worker of this.workers) {
-                for (let id of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
-                    const liveInstance = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, id)).toString().split("\n");
+                if (fs.existsSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
+                    for (let id of fs.readdirSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
+                        const liveInstance = fs.readFileSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, id)).toString().split("\n");
 
-                    if (liveInstance[1] == instance) {
-                        this.stopInstance(application, version, env, worker.name, liveInstance[0]);
+                        if (liveInstance[1] == instance) {
+                            this.stopInstance(application, version, env, worker.name, liveInstance[0]);
+                        }
                     }
                 }
             }
