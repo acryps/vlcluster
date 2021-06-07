@@ -44,8 +44,18 @@ export class InstancesRegistryController {
 
 			worker.instances.push(activeInstance);
 
-            // update gateways to expose application if there was no start request (when a worker reconnects)
+            
             if (!request) {
+                // check if the instance is a stray instance
+                if (!fs.existsSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance))) {
+                    this.logger.log(this.logger.w(workerName), " started stray instance ", this.logger.aevi(application, env, version, instance), ". shutting down");
+
+                    this.stopInstance(application, version, env, workerName, instance);
+
+                    return {};
+                }
+
+                // update gateways to expose application if there was no start request (when a worker reconnects)
 				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port));
 
                 await this.registry.route.updateGateways();
