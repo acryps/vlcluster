@@ -76,7 +76,7 @@ export class GatewayServer {
 			const process = spawn("certbot", [
 				"-d", host, // obtain for domain
 				"certonly", // only obtain cert, we match domain on our own
-				"--nginx" // using nginx plugin
+				"--standalone " // using nginx plugin
 			], {
 				stdio: "inherit"
 			});
