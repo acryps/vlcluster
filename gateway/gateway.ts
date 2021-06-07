@@ -5,6 +5,7 @@ import { Cluster } from "../shared/cluster";
 import { Logger } from "../shared/log";
 import { GatewayPath } from "./paths";
 import { Request } from "../shared/request";
+import { Handler } from "../shared/handler";
 
 export class GatewayServer {
 	clusterHost: string;
@@ -65,6 +66,29 @@ export class GatewayServer {
 
             res.json({});
 		});
+
+		new Handler(app, Cluster.api.gateway.ssl, async params => {
+			const host = params.host;
+			const port = params.port;
+
+			this.logger.log("obtaining ssl for ", this.logger.hp(host, port));
+
+			const process = spawn("certbot", [
+				"-d", host, // obtain for domain
+				"certonly", // only obtain cert, we match domain on our own
+				"--nginx" // using nginx plugin
+			], {
+				stdio: "inherit"
+			});
+
+			await new Promise(done => {
+				process.on("exit", () => {
+					this.logger.log("obtained ssl for ", this.logger.hp(host, port));
+
+					done(null);
+				});
+			});
+		});
     }
 
     async reloadServer() {
@@ -80,22 +104,6 @@ export class GatewayServer {
 				this.logger.ae(route.application, route.env), 
 				` (${route.ssl ? "SSL, " : ""}${route.instances.length} instances${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
 			);
-			
-			if (route.ssl) {
-				if (!fs.existsSync(GatewayPath.letsencryptRoot(route.host))) {
-					this.logger.log("obtaining ssl for ", this.logger.hp(route.host, route.port));
-
-					const process = spawn("certbot", [
-						"-d", route.host, // obtain for domain
-						"certonly", // only obtain cert, we match domain on our own
-						"--nginx" // using nginx plugin
-					]);
-
-					await new Promise(done => {
-						process.on("exit", () => done(null));
-					});
-				}
-			}
 
             // create upstream
             const upstream = `stream_${sha512(JSON.stringify(route))}`;

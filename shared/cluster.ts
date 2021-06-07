@@ -42,7 +42,8 @@ export class Cluster {
 		},
 
 		gateway: {
-			reload: "/reload"
+			reload: "/reload",
+			ssl: "/ssl"
 		}
 	}
 
