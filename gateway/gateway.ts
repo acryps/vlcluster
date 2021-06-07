@@ -74,9 +74,9 @@ export class GatewayServer {
 			this.logger.log("obtaining ssl for ", this.logger.hp(host, port));
 
 			const process = spawn("certbot", [
+				"--standalone", // using standalone webserver for challenge
 				"-d", host, // obtain for domain
-				"certonly", // only obtain cert, we match domain on our own
-				"--standalone " // using nginx plugin
+				"certonly" // only obtain cert, we match domain on our own
 			], {
 				stdio: "inherit"
 			});
