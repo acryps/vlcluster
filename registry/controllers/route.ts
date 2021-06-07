@@ -92,7 +92,7 @@ export class RouteRegistryController {
 			for (let worker of this.registry.instances.workers) {
 				if (worker.endpoint) {
 					for (let instance of worker.instances) {
-						if (instance.application == application && instance.env == env && instance.version == latestVersion) {
+						if (instance.application == application && instance.env == env && instance.version == latestVersion && instance.port) {
 							instances.push({
 								id: instance.id,
 								worker: worker.name,
