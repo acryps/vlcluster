@@ -18,7 +18,7 @@ export class SSLClientController {
 				.append("port", port)
 				.send();
 
-			finished("enabled ssl for ", logger.hp(host, port), ". deploy new version to enable SSL");
+			finished("enabled ssl for ", logger.hp(host, port));
 		});
 	}
 }

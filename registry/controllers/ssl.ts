@@ -31,6 +31,8 @@ export class SSLRegistryController {
 
 					fs.writeFileSync(RegistryPath.routeSSLFile(id), port);
 
+                    await this.registry.route.updateGateways();
+
 					return {};
 				}
 			}
