@@ -2,6 +2,7 @@ import * as readline from "readline";
 import * as fs from "fs";
 
 import { Cluster } from "./shared/cluster";
+import { Logger } from "./shared/log";
 
 export class CLI {
     static async getArgument(names: (string | number)[], prompt?: string | [string, string, string, string]): Promise<string> {
@@ -76,7 +77,15 @@ export class CLI {
         }
 
         try {
-            return fs.readFileSync(Cluster.activeClusterNameFile).toString();
+            const activeCluster = fs.readFileSync(Cluster.activeClusterNameFile).toString();
+
+            if (fs.readdirSync(Cluster.clustersDirectory).length > 1) {
+                const logger = new Logger("cluster");
+
+                logger.log("using cluster ", logger.c(activeCluster));
+            }
+
+            return activeCluster;
         } catch {
             const cluster = await this.getArgument(["-c", "--cluster"], "Cluster name");
             this.setActiveCluster(cluster);
