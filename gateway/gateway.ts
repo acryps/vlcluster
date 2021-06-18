@@ -125,7 +125,9 @@ export class GatewayServer {
 				this.logger.hp(route.host, route.port), 
 				" → ", 
 				this.logger.ae(route.application, route.env), 
-				` (${route.ssl ? "SSL, " : ""}${route.instances.length} instances${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
+				` (${route.ssl ? "SSL, " : ""}${route.instances.length} instances [`,
+				...route.instances.map(i => this.logger.hp(i.endpoint, i.port)),
+				``]${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
 			);
 
             // create upstream
