@@ -99,6 +99,8 @@ export class RouteRegistryController {
 								endpoint: instance.worker.endpoint,
 								port: instance.port
 							});
+
+							console.log(`     ${application}[${env}] -> ${instance.worker.endpoint}:${instance.port} (${instance.id})`)
 						}
 					}
 				} else {
