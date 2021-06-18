@@ -143,6 +143,9 @@ export class DeployRegistryController {
 
 		// write current version file
 		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
+
+		// update gateways
+		await this.registry.route.updateGateways();
 		
 		// stop dangeling versions
 		if (dangelingVersion) {

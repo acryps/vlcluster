@@ -179,8 +179,8 @@ export class InstancesRegistryController {
                             this.logger.warn("proposal ", this.logger.aev(request.application, request.env, request.version), " for ", this.logger.w(worker.name), " timed out");
 
                             this.start(request.application, request.version, request.env).then(() => {
-                                request.oncomplete(request);
-                            });
+								request.oncomplete(request);
+							});
                         }
                     }
                 }
@@ -230,10 +230,14 @@ export class InstancesRegistryController {
                     }
 
                     if (restart) {
+						// start new instance
                         await this.start(instance.application, instance.version, instance.env);
                         
                         // we don't need to wait for the instance to stop, this can happen in the background
-                        this.stopInstance(instance.application, instance.version, instance.env, instance.worker.name, instance.id);
+						this.stopInstance(instance.application, instance.version, instance.env, instance.worker.name, instance.id);
+						
+						// update gateways
+						await this.registry.route.updateGateways();
                     }
                 }
             }
@@ -243,7 +247,10 @@ export class InstancesRegistryController {
     // start backup instance
     // will be stopped as soon as the original instance is started again
     async startBackupFor(instance: ActiveInstance) {
-        await this.start(instance.application, instance.version, instance.env, instance.id);
+		await this.start(instance.application, instance.version, instance.env, instance.id);
+		
+		// update gateways
+		await this.registry.route.updateGateways();
     }
 
     start(application: string, version: string, env: string, backupOf: string = null) {
@@ -279,7 +286,7 @@ export class InstancesRegistryController {
 			this.startRequests.push(request);
 
             // wait for request to complete
-			request.oncomplete = status => {
+			request.oncomplete = async status => {
                 request.port = status.port;
 
 				if (!fs.existsSync(RegistryPath.applicationEnvActiveVersionWorkerDirectory(application, env, version, worker.name))) {
@@ -293,9 +300,6 @@ export class InstancesRegistryController {
 				);
 
 				this.logger.log("started ", this.logger.aevi(application, version, env, instance), " on ", this.logger.w(worker.name));
-
-                // update gateways
-                this.registry.route.updateGateways();
 
 				done(request);
 			};
