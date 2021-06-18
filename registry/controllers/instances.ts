@@ -44,8 +44,9 @@ export class InstancesRegistryController {
 
 			worker.instances.push(activeInstance);
 
-            
-            if (!request) {
+            if (request) {
+				this.logger.log(this.logger.aevi(application, env, version, instance), " started on ", this.logger.w(workerName), " exposing ", this.logger.p(port), " by request");
+			} else {
                 // check if the instance is a stray instance
                 if (!fs.existsSync(RegistryPath.applicationEnvActiveVersionWorkerInstanceFile(application, env, version, worker.name, instance))) {
                     this.logger.log(this.logger.w(workerName), " started stray instance ", this.logger.aevi(application, env, version, instance), ". shutting down");
