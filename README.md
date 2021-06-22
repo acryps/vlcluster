@@ -115,6 +115,8 @@ vlcluster deploy -c mainnet -e <b>test</b>
 vlcluster route domain -c mainnet -h <b>test.example-application.example.com</b> -p 80 -a vlcluster-example -e <b>test</b>
 </pre>
 
+**When making your own application, make sure to listen on the port defined in the env variable `PORT`. The port will automatically be assigned and routed.**
+
 ### Variables
 Nobody wants hardcoded database connection strings! Thats why vlcluster allows you to create variables which will be set as ENV-variables in your applications
 
