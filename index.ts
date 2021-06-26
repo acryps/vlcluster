@@ -13,10 +13,12 @@ import { CLI } from "./cli";
 import { Logger } from "./shared/log";
 import { DeployClientController } from "./client/controllers/deploy";
 import { CreateRegistryController } from "./registry/controllers/create";
+import { Configuration } from "./shared/configuration";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
 	Cluster.rootDirectory = path.resolve(os.homedir(), ".vlcluster");
+	Configuration.load();
 
 	if (!fs.existsSync(Cluster.rootDirectory)) {
 		fs.mkdirSync(Cluster.rootDirectory);
@@ -55,30 +57,20 @@ export async function main() {
 						const registry = await WorkerServer.create(
 							await CLI.getArgument(["-h", "--hostname"], "Registry hostname"),
 							await CLI.getArgument(["-k", "--key"], "Registry key"),
-							await CLI.getArgument(["-n", "--name"], "Worker name")
+							await CLI.getArgument(["-n", "--name"], "Worker name"),
+							await CLI.getArgument(["-e", "--endpoint"], "Worker endpoint")
 						);
 						
 						console.log(`created worker!\n\nwelcome to '${registry.name}'!`);
 						return process.exit(0);
 					}
 
-					case "endpoint": {
-						await new WorkerServer(
-							await CLI.getClusterName()
-						).setLocalPath(
-							await CLI.getArgument(["-h", "--hostname"], "Endpoint hostname")
-						);
-
-						console.log(`local path assigned`);
-						return process.exit(0);
-					}
-
 					case "gateway": {
 						await GatewayServer.create(
-							await CLI.getArgument(["--cluster-hostname"], "Cluster hostname"),
-							await CLI.getArgument(["--cluster-key"], "Cluster key"),
+							await CLI.getArgument(["-h", "--hostname"], "Cluster hostname"),
+							await CLI.getArgument(["-k", "--key"], "Cluster key"),
 							await CLI.getArgument(["-n", "--name"], "Gateway name"),
-							await CLI.getArgument(["--endpoint-hostname"], "Endpoint host")
+							await CLI.getArgument(["-e", "--endpoint"], "Endpoint host")
 						);
 
 						console.log(`gateway created`);
@@ -104,9 +96,7 @@ export async function main() {
 			}
 
 			case "push": {
-				await new Client(
-					await CLI.getClusterName()
-				).deploy.push(
+				await (await Client.getActiveClient()).deploy.push(
 					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 					await CLI.getArgument([2, "-v", "--version"], "Application version")
 				);
@@ -115,9 +105,7 @@ export async function main() {
 			}
 
 			case "upgrade": {
-				await new Client(
-					await CLI.getClusterName()
-				).deploy.upgrade(
+				await (await Client.getActiveClient()).deploy.upgrade(
 					await CLI.getArgument([1, "-a", "--application"], "Application name"),
 					await CLI.getArgument([2, "-v", "--version"], "Application version"),
 					await CLI.getArgument([3, "-e", "--env"], "Environnement"),
@@ -128,9 +116,7 @@ export async function main() {
 			}
 
 			case "deploy": {
-				await new Client(
-					await CLI.getClusterName()
-				).deploy.deploy(
+				await (await Client.getActiveClient()).deploy.deploy(
 					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
 					await CLI.getArgument([1, "-e", "--env"], "Environnement"),
 					+(await CLI.getArgument(["-i", "--instances"]) || 1)
@@ -142,9 +128,7 @@ export async function main() {
 			case "var": {
 				switch (parameters.shift()) {
 					case "set": {
-						await new Client(
-							await CLI.getClusterName()
-						).variables.set(
+						await (await Client.getActiveClient()).variables.set(
 							await CLI.getArgument([2, "-n", "--name"], "Variable name"),
 							await CLI.getArgument([3, "-v", "--value"], "Variable name"),
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
@@ -155,9 +139,7 @@ export async function main() {
 					}
 
 					case "list": {
-						const vars = await new Client(
-							await CLI.getClusterName()
-						).variables.list(
+						const vars = await (await Client.getActiveClient()).variables.list(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
@@ -172,9 +154,7 @@ export async function main() {
 			case "instance": {
 				switch (parameters.shift()) {
 					case "list": {
-						await new Client(
-							await CLI.getClusterName()
-						).instances.printList(
+						await (await Client.getActiveClient()).instances.printList(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
@@ -183,16 +163,16 @@ export async function main() {
 					}
 
 					case "restart": {
-						const client = new Client(await CLI.getClusterName());
+						const client = await Client.getActiveClient();
 						const application = await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]);
 						const env = await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]);
 
 						const logger = new Logger("restart");
 
 						await logger.process(["restarting ", logger.ae(application || "*", env || "*")], async done => {
-							await client.instances.restart(application, env);
+							const count = await client.instances.restart(application, env);
 
-							done("restarted ", logger.ae(application || "*", env || "*"));
+							done("restarted ", count, " instances of ", logger.ae(application || "*", env || "*"));
 						});
 
 						return process.exit();
@@ -208,9 +188,7 @@ export async function main() {
 			case "route": {
 				switch (parameters.shift()) {
 					case "domain": {
-						await new Client(
-							await CLI.getClusterName()
-						).route.domain(
+						await (await Client.getActiveClient()).route.domain(
 							await CLI.getArgument(["-h", "--host"], "Host"),
 							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
 							await CLI.getArgument(["-a", "--application"], "Application"),
@@ -221,9 +199,7 @@ export async function main() {
 					}
 
 					case "websocket": {
-						await new Client(
-							await CLI.getClusterName()
-						).route.webSocket(
+						await (await Client.getActiveClient()).route.webSocket(
 							await CLI.getArgument(["-h", "--host"], "Host"),
 							+await CLI.getArgument(["-p", "--port"], "Port (default 80)"),
 							await CLI.getArgument(["-l", "--location"], "Location (example: /socket)"),
@@ -242,9 +218,7 @@ export async function main() {
 			case "ssl": {
 				switch (parameters.shift()) {
 					case "enable": {
-						await new Client(
-							await CLI.getClusterName()
-						).ssl.enable(
+						await (await Client.getActiveClient()).ssl.enable(
 							await CLI.getArgument(["-h", "--host"], "Host"),
 							+await CLI.getArgument(["-p", "--port"], "Port (default 443)"),
 						);

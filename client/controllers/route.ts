@@ -10,8 +10,8 @@ export class RouteClientController {
 
     async domain(host: string, port: number, application: string, env: string) {
 		await this.logger.process(["routing domain ", this.logger.hp(host, port), " to ", this.logger.ae(application, env), "..."], async finished => {
-			await new Request(this.client.host, Cluster.api.registry.route.domain)
-				.auth(this.client.username, this.client.key)
+			await new Request(this.client.configuration.host, Cluster.api.registry.route.domain)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("host", host)
 				.append("port", port)
 				.append("application", application)
@@ -24,8 +24,8 @@ export class RouteClientController {
 
 	async webSocket(host: string, port: number, path: string) {
 		await this.logger.process(["routing websocket ", this.logger.hp(host, port), " on ", path, "..."], async finished => {
-			const res = await new Request(this.client.host, Cluster.api.registry.route.webSocket)
-				.auth(this.client.username, this.client.key)
+			const res = await new Request(this.client.configuration.host, Cluster.api.registry.route.webSocket)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("host", host)
 				.append("port", port)
 				.append("websocket", path)

@@ -3,6 +3,7 @@ import * as fs from "fs";
 
 import { Cluster } from "./shared/cluster";
 import { Logger } from "./shared/log";
+import { Configuration } from "./shared/configuration";
 
 export class CLI {
     static async getArgument(names: (string | number)[], prompt?: string | [string, string, string, string]): Promise<string> {
@@ -77,10 +78,10 @@ export class CLI {
         }
 
         try {
-            const activeCluster = fs.readFileSync(Cluster.activeClusterNameFile).toString();
+            const activeCluster = Configuration.activeCluster;
 
-            if (fs.readdirSync(Cluster.clustersDirectory).length > 1) {
-                const logger = new Logger("cluster");
+            if (Configuration.clients.length > 1) {
+                const logger = new Logger("*");
 
                 logger.log("using cluster ", logger.c(activeCluster));
             }
@@ -95,6 +96,7 @@ export class CLI {
     }
 
     static setActiveCluster(cluster: string) {
-        fs.writeFileSync(Cluster.activeClusterNameFile, cluster);
+        Configuration.activeCluster = cluster;
+        Configuration.save();
     }
 }

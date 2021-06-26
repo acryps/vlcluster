@@ -19,42 +19,6 @@ export class Crypto {
 		return sha512(Math.random().toString()).substring(0, 32);
 	}
 
-	static hostIdentifier(name: string) {
-		return name.replace(/[^\-\_0-9a-z\.]/g, "");
-	}
-
-	static sanitizeUsername(name: string) {
-		return name.replace(/[^\-\_0-9a-z\.\@]/g, "");
-	}
-
-	static sanitizeVersion(name: string) {
-		return name.replace(/[^\-\_\.0-9a-z]/g, "");
-	}
-
-	static sanitizeApplicationName(name: string) {
-		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
-	}
-
-	static sanitizeWorkerName(name: string) {
-		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
-	}
-
-	static sanitizeGatewayName(name: string) {
-		return name.replace(/[^\-\_\@\.0-9a-zA-Z]/g, "");
-	}
-
-	static sanitizeInstanceName(name: string) {
-		return name.replace(/[^0-9a-zA-Z\-\.]/g, "");
-	}
-
-	static sanitizeEnv(name: string) {
-		return name.replace(/[^\-\_\@0-9a-zA-Z]/g, "");
-	}
-
-	static sanitizeHostname(name: string) {
-		return name.replace(/[^\-\_\@0-9a-zA-Z]/g, "");
-	}
-
 	static getRandomPort() {
 		return new Promise<number>(done => {
 			const server = net.createServer(() => {});

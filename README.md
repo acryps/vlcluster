@@ -47,10 +47,7 @@ sudo apt install docker.io # install docker (if you don't already have it)
 sudo npm install -g vlcluster
 
 # create worker
-sudo vlcluster init worker -n "worker1" -h <b>registry.example.com</b> -k <b>8cfh8jVXPd4...</b>
-
-# set workers endpoint address
-sudo vlcluster init endpoint -c <b>mainnet</b> -h <b>worker1.example.com</b>
+sudo vlcluster init worker -n "worker1" -h <b>registry.example.com</b> -k <b>8cfh8jVXPd4...</b> -e <b>worker1.example.com</b>
 </pre>
 
 We have to restart the daemon if your worker is *on the same node as the registry*. 
@@ -140,9 +137,8 @@ The variables will be set after a `deploy` or a `vlcluster instance restart`
 ```
 vlcluster init [client] [-e | --email <email>] [-h | --hostname <registry hostname>] [-k | --key <registry key>]
 vlcluster init registry [-n | --name <registry name>]
-vlcluster init worker [-h | --hostname <registry hostname>] [-k | --key <registry key>] [-n | --name <worker name>]
-vlcluster init endpoint [-c | --cluster <registry hostname>] [-h | --hostname <endpoint hostname>]
-vlcluster init gateway [--cluster-hostname <cluster hostname>] [--cluster-key <cluster key>] [-n | --name <gateway name>] [--endpoint-hostname <endpoint hostname>]
+vlcluster init worker [-h | --hostname <registry hostname>] [-k | --key <registry key>] [-n | --name <worker name>] [-e | --endpoint <worker endpoint>]
+vlcluster init gateway [-h | --hostname <cluster hostname>] [-key | --key <cluster key>] [-n | --name <gateway name>] [-e | --endpoint <endpoint hostname>]
 
 vlcluster daemon install [-u | --user <user>]
 ```
@@ -176,6 +172,7 @@ vlcluster route websocket [-c | --cluster <registry hostname>] [-h | --host <hos
 
 ## SSL 
 SSL certificates are created by [certbot](https://certbot.eff.org/) which needs to be installed on the gateways!
+Creating the certificates requires the gateway to shutdown the nginx webserver temporarely!
 ```
 vlcluster ssl enable [-c | --cluster <registry hostname>] [-h | --host <host>] [-p | --port <port>]
 ```

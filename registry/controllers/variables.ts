@@ -1,10 +1,13 @@
 import { Logger } from "../../shared/log";
-import { RegistryPath } from "../paths";
 import { RegistryServer } from "../registry";
 import fs = require("fs");
 import { Crypto } from "../../shared/crypto";
 import { Handler } from "../../shared/handler";
 import { Cluster } from "../../shared/cluster";
+import { Application } from "../../shared/models/application";
+import { Environnement } from "../../shared/models/environnement";
+import { Variable } from "../../shared/models/variable";
+import { Configuration } from "../../shared/configuration";
 
 export class VariablesRegistryController {
     logger = new Logger("variables");
@@ -32,31 +35,18 @@ export class VariablesRegistryController {
 		});
     }
 
-    list(application: string, env: string) {
+    list(applicationFilter: string, envFilter: string) {
 		const variables: Variable[] = [];
 		
-		for (let id of fs.readdirSync(RegistryPath.variablesDirectory)) {
+		for (let variable of this.registry.configuration.variables) {
 			let add = true;
 
-			const variable = new Variable();
-			variable.id = id;
-			variable.name = fs.readFileSync(RegistryPath.variableNameFile(id)).toString();
-			variable.value = fs.readFileSync(RegistryPath.variableValueFile(id)).toString();
-
-			if (fs.existsSync(RegistryPath.variableApplicationFile(id))) {
-				variable.application = fs.readFileSync(RegistryPath.variableApplicationFile(id)).toString();
-
-				if (application && variable.application && application != variable.application) {
-					add = false;
-				}
+			if (applicationFilter && variable.applicationFilter && applicationFilter != variable.applicationFilter) {
+				add = false;
 			}
 
-			if (fs.existsSync(RegistryPath.variableEnvFile(id))) {
-				variable.env = fs.readFileSync(RegistryPath.variableEnvFile(id)).toString();
-
-				if (env && variable.env && env != variable.env) {
-					add = false;
-				}
+			if (envFilter && variable.envFilter && envFilter != variable.envFilter) {
+				add = false;
 			}
 
 			if (add) {
@@ -67,23 +57,25 @@ export class VariablesRegistryController {
 		return variables;
 	}
 
-	constructActive(application: string, env: string) {
-		const variables = this.list(application, env).sort((a, b) => {
+	constructActive(application: Application, env: Environnement) {
+		// sort variables by priority
+		const variables = this.list(application.name, env.name).sort((a, b) => {
 			if (a.name == b.name) {
-				if (a.application == b.application) {
-					if (a.env == b.env) {
+				if (a.applicationFilter == b.applicationFilter) {
+					if (a.envFilter == b.envFilter) {
 						return 0;
 					} else {
-						return a.env ? 1 : -1;
+						return a.envFilter ? 1 : -1;
 					}
 				} else {
-					return a.application ? 1 : -1;
+					return a.applicationFilter ? 1 : -1;
 				}
 			} else {
 				return a.name > b.name ? 1 : -1;
 			}
 		});
 
+		// condense list
 		const constructed = {};
 
 		for (let variable of variables) {
@@ -93,43 +85,24 @@ export class VariablesRegistryController {
 		return constructed;
 	}
 
-    async set(name: string, value: string, application: string, env: string) {
-		let id;
-
+    async set(name: string, value: string, applicationFilter: string, envFilter: string) {
 		// try to find existing variable
-		for (let variable of fs.readdirSync(RegistryPath.variablesDirectory)) {
-			if (
-				fs.readFileSync(RegistryPath.variableNameFile(variable)).toString() == name &&
-				(application ? fs.readFileSync(RegistryPath.variableApplicationFile(variable)).toString() == application : !fs.existsSync(RegistryPath.variableApplicationFile(variable))) &&
-				(env ? fs.readFileSync(RegistryPath.variableEnvFile(variable)).toString() == env : !fs.existsSync(RegistryPath.variableEnvFile(variable)))
-			) {
-				id = variable;
+		for (let variable of this.registry.configuration.variables) {
+			if (variable.name == name && variable.applicationFilter == applicationFilter && variable.envFilter == envFilter) {
+				variable.value = value;
+
+				return;
 			}
 		}
 
-		if (!id) {
-			id = Crypto.createId();
+		const variable: Variable = {
+			name,
+			value,
+			applicationFilter,
+			envFilter
+		};
 
-			fs.mkdirSync(RegistryPath.variableDirectory(id));
-			fs.writeFileSync(RegistryPath.variableNameFile(id), name);
-
-			if (application) {
-				fs.writeFileSync(RegistryPath.variableApplicationFile(id), application);
-			}
-	
-			if (env) {
-				fs.writeFileSync(RegistryPath.variableEnvFile(id), env);
-			}
-		}
-		
-		fs.writeFileSync(RegistryPath.variableValueFile(id), value);
+		this.registry.configuration.variables.push(variable);
+		Configuration.save();
 	}
-}
-
-export class Variable {
-	id: string;
-	name: string;
-	value: string;
-	application?: string;
-	env?: string
 }

@@ -9,8 +9,8 @@ export class VariablesClientController {
     constructor(public client: Client) {}
     
     async list(application?: string, env?: string) {
-        return await new Request(this.client.host, Cluster.api.registry.variables.list)
-            .auth(this.client.username, this.client.key)
+        return await new Request(this.client.configuration.host, Cluster.api.registry.variables.list)
+            .auth(this.client.configuration.name, this.client.configuration.key)
             .append("name", application)
             .append("env", env)
             .send<{ id, name, value, application?, env? }[]>();
@@ -18,8 +18,8 @@ export class VariablesClientController {
 
     async set(name: string, value: string, application: string, env: string) {
 		await this.logger.process(["setting ", name, " to ", value, " on ", this.logger.ae(application || "*", env || "*"), "..."], async finished => {
-			await new Request(this.client.host, Cluster.api.registry.variables.set)
-				.auth(this.client.username, this.client.key)
+			await new Request(this.client.configuration.host, Cluster.api.registry.variables.set)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("name", name)
 				.append("value", value)
 				.append("application", application)

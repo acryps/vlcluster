@@ -5,87 +5,70 @@ import { spawn } from "child_process";
 import { Crypto } from "../shared/crypto";
 import { WorkerInstance } from "./instance-state";
 import { Logger } from "../shared/log";
-import { WorkerPath } from "./paths";
-import { StartRequest } from "../registry/messages/start";
-import { StopRequest } from "../registry/messages/stop";
 import { Request } from "../shared/request";
+import { WorkerConfiguration } from "./configuration";
+import { Configuration } from "../shared/configuration";
+import { Handler } from "../shared/handler";
 
 export class WorkerServer {
-	key: string;
-	name: string;
-	host: string;
-	endpoint: string;
 	cpuUsage: number;
 
 	logger: Logger;
 
 	instances: WorkerInstance[] = [];
 
-	constructor(private clusterName: string) {
+	constructor(private configuration: WorkerConfiguration) {
 		this.logger = new Logger("worker");
-
-		this.key = fs.readFileSync(WorkerPath.keyFile(clusterName)).toString();
-		this.host = fs.readFileSync(WorkerPath.hostFile(clusterName)).toString();
-		this.name = fs.readFileSync(WorkerPath.nameFile(clusterName)).toString();
-
-		if (fs.existsSync(WorkerPath.endpointFile(clusterName))) {
-			this.endpoint = fs.readFileSync(WorkerPath.endpointFile(clusterName)).toString();
-		} else {
-			this.logger.warn("endpoint missing. worker will not be reachable from gateways. set endpoint by running 'vlcluster init endpoint'");
-		}
-
-		if (!fs.existsSync(WorkerPath.instancesDirectory(this.clusterName))) {
-			fs.mkdirSync(WorkerPath.instancesDirectory(this.clusterName));
-		}
-
 		this.cpuUsage = 1;
 	}
 
-	async register() {
+	async register(app) {
 		this.startCPUMonitoring();
 		
 		await this.startPing();
-		await this.startInstances();
+
+		new Handler(app, Cluster.api.worker.start, async params => {
+			const instance = params.instance;
+			const application = params.application;
+            const version = params.version;
+			const env = params.env;
+			const variables = JSON.parse(params.variables);
+
+			const state = await this.start(application, version, env, instance, variables);
+
+			return {
+				port: state.externalPort
+			};
+		});
+
+		new Handler(app, Cluster.api.worker.stop, async params => {
+			const instance = params.instance;
+
+			this.stop(instance);
+		});
 	}
 
-	static async create(host: string, key: string, name: string) {
+	static async create(host: string, key: string, name: string, endpoint: string) {
 		const result = await new Request(host, Cluster.api.registry.create.worker)
 			.append("key", key)
 			.append("name", name)
+			.append("endpoint", endpoint)
 			.send<{ name, key }>();
 
-		if (!fs.existsSync(WorkerPath.rootDirectory)) {
-			fs.mkdirSync(WorkerPath.rootDirectory);
-		}
+		const configuration: WorkerConfiguration = {
+			name,
+			clusterName: result.name,
+			clusterHost: host,
+			key: result.key,
+			endpoint
+		};
 
-		fs.mkdirSync(WorkerPath.workerDirectory(result.name));
-		fs.writeFileSync(WorkerPath.keyFile(result.name), result.key);
-		fs.writeFileSync(WorkerPath.hostFile(result.name), host);
-		fs.writeFileSync(WorkerPath.nameFile(result.name), name);
+		Configuration.workers.push(configuration);
+		Configuration.save();
 
 		return {
 			name: result.name
 		};
-	}
-
-	static getInstalledClusterNames() {
-		if (!fs.existsSync(WorkerPath.rootDirectory)) {
-			return [];
-		}
-
-		return fs.readdirSync(WorkerPath.rootDirectory);
-	}
-
-	async startInstances() {
-		for (let instance of fs.readdirSync(WorkerPath.instancesDirectory(this.clusterName))) {
-			await this.start(
-				fs.readFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance)).toString(),
-				fs.readFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance)).toString(),
-				fs.readFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance)).toString(),
-				instance,
-				JSON.parse(fs.readFileSync(WorkerPath.instanceVariablesFile(this.clusterName, instance)).toString())
-			);
-		}
 	}
 
 	async startPing() {
@@ -98,26 +81,11 @@ export class WorkerServer {
 
 	async ping() {
 		try {
-			const response = await new Request(this.host, Cluster.api.registry.ping)
-				.append("name", this.name)
-				.append("key", this.key)
+			await new Request(this.configuration.clusterHost, Cluster.api.registry.ping)
+				.append("name", this.configuration.name)
+				.append("key", this.configuration.key)
 				.append("cpu-usage", this.cpuUsage)
-				.append("endpoint", this.endpoint)
-				.send<{ start: StartRequest[], stop: StopRequest[], new: boolean }>();
-
-			if (response.new) {
-				for (let instance of this.instances) {
-					this.reportInstanceStart(instance.application, instance.version, instance.env, instance.instanceId, instance.externalPort);
-				}
-			}
-
-			for (let request of response.start) {
-				this.start(request.application, request.version, request.env, request.instance, request.variables);
-			}
-
-			for (let request of response.stop) {
-				this.stop(request.instance);
-			}
+				.send();
 		} catch (error) {
 			this.logger.warn("ping failed! ", error.message);
 		}
@@ -139,11 +107,11 @@ export class WorkerServer {
 				]
 			});
 
-			new Request(this.host, Cluster.api.registry.pull)
+			new Request(this.configuration.clusterHost, Cluster.api.registry.pull)
 				.append("application", application)
 				.append("version", version)
-				.append("key", this.key)
-				.append("worker", this.name)
+				.append("key", this.configuration.key)
+				.append("worker", this.configuration.name)
 				.pipe(loadProcess.stdin);
 
 			loadProcess.on("exit", async () => {
@@ -154,7 +122,7 @@ export class WorkerServer {
 		}));
 	}
 
-	async start(application: string, version: string, env: string, instance: string, variables: any) {
+	async start(application: string, version: string, env: string, instance: string, variables: any): Promise<WorkerInstance> {
 		const state = new WorkerInstance();
 		state.application = application;
 		state.version = version;
@@ -171,13 +139,10 @@ export class WorkerServer {
 			state.externalPort = await this.getExternalPort(instance);
 			state.running = true;
 
-			await this.reportInstanceStart(application, version, env, instance, state.externalPort);
-
 			this.logger.log(this.logger.aevi(application, env, version, instance), " already running");
-
 			this.instances.push(state);
 
-			return;
+			return state;
 		}
 
 		// remove old container if present
@@ -185,82 +150,61 @@ export class WorkerServer {
 			await this.removeInstanceContainer(instance);
 		}
 
-		return await this.logger.process(["starting ", this.logger.aev(application, env, version), "..."], finished => new Promise<void>(async done => {
-			const internalPort = await Crypto.getRandomPort();
-			const externalPort = await Crypto.getRandomPort();
+		this.logger.log("starting ", this.logger.aev(application, env, version));
+			
+		const internalPort = await Crypto.getRandomPort();
+		const externalPort = await Crypto.getRandomPort();
 
-			this.instances.push(state);
+		this.instances.push(state);
 
-			variables.PORT = internalPort;
-			variables.CLUSTER_APPLICATION = application;
-			variables.CLUSTER_INTERNAL_PORT = internalPort;
-			variables.CLUSTER_EXTERNAL_PORT = externalPort;
-			variables.CLUSTER_VERSION = version;
-			variables.CLUSTER_INSTANCE = instance;
-			variables.CLUSTER_NAME = this.clusterName;
-			variables.CLUSTER_WORKER = this.name;
-			variables.CLUSTER_REGISTRY = this.host;
-			variables.CLUSTER_ENV = env;
+		variables.PORT = internalPort;
+		variables.CLUSTER_APPLICATION = application;
+		variables.CLUSTER_INTERNAL_PORT = internalPort;
+		variables.CLUSTER_EXTERNAL_PORT = externalPort;
+		variables.CLUSTER_VERSION = version;
+		variables.CLUSTER_INSTANCE = instance;
+		variables.CLUSTER_NAME = this.configuration.clusterName;
+		variables.CLUSTER_REGISTRY = this.configuration.clusterHost;
+		variables.CLUSTER_WORKER = this.configuration.name;
+		variables.CLUSTER_WORKER_ENDPOINT = this.configuration.endpoint;
+		variables.CLUSTER_ENV = env;
 
-			const variableArguments = [];
+		const variableArguments = [];
 
-			for (let variable in variables) {
-				variableArguments.push("--env", `${variable}=${variables[variable]}`);
-			}
+		for (let variable in variables) {
+			variableArguments.push("--env", `${variable}=${variables[variable]}`);
+		}
 
-			const runProcess = spawn("docker", [
-				"run",
-				...variableArguments,
-				"--expose", internalPort.toString(), // export container port to docker interface
-				"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
-				"--name", instance, // tag container
-				"-d", // detatch (run in background)
-				`${application}:${version}`
-			], {
-				stdio: [
-					"ignore",
-					process.stdout,
-					process.stderr
-				]
-			});
+		const runProcess = spawn("docker", [
+			"run",
+			...variableArguments,
+			"--expose", internalPort.toString(), // export container port to docker interface
+			"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
+			"--name", instance, // tag container
+			"-d", // detatch (run in background)
+			`${application}:${version}`
+		], {
+			stdio: [
+				"ignore",
+				process.stdout,
+				process.stderr
+			]
+		});
 
+		await new Promise(done => {
 			runProcess.on("exit", async () => {
-				finished("started ", this.logger.aevi(application, env, version, instance));
+				this.logger.log("started ", this.logger.aevi(application, env, version, instance));
 
-				if (!fs.existsSync(WorkerPath.instanceDirectory(this.clusterName, instance))) {
-					fs.mkdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
+				state.externalPort = externalPort;
+				state.internalPort = internalPort;
 
-					fs.writeFileSync(WorkerPath.instanceApplicationFile(this.clusterName, instance), application);
-					fs.writeFileSync(WorkerPath.instanceVersionFile(this.clusterName, instance), version);
-					fs.writeFileSync(WorkerPath.instanceEnvFile(this.clusterName, instance), env);
-					fs.writeFileSync(WorkerPath.instanceVariablesFile(this.clusterName, instance), JSON.stringify(variables));
-				}
-				
-				this.logger.process(["reporting start ", this.logger.aev(application, env, version), " to registry"], async finished => {
-					await this.reportInstanceStart(application, version, env, instance, externalPort);
+				state.running = true;
 
-					finished("start ", this.logger.aev(application, env, version), " reported");
-
-					state.externalPort = externalPort;
-					state.internalPort = internalPort;
-
-					state.running = true;
-
-					done();
-				});
+				done(null);
 			});
-		}));
-	}
+		});
 
-	async reportInstanceStart(application: string, version: string, env: string, instance: string, externalPort: number) {
-		await new Request(this.host, Cluster.api.registry.instances.report.started)
-			.append("instance", instance)
-			.append("worker", this.name)
-			.append("application", application)
-			.append("env", env)
-			.append("version", version)
-			.append("port", externalPort)
-			.send();
+		return state;
 	}
 
 	hasLoadedImage(application: string, version: string) {
@@ -358,35 +302,23 @@ export class WorkerServer {
 	}
 
 	async stop(instance: string) {
-		await this.logger.process(["stopping ", this.logger.i(instance)], finished => new Promise<void>(done => {
-			const stopProcess = spawn("docker", [
-				"rm", // remove container
-				"--force", // stop container
-				instance
-			], {
-				stdio: "ignore"
-			});
+		this.logger.log("stopping ", this.logger.i(instance));
+
+		const stopProcess = spawn("docker", [
+			"rm", // remove container
+			"--force", // stop container
+			instance
+		], {
+			stdio: "ignore"
+		});
 			
+		await new Promise(done => {
 			stopProcess.on("exit", async () => {
 				// remove instance files
-				fs.unlinkSync(WorkerPath.instanceEnvFile(this.clusterName, instance));
-				fs.unlinkSync(WorkerPath.instanceApplicationFile(this.clusterName, instance));
-				fs.unlinkSync(WorkerPath.instanceVersionFile(this.clusterName, instance));
-				fs.unlinkSync(WorkerPath.instanceVariablesFile(this.clusterName, instance));
-				
-				fs.rmdirSync(WorkerPath.instanceDirectory(this.clusterName, instance));
-
-				await new Request(this.host, Cluster.api.registry.instances.report.stopped)
-					.append("instance", instance);
-
-				finished("stopped ", this.logger.i(instance));
+				this.logger.log("stopped ", this.logger.i(instance));
 	
-				done();
+				done(null);
 			});
-		}));
-	}
-
-	setLocalPath(hostname: string) {
-		fs.writeFileSync(WorkerPath.endpointFile(this.clusterName), hostname);
+		});
 	}
 }

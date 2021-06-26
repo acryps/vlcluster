@@ -4,36 +4,22 @@ import { Cluster } from "../shared/cluster";
 import { Logger } from "../shared/log";
 import { InstancesClientController } from "./controllers/instances";
 import { Request } from "../shared/request";
-import { ClientPath } from "./paths";
 import { DeployClientController } from "./controllers/deploy";
 import { RouteClientController } from "./controllers/route";
 import { SSLClientController } from "./controllers/ssl";
 import { VariablesClientController } from "./controllers/variables";
+import { ClientConfiguration } from "./configuration";
+import { Configuration } from "../shared/configuration";
+import { CLI } from "../cli";
 
 export class Client {
-	host: string;
-	key: string;
-	username: string;
-
 	deploy = new DeployClientController(this);
 	instances = new InstancesClientController(this);
 	route = new RouteClientController(this);
 	ssl = new SSLClientController(this);
 	variables = new VariablesClientController(this);
 
-	constructor(public clusterName: string) {
-		if (!Client.hasCluster(clusterName)) {
-			throw new Error(`Cluster '${clusterName}' not found!`);
-		}
-
-		this.host = fs.readFileSync(ClientPath.clusterHostFile(clusterName)).toString();
-		this.key = fs.readFileSync(ClientPath.clusterKeyFile(clusterName)).toString();
-		this.username = fs.readFileSync(ClientPath.clusterUsernameFile(clusterName)).toString();
-	}
-
-	static hasCluster(name: string) {
-		return fs.existsSync(ClientPath.clusterDirectory(name));
-	}
+	constructor(public configuration: ClientConfiguration) {}
 
 	static async create(username: string, host: string, key: string) {
 		const logger = new Logger("login");
@@ -50,16 +36,24 @@ export class Client {
 
 		logger.log("welcome to ", logger.c(result.name), "!");
 
-		if (!fs.existsSync(ClientPath.clusterDirectory(result.name))) {
-			fs.mkdirSync(ClientPath.clusterDirectory(result.name));
-		}
+		const config: ClientConfiguration = {
+			name: username,
+			host,
+			key: result.key,
+			clusterName: result.name
+		};
 
-		fs.writeFileSync(ClientPath.clusterKeyFile(result.name), result.key);
-		fs.writeFileSync(ClientPath.clusterUsernameFile(result.name), username);
-		fs.writeFileSync(ClientPath.clusterHostFile(result.name), host);
+		Configuration.clients.push(config);
+		Configuration.save();
 
 		return {
 			name: result.name
 		};
+	}
+
+	static async getActiveClient() {
+		const cluster = await CLI.getClusterName();
+
+		return new Client(Configuration.clients.find(c => c.clusterName == cluster));
 	}
 }

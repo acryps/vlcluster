@@ -1,11 +1,11 @@
+import fs = require("fs"); 
+
 import { Logger } from "../../shared/log";
 import { Crypto } from "../../shared/crypto";
-import { RegistryPath } from "../paths";
 import { RegistryServer } from "../registry";
-import fs = require("fs");
 import { Handler } from "../../shared/handler";
-import { clearScreenDown } from "readline";
 import { Cluster } from "../../shared/cluster";
+import { Configuration } from "../../shared/configuration";
 
 export class CreateRegistryController {
     logger = new Logger("create");
@@ -16,19 +16,17 @@ export class CreateRegistryController {
 		// generate key
 		const key = Crypto.createKey();
 
-		// create registry directory
-		fs.mkdirSync(RegistryPath.rootDirectory);
+		Configuration.registry = {
+			name,
+			key,
+			workers: [],
+			clients: [],
+			gateways: [],
+			applications: [],
+			variables: []
+		};
 
-		// create files
-		fs.writeFileSync(RegistryPath.keyFile, key);
-		fs.writeFileSync(RegistryPath.nameFile, name);
-
-		// create registry
-		fs.mkdirSync(RegistryPath.workersDirectory);
-		fs.mkdirSync(RegistryPath.clientsDirectory);
-		fs.mkdirSync(RegistryPath.applicationsDirectory);
-		fs.mkdirSync(RegistryPath.routesDirectory);
-		fs.mkdirSync(RegistryPath.variablesDirectory);
+		Configuration.save();
 
 		return key;
 	}
@@ -40,8 +38,8 @@ export class CreateRegistryController {
 			}
 
 			return {
-				name: this.registry.name,
-				key: await this.worker(params.name)
+				name: this.registry.configuration.name,
+				key: await this.worker(params.name, params.endpoint)
 			};
 		});
 
@@ -51,7 +49,7 @@ export class CreateRegistryController {
 			}
 
 			return {
-				name: this.registry.name,
+				name: this.registry.configuration.name,
 				key: await this.client(params.username)
 			};
 		});
@@ -62,23 +60,31 @@ export class CreateRegistryController {
 			}
 
 			return {
-				name: this.registry.name,
+				name: this.registry.configuration.name,
 				key: await this.gateway(params.name, params.host)
 			};
 		});
 	}
 
-    worker(name: string) {
+    worker(name: string, endpoint: string) {
 		this.logger.log("creating worker ", this.logger.w(name));
 
-		if (fs.existsSync(RegistryPath.workerDirectory(name))) {
+		if (this.registry.configuration.workers.find(w => w.name == name)) {
 			throw new Error("worker already registered");
 		}
 
 		const key = Crypto.createKey();
 
-		fs.mkdirSync(RegistryPath.workerDirectory(name));
-		fs.writeFileSync(RegistryPath.workerKeyFile(name), key);
+		Configuration.registry.workers.push({
+			name,
+			key,
+			endpoint,
+			running: false,
+			cpuUsage: null,
+			lastSeen: null
+		});
+
+		Configuration.save();
 
 		this.logger.log("created worker ", this.logger.w(name));
 
@@ -90,12 +96,16 @@ export class CreateRegistryController {
 
 		this.logger.log(`creating client ${name}`);
 
-		if (fs.existsSync(RegistryPath.clientDirectory(name))) {
+		if (this.registry.configuration.clients.find(w => w.name == name)) {
 			throw new Error(`client '${name}' already exists!`);
 		}
 
-		fs.mkdirSync(RegistryPath.clientDirectory(name));
-		fs.writeFileSync(RegistryPath.clientKeyFile(name), key);
+		Configuration.registry.clients.push({
+			name,
+			key
+		});
+
+		Configuration.save();
 
 		this.logger.log("created client");
 
@@ -107,17 +117,17 @@ export class CreateRegistryController {
 
 		this.logger.log(`creating gateway ${name}`);
 
-		if (fs.existsSync(RegistryPath.gatewayDirectory(name))) {
+		if (this.registry.configuration.gateways.find(g => g.name == name)) {
 			throw new Error(`gateway '${name}' already exists!`);
 		}
 
-		if (!fs.existsSync(RegistryPath.gatewaysDirectory)) {
-			fs.mkdirSync(RegistryPath.gatewaysDirectory);
-		}
+		Configuration.registry.gateways.push({
+			name,
+			key,
+			endpoint: host
+		});
 
-		fs.mkdirSync(RegistryPath.gatewayDirectory(name));
-		fs.writeFileSync(RegistryPath.gatewayHostFile(name), host);
-		fs.writeFileSync(RegistryPath.gatewayKeyFile(name), key);
+		Configuration.save();
 
 		this.logger.log("created gateway");
 

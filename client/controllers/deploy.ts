@@ -83,8 +83,8 @@ export class DeployClientController {
 				]
 			});
 
-			const request = new Request(this.client.host, Cluster.api.registry.push)
-				.auth(this.client.username, this.client.key)
+			const request = new Request(this.client.configuration.host, Cluster.api.registry.push)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("application", application)
 				.append("version", version)
 				.append("image-name", imageName)
@@ -107,8 +107,8 @@ export class DeployClientController {
 		const logger = new Logger("upgrade");
 		
 		await logger.process(["upgrading ", logger.aev(application, env, version), "..."], async finished => {
-			await new Request(this.client.host, Cluster.api.registry.upgrade)
-				.auth(this.client.username, this.client.key)
+			await new Request(this.client.configuration.host, Cluster.api.registry.upgrade)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("application", application)
 				.append("version", version)
 				.append("env", env)

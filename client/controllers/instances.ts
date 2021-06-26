@@ -10,8 +10,8 @@ export class InstancesClientController {
     constructor(public client: Client) {}
 
     async list(application: string, env: string) {
-        let instances = await new Request(this.client.host, Cluster.api.registry.instances.list)
-            .auth(this.client.username, this.client.key)
+        let instances = await new Request(this.client.configuration.host, Cluster.api.registry.instances.list)
+            .auth(this.client.configuration.name, this.client.configuration.key)
             .send<{ instance, application, version, env, port }[]>();
 
         if (application && application != "*") {
@@ -43,10 +43,10 @@ export class InstancesClientController {
     }
 
     async restart(application: string, env: string) {
-        await new Request(this.client.host, Cluster.api.registry.instances.restart)
-            .auth(this.client.username, this.client.key)
+        return await new Request(this.client.configuration.host, Cluster.api.registry.instances.restart)
+            .auth(this.client.configuration.name, this.client.configuration.key)
             .append("application", application)
             .append("env", env)
-            .send();
+            .send<number>();
     }
 }

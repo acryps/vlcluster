@@ -7,6 +7,7 @@ import { Cluster } from "./shared/cluster";
 import { WorkerServer } from "./worker/worker";
 import { Logger } from "./shared/log";
 import { GatewayServer } from "./gateway/gateway";
+import { Configuration } from "./shared/configuration";
 
 export class Daemon {
 	server;
@@ -16,7 +17,7 @@ export class Daemon {
 
 		process.stdout.write(`\u001b[1m${Cluster.logo}  \u001b[2m${Cluster.version}\u001b[0m\n\n`);
 
-		logger.log("starting vlcluster daemon in '", Cluster.localDirectory, "'");
+		logger.log("starting vlcluster daemon in '", Cluster.rootDirectory, "'");
 
 		this.server = express();
 		this.server.use(express.json());
@@ -31,37 +32,37 @@ export class Daemon {
 			logger.log("daemon server started");
 		});
 
-		for (let cluster of GatewayServer.getInstalledGateways()) {
+		for (let gateway of Configuration.gateways) {
 			if (process.env.USER !== "root") {
 				logger.warn("gateways must be run as root!");
 
 				return process.exit(1);
 			}
 
-			await logger.process(["starting gateway for ", logger.c(cluster)], async finished => {
-				const gateway = new GatewayServer(cluster);
-				await gateway.register(this.server);
+			logger.log("starting gateway ", logger.cg(gateway.clusterHost, gateway.name));
 
-				finished("started gateway ", logger.cg(cluster, gateway.name));
-			});
+			const server = new GatewayServer(gateway);
+			await server.register(this.server);
+
+			logger.log("started gateway ", logger.cg(gateway.clusterHost, gateway.name));
 		}
 
-		if (RegistryServer.isInstalled()) {
-			await logger.process(["starting registry"], async finished => {
-				const registry = new RegistryServer();
-				registry.register(this.server);
+		if (Configuration.registry) {
+			logger.log("starting registry ", logger.c(Configuration.registry.name));
 
-				finished("started registry ", logger.c(registry.name));
-			});
+			const server = new RegistryServer(Configuration.registry);
+			server.register(this.server);
+
+			logger.log("started registry ", logger.c(Configuration.registry.name));
 		}
 
-		for (let cluster of WorkerServer.getInstalledClusterNames()) {
-			await logger.process(["starting worker for ", logger.c(cluster)], async finished => {
-				const worker = new WorkerServer(cluster);
-				await worker.register();
+		for (let worker of Configuration.workers) {
+			logger.log("starting worker ", logger.cw(worker.clusterName, worker.name));
 
-				finished("started worker ", logger.cw(cluster, worker.name));
-			});
+			const server = new WorkerServer(worker);
+			await server.register(this.server);
+
+			logger.log("started worker ", logger.cw(worker.clusterName, worker.name));
 		}
 	}
 

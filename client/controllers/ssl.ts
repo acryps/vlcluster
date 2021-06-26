@@ -12,8 +12,8 @@ export class SSLClientController {
 		const logger = new Logger("ssl");
 
 		await logger.process(["enabling ssl for ", logger.hp(host, port)], async finished => {
-			await new Request(this.client.host, Cluster.api.registry.ssl.enable)
-				.auth(this.client.username, this.client.key)
+			await new Request(this.client.configuration.host, Cluster.api.registry.ssl.enable)
+				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("host", host)
 				.append("port", port)
 				.send();

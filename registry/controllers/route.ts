@@ -2,10 +2,15 @@ import { Logger } from "../../shared/log";
 import { RegistryServer } from "../registry";
 import fs = require("fs");
 import { Crypto } from "../../shared/crypto";
-import { RegistryPath } from "../paths";
 import { Handler } from "../../shared/handler";
 import { Cluster } from "../../shared/cluster";
 import { Request } from "../../shared/request";
+import { DomainRoute } from "../../shared/models/routes/domain";
+import { Application } from "../../shared/models/application";
+import { Environnement } from "../../shared/models/environnement";
+import { Configuration } from "../../shared/configuration";
+import { env } from "process";
+import { Route, RoutedInstance } from "../../gateway/route";
 
 export class RouteRegistryController {
     logger = new Logger("route");
@@ -16,10 +21,13 @@ export class RouteRegistryController {
         new Handler(app, Cluster.api.registry.route.domain, async params => {
 			const host = params.host;
 			const port = params.port;
-			const application = params.application;
-			const env = params.env;
+			const applicationName = params.application;
+			const envName = params.env;
 
-			this.logger.log("routing ", this.logger.hp(host, port), " to ", this.logger.ae(application, env));
+			const application = this.registry.configuration.applications.find(a => a.name == applicationName);
+			const env = application.environnements.find(e => e.name == envName);
+
+			this.logger.log("routing ", this.logger.hp(host, port), " to ", this.logger.ae(application.name, env.name));
 			await this.domain(host, port, application, env);
 
 			return {};
@@ -30,120 +38,108 @@ export class RouteRegistryController {
 			const port = +params.port;
 			const path = params.websocket;
 
-			this.logger.log("routing ", this.logger.hp(host, port), " on ", path);
+			for (let application of this.registry.configuration.applications) {
+				for (let env of application.environnements) {
+					for (let domain of env.routes) {
+						if (domain.host == host && domain.port == port) {
+							this.logger.log("routing ", this.logger.hp(host, port), " on ", path);
 			
-			return await this.webSocket(host, port, path);
+							await this.webSocket(domain, path);
+
+							return {
+								application: application.name,
+								env: env.name
+							};
+						}
+					}
+				}
+			}
+
+			throw new Error(`route '${host}' on port ${port} not found!`);
 		});
     }
 
-    async domain(host: string, port: number, application: string, env: string) {
+    async domain(host: string, port: number, application: Application, env: Environnement) {
 		const id = Crypto.createId(host);
 
-		fs.mkdirSync(RegistryPath.routeDirectory(id));
+		const route: DomainRoute = {
+			host,
+			port,
+			webSockets: []
+		};
 
-		fs.writeFileSync(RegistryPath.routeApplicationFile(id), application);
-		fs.writeFileSync(RegistryPath.routeEnvFile(id), env);
-		fs.writeFileSync(RegistryPath.routeHostFile(id), host);
-		fs.writeFileSync(RegistryPath.routePortFile(id), port + "");
+		env.routes.push(route);
+		Configuration.save();
 
 		await this.updateGateways();
 	}
 
-	async webSocket(socketHost: string, socketPort: number, socketPath: string) {
-		for (let id of fs.readdirSync(RegistryPath.routesDirectory)) {
-			const host = fs.readFileSync(RegistryPath.routeHostFile(id)).toString();
-			const port = +fs.readFileSync(RegistryPath.routePortFile(id)).toString();
+	async webSocket(domain: DomainRoute, path: string) {
+		domain.webSockets.push({
+			path
+		});
+		Configuration.save();
 
-			if (host == socketHost && port == socketPort) {
-				if (!fs.existsSync(RegistryPath.routeWebSocketsDirectory(id))) {
-					fs.mkdirSync(RegistryPath.routeWebSocketsDirectory(id));
-				}
-
-				fs.writeFileSync(RegistryPath.routeWebSocketFile(id, Crypto.nameHash(socketPath)), socketPath);
-
-				await this.updateGateways();
-
-				return {
-					application: fs.readFileSync(RegistryPath.routeApplicationFile(id)).toString(),
-					env: fs.readFileSync(RegistryPath.routeEnvFile(id)).toString()
-				};
-			}
-		}
-
-		throw new Error(`No domain '${socketHost}:${socketPort}' registered`);
+		await this.updateGateways();
 	}
 
     async updateGateways() {
 		this.logger.log("updating gateways...");
 
-		const routes = [];
+		const routes: Route[] = [];
 
-		for (let id of fs.readdirSync(RegistryPath.routesDirectory)) {
-			const host = fs.readFileSync(RegistryPath.routeHostFile(id)).toString();
-			const port = +fs.readFileSync(RegistryPath.routePortFile(id)).toString();
-			const env = fs.readFileSync(RegistryPath.routeEnvFile(id)).toString();
-			const application = fs.readFileSync(RegistryPath.routeApplicationFile(id)).toString();
+		for (let application of this.registry.configuration.applications) {
+			for (let env of application.environnements) {
+				const instances: RoutedInstance[] = [];
+				const sockets: string[] = [];
 
-			const latestVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
+				for (let instance of application.instances) {
+					if (instance.running && instance.env.name == env.name) {
+						instances.push({
+							name: instance.name,
+							worker: instance.worker.name,
+							endpoint: instance.worker.endpoint,
+							port: instance.port
+						});
+					}
+				}
 
-			const instances = [];
-			const sockets = [];
+				if (instances.length) {
+					for (let domain of env.routes) {
+						const route: Route = {
+							application: application.name,
+							env: env.name,
+							host: domain.host,
+							port: domain.port,
+							instances,
+							sockets: domain.webSockets.map(s => s.path)
+						};
 
-			for (let worker of this.registry.instances.workers) {
-				if (worker.endpoint) {
-					for (let instance of worker.instances) {
-						if (instance.application == application && instance.env == env && instance.version == latestVersion && instance.port) {
-							instances.push({
-								id: instance.id,
-								worker: worker.name,
-								endpoint: instance.worker.endpoint,
-								port: instance.port
-							});
+						if (domain.ssl) {
+							route.ssl = domain.ssl.port;
 						}
+
+						routes.push(route);
+					}
+
+					if (!env.routes.length) {
+						this.logger.log("no domains routed for ", this.logger.ae(application.name, env.name), ", skipped");
 					}
 				} else {
-					this.logger.log("no endpoint set, skipped ", this.logger.w(worker.name), "");
+					this.logger.log("no instances of ", this.logger.ae(application.name, env.name), " running, skipped");
 				}
-			}
-
-			if (fs.existsSync(RegistryPath.routeWebSocketsDirectory(id))) {
-				for (let socket of fs.readdirSync(RegistryPath.routeWebSocketsDirectory(id))) {
-					sockets.push(fs.readFileSync(RegistryPath.routeWebSocketFile(id, socket)).toString());
-				}
-			}
-
-			if (instances.length) {
-				const route = {
-					application,
-					env,
-					host,
-					port,
-					instances,
-					sockets
-				} as any;
-
-				if (fs.existsSync(RegistryPath.routeSSLFile(id))) {
-					route.ssl = +fs.readFileSync(RegistryPath.routeSSLFile(id)).toString();
-				}
-
-				routes.push(route);
-			} else {
-				this.logger.log("no instances of ", this.logger.ae(application, env), " running, skipped");
 			}
 		}
 
-		for (let gateway of fs.readdirSync(RegistryPath.gatewaysDirectory)) {
-			const host = fs.readFileSync(RegistryPath.gatewayHostFile(gateway)).toString();
-			const key = fs.readFileSync(RegistryPath.gatewayKeyFile(gateway)).toString();
+		for (let gateway of this.registry.configuration.gateways) {
+			this.logger.log("upgrading ", this.logger.g(gateway.name), "...");
 
-			this.logger.log("upgrading ", this.logger.g(gateway), "...");
+			await new Request(gateway.endpoint, Cluster.api.gateway.reload)
+				.append("key", gateway.key)
+				.appendJSONBody(routes)
+				.send();
 
-            await new Request(host, Cluster.api.gateway.reload)
-                .append("key", key)
-                .appendJSONBody(routes)
-                .send();
-
-			this.logger.log("upgraded ", this.logger.g(gateway));
+			this.logger.log("upgraded ", this.logger.g(gateway.name));
 		}
 
 		this.logger.log("updated gateways");

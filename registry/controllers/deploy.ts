@@ -1,13 +1,13 @@
+import fs = require("fs");
+
 import { Logger } from "../../shared/log";
 import { Cluster } from "../../shared/cluster";
 import { Handler } from "../../shared/handler";
 import { RegistryServer } from "../registry";
-
-import fs = require("fs");
-import { RegistryPath } from "../paths";
-import { StartRequest } from "../messages/start";
-import { StopRequest } from "../messages/stop";
-import { Crypto } from "../../shared/crypto";
+import { Configuration } from "../../shared/configuration";
+import { Version } from "../../shared/models/version";
+import { Application } from "../../shared/models/application";
+import { Environnement } from "../../shared/models/environnement";
 
 export class DeployRegistryController {
     logger = new Logger("deploy");
@@ -16,41 +16,46 @@ export class DeployRegistryController {
 
     register(app) {
         new Handler(app, Cluster.api.registry.push, async (params, req) => {
-            const application = params.application;
-			const version = params.version;
+            const applicationName = params.application;
+			const versionName = params.version;
 			const imageName = params["image-name"];
 
-            if (!application) {
-                throw new Error("no application name");
-            }
+            this.logger.log("push ", this.logger.av(applicationName, versionName));
 
-            if (!version) {
-                throw new Error("no version");
-            }
+			let application = this.registry.configuration.applications.find(a => a.name == applicationName);
 
-            this.logger.log("create ", this.logger.av(application, version));
+			if (!application) {
+				application = {
+					name: applicationName,
+					versions: [],
+					environnements: [],
+					instances: []
+				};
 
-            if (!fs.existsSync(RegistryPath.applicationDirectory(application))) {
-                this.logger.log(`create new application '${application}'`);
-    
-                fs.mkdirSync(RegistryPath.applicationDirectory(application));
-                fs.mkdirSync(RegistryPath.applicationVersionsDirectory(application));
-                fs.mkdirSync(RegistryPath.applicationEnvsDirectory(application));
-            }
+				this.logger.log("new application ", this.logger.a(applicationName));
 
-            if (fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
-                throw new Error(`version '${version}' of application '${application}' already exists!`);
-            }
+				this.registry.configuration.applications.push(application);
+				Configuration.save();
+			}
 
-            fs.mkdirSync(RegistryPath.applicationVersionDirectory(application, version));
-            fs.writeFileSync(RegistryPath.applicationVersionImageIdFile(application, version), imageName);
+			if (application.versions.find(v => v.name == versionName)) {
+				throw new Error(`version '${versionName}' of application '${application}' already exists!`);
+			}
 
-            this.logger.log("receiving ", this.logger.av(application, version), " image...");
-            req.pipe(fs.createWriteStream(RegistryPath.applicationVersionImageSourceFile(application, version)));
+			const version: Version = {
+				name: versionName,
+				pushedAt: new Date()
+			};
+
+            this.logger.log("receiving ", this.logger.av(applicationName, versionName), " image...");
+            req.pipe(fs.createWriteStream(RegistryServer.imageLocation(applicationName, versionName)));
 
             return await new Promise(done => {
 				req.on("end", () => {
-					this.logger.log("saved ", this.logger.av(application, version), " image");
+					this.logger.log("saved ", this.logger.av(applicationName, versionName), " image");
+
+					application.versions.push(version);
+					Configuration.save();
 
 					done({});
 				});
@@ -58,47 +63,68 @@ export class DeployRegistryController {
         });
 
         new Handler(app, Cluster.api.registry.upgrade, async params => {
-            const application = params.application;
-            const version = params.version;
-            const env = params.env;
+            const applicationName = params.application;
+            const versionName = params.version;
+            const envName = params.env;
 			const instances = params.instances || 1;
 
-            if (!fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
+			const application = this.registry.configuration.applications.find(a => a.name == applicationName);
+			const version = application.versions.find(v => v.name == versionName);
+
+            if (!application || !version) {
                 throw new Error("application or version does not exist!");
             }
 
-            this.logger.log("upgrading to ", this.logger.av(application, version));
+			let env = application.environnements.find(e => e.name == envName);
 
-            return await this.upgrade(application, version, env, instances);
+			if (!env) {
+				this.logger.log("new env ", this.logger.ae(applicationName, envName));
+
+				env = {
+					name: envName,
+					routes: []
+				};
+
+				application.environnements.push(env);
+				Configuration.save();
+			}
+
+            this.logger.log("upgrading to ", this.logger.av(applicationName, versionName));
+
+            await this.upgrade(application, version, env, instances);
         });
 
         // use native route to return streamed body
         app.post(Cluster.api.registry.pull, (req, res) => {
-			const application = req.headers["cluster-application"];
-			const version = req.headers["cluster-version"];
+			const applicationName = req.headers["cluster-application"];
+			const versionName = req.headers["cluster-version"];
 			const key = req.headers["cluster-key"];
-			const worker = req.headers["cluster-worker"];
+			const workerName = req.headers["cluster-worker"];
 			
-			if (!fs.existsSync(RegistryPath.workerDirectory(worker))) {
-				throw new Error("worker does not exist");
-			}
+			const worker = this.registry.configuration.workers.find(w => w.name == workerName);
 
-			if (fs.readFileSync(RegistryPath.workerKeyFile(worker)).toString() != key) {
+			if (!worker) {
+				throw new Error("worker does not exist!");
+			} 
+
+			if (worker.key != key) {
 				throw new Error("invalid key");
 			}
 
-			if (!fs.existsSync(RegistryPath.applicationDirectory(application))) {
+			const application = this.registry.configuration.applications.find(a => a.name == applicationName);
+
+			if (!application) {
 				throw new Error("application does not exist");
 			}
 
-			if (!fs.existsSync(RegistryPath.applicationVersionDirectory(application, version))) {
+			if (!application.versions.find(v => v.name == versionName)) {
 				throw new Error("application does not exist");
 			}
 
-			this.logger.log("sending ", this.logger.av(application, version), " to ", this.logger.w(worker));
+			this.logger.log("sending ", this.logger.av(applicationName, versionName), " to ", this.logger.w(worker.name));
 			
-			fs.createReadStream(RegistryPath.applicationVersionImageSourceFile(application, version)).pipe(res).on("end", () => {
-				this.logger.log("sent ", this.logger.av(application, version), " to ", this.logger.w(worker));
+			fs.createReadStream(RegistryServer.imageLocation(applicationName, versionName)).pipe(res).on("end", () => {
+				this.logger.log("sent ", this.logger.av(applicationName, versionName), " to ", this.logger.w(worker.name));
 
                 res.json({
                     data: {}
@@ -107,33 +133,10 @@ export class DeployRegistryController {
 		});
     }
 
-    async upgrade(application: string, version: string, env: string, instances: number) {
-		this.logger.log("upgrade ", this.logger.aev(application, env, version));
-		
-		let isNewEnv;
-		
-		if (!fs.existsSync(RegistryPath.applicationEnvDirectory(application, env))) {
-			fs.mkdirSync(RegistryPath.applicationEnvDirectory(application, env));
-			fs.mkdirSync(RegistryPath.applicationEnvActiveVersionsDirectory(application, env));
+    async upgrade(application: Application, version: Version, env: Environnement, instances: number) {
+		this.logger.log("upgrade ", this.logger.aev(application.name, env.name, version.name));
 
-			this.logger.log("new env ", this.logger.ae(application, env));
-			
-			isNewEnv = true;
-		}
-
-		if (fs.existsSync(RegistryPath.applicationEnvDangelingVersionFile(application, env))) {
-			throw new Error("cannot upgrade. upgrade already in progress!");
-		}
-
-		let dangelingVersion;
-		
-		if (fs.existsSync(RegistryPath.applicationEnvLatestVersionFile(application, env))) {
-			dangelingVersion = fs.readFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env)).toString();
-
-			fs.writeFileSync(RegistryPath.applicationEnvDangelingVersionFile(application, env), dangelingVersion);
-		} 
-
-		fs.mkdirSync(RegistryPath.applicationEnvActiveVersionDirectory(application, env, version));
+		const oldVersion = env.latestVersion;
 
 		// install applications on new worker
 		for (let i = 0; i < instances; i++) {
@@ -142,18 +145,15 @@ export class DeployRegistryController {
 		}
 
 		// write current version file
-		fs.writeFileSync(RegistryPath.applicationEnvLatestVersionFile(application, env), version);
+		env.latestVersion = version;
+		Configuration.save();
 
 		// update gateways
 		await this.registry.route.updateGateways();
 		
 		// stop dangeling versions
-		if (dangelingVersion) {
-			this.registry.instances.stop(application, dangelingVersion, env);
-
-			fs.unlinkSync(RegistryPath.applicationEnvDangelingVersionFile(application, env));
+		if (oldVersion) {
+			this.registry.instances.stop(application, oldVersion, env);
 		}
-		
-		return isNewEnv;
 	}
 }
