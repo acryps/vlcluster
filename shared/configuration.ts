@@ -16,16 +16,22 @@ export class Configuration {
     static save() {
         console.log("SAVE CONFIG");
 
-        writeFileSync(Cluster.configurationFileLocation, JSON.stringify(this));
+        writeFileSync(Cluster.configurationFileLocation, JSON.stringify({
+            registry: this.registry,
+            gateways: this.gateways,
+            workers: this.workers,
+            clients: this.clients
+        }));
     }
 
     static load() {
         if (existsSync(Cluster.configurationFileLocation)) {
             const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
 
-            for (let key in config) {
-                this[key] = config;
-            }
+            this.registry = config.registry;
+            this.gateways = config.gateways;
+            this.workers = config.workers;
+            this.clients = config.clients;
 
             return;
         }
