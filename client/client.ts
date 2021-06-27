@@ -44,6 +44,8 @@ export class Client {
 		};
 
 		Configuration.clients.push(config);
+		Configuration.activeCluster = result.name;
+
 		Configuration.save();
 
 		return {
