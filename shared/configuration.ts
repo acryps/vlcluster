@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { copyFile, existsSync, readFileSync, writeFileSync } from "fs";
 import { ClientConfiguration } from "../client/configuration";
 import { GatewayConfiguration } from "../gateway/configuration";
 import { RegistryConfiguration } from "../registry/configuration";
@@ -14,6 +14,8 @@ export class Configuration {
     static clients: ClientConfiguration[] = [];
 
     static save() {
+        const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
+
         console.log("SAVE CONFIG");
 
         if (this.registry) {
@@ -33,10 +35,10 @@ export class Configuration {
         }
 
         writeFileSync(Cluster.configurationFileLocation, JSON.stringify({
-            registry: !!this.registry,
-            gateways: this.gateways.map(c => c.name),
-            workers: this.workers.map(c => c.name),
-            clients: this.clients.map(c => c.name)
+            registry: !!this.registry || config.registry,
+            gateways: [...config.gateways, ...this.gateways.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
+            workers: [...config.gateways, this.workers.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
+            clients: [...config.gateways, this.clients.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i)
         }));
     }
 
