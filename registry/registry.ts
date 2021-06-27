@@ -59,11 +59,17 @@ export class RegistryServer {
 
 			this.logger.log(this.configuration.workers.filter(w => w.running).map(w => this.logger.w(w.name)).join(", "), " logged in, starting instances");
 
+			let count = 0;
+
 			for (let application of this.configuration.applications) {
 				for (let instance of application.instances) {
+					count++;
+
 					await this.instances.start(application, instance.version, instance.env);
 				}
 			}
+
+			this.logger.log(`started ${count} instances. cluster `, this.logger.c(this.configuration.name), " ready");
 		}, Cluster.startupTime);
 	}
 
