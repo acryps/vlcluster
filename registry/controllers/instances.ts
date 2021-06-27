@@ -107,14 +107,19 @@ export class InstancesRegistryController {
                 if (!applicationName || application.name == applicationName) {
                     for (let instance of [...application.instances]) {
                         if (!envName || instance.env.name == envName) {
-                            // start new instance
-                            await this.start(application, instance.version, instance.env);
-                            
                             if (instance.running) {
-                                await this.stopInstance(application, instance.version, instance.env, instance);
-                            }
+                                // start new instance
+                                this.logger.log("STARTING INSTANCE ", count.toString());
 
-                            count++;
+                                await this.start(application, instance.version, instance.env);
+                        
+                                // stop instance
+                                this.logger.log("STOPPING INSTANCE ", count.toString());
+
+                                await this.stopInstance(application, instance.version, instance.env, instance);
+
+                                count++;
+                            }
                         }
                     }
                 }
