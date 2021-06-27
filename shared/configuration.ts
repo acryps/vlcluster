@@ -16,8 +16,6 @@ export class Configuration {
     static save() {
         const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
 
-        console.log("SAVE CONFIG");
-
         if (this.registry) {
             writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
         }

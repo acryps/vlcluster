@@ -34,7 +34,7 @@ export class InstancesRegistryController {
             if (!worker.running) {
                 this.logger.log("worker login ", this.logger.w(name), " on ", worker.endpoint);
 
-                // restart applications that are supposed to run on this instance 
+                // restart applications that were supposed to run on this instance 
                 // kill backups after that
                 for (let application of this.registry.configuration.applications) {
                     for (let instance of application.instances) {
@@ -109,13 +109,9 @@ export class InstancesRegistryController {
                         if (!envName || instance.env.name == envName) {
                             if (instance.running) {
                                 // start new instance
-                                this.logger.log("STARTING INSTANCE ", count.toString());
-
                                 await this.start(application, instance.version, instance.env);
                         
                                 // stop instance
-                                this.logger.log("STOPPING INSTANCE ", count.toString());
-
                                 await this.stopInstance(application, instance.version, instance.env, instance);
 
                                 count++;
@@ -140,13 +136,13 @@ export class InstancesRegistryController {
     // start backup instance
     // will be stopped as soon as the original instance is started again
     async startBackupFor(application: Application, instance: Instance) {
-		await this.start(application, instance.version, instance.env, instance);
+		await this.start(application, instance.version, instance.env, null, instance);
 		
 		// update gateways
 		await this.registry.route.updateGateways();
     }
 
-    async start(application: Application, version: Version, env: Environnement, backupOf: Instance = null) {
+    async start(application: Application, version: Version, env: Environnement, source: Instance = null, backupOf: Instance = null) {
 		const worker = this.pickWorker();
 
         // wait for a worker if none are available
@@ -155,20 +151,30 @@ export class InstancesRegistryController {
 
             await new Promise(done => setTimeout(() => done(null), Cluster.startRetryTimeout));
 
-            return await this.start(application, version, env);
+            return await this.start(application, version, env, source, backupOf);
         }
 
-        const instance: Instance = {
-            name: Crypto.createId(application.name, version.name, env.name),
-            version,
-            env,
-            worker,
-            backupOf,
-            running: false
-        };
+        let instance: Instance;
+        
+        if (source) {
+            source.running = false;
+            source.worker = worker;
+            source.port = null;
 
-        application.instances.push(instance);
-        Configuration.save();
+            instance = source;
+        } else {
+            instance = {
+                name: Crypto.createId(application.name, version.name, env.name),
+                version,
+                env,
+                worker,
+                backupOf,
+                running: false
+            };
+    
+            application.instances.push(instance);
+            Configuration.save();
+        }
 
         this.logger.log("requesting start ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name));
 
@@ -190,12 +196,11 @@ export class InstancesRegistryController {
         } catch (error) {
             this.logger.warn("start of ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name), " failed! ", error);
             
-            application.instances.splice(application.instances.indexOf(instance), 1);
             Configuration.save();
 
             await new Promise(done => setTimeout(() => done(null), Cluster.startRetryTimeout));
 
-            return await this.start(application, version, env);
+            return await this.start(application, version, env, instance, backupOf);
         }
 	}
 

@@ -98,28 +98,30 @@ export class WorkerServer {
 	}
 
 	async pull(application: string, version: string) {
-		await this.logger.process(["pulling ", this.logger.av(application, version), "..."], finished => new Promise<void>(async done => {
-			const loadProcess = spawn("docker", ["load"], {
-				stdio: [
-					"pipe",
-					"ignore",
-					process.stderr
-				]
-			});
+		this.logger.log("pulling ", this.logger.av(application, version));
 
-			new Request(this.configuration.clusterHost, Cluster.api.registry.pull)
-				.append("application", application)
-				.append("version", version)
-				.append("key", this.configuration.key)
-				.append("worker", this.configuration.name)
-				.pipe(loadProcess.stdin);
+		const loadProcess = spawn("docker", ["load"], {
+			stdio: [
+				"pipe",
+				"ignore",
+				process.stderr
+			]
+		});
 
+		new Request(this.configuration.clusterHost, Cluster.api.registry.pull)
+			.append("application", application)
+			.append("version", version)
+			.append("key", this.configuration.key)
+			.append("worker", this.configuration.name)
+			.pipe(loadProcess.stdin);
+
+		await new Promise(done => {
 			loadProcess.on("exit", async () => {
-				finished("loaded ", this.logger.av(application, version));
-
-				done();
+				done(null);
 			});
-		}));
+		});
+
+		this.logger.log("loaded ", this.logger.av(application, version));
 	}
 
 	async start(application: string, version: string, env: string, instance: string, variables: any): Promise<WorkerInstance> {
