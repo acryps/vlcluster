@@ -91,7 +91,6 @@ export class RouteRegistryController {
 		for (let application of this.registry.configuration.applications) {
 			for (let env of application.environnements) {
 				const instances: RoutedInstance[] = [];
-				const sockets: string[] = [];
 
 				for (let instance of application.instances) {
 					if (instance.running && instance.env.name == env.name) {

@@ -62,7 +62,7 @@ export class RegistryServer {
 			let count = 0;
 
 			for (let application of this.configuration.applications) {
-				for (let instance of application.instances) {
+				for (let instance of [...application.instances]) {
 					count++;
 
 					await this.instances.start(application, instance.version, instance.env);

@@ -163,6 +163,9 @@ export class InstancesRegistryController {
             running: false
         };
 
+        application.instances.push(instance);
+        Configuration.save();
+
         this.logger.log("requesting start ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name));
 
         try {
@@ -176,14 +179,15 @@ export class InstancesRegistryController {
                     port: number
                 }>();
 
-            application.instances.push(instance);
-
             instance.port = startRequest.port;
             instance.running = true;
 
             Configuration.save();
         } catch (error) {
             this.logger.warn("start of ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name), " failed! ", error);
+            
+            application.instances.splice(application.instances.indexOf(instance), 1);
+            Configuration.save();
 
             await new Promise(done => setTimeout(() => done(null), Cluster.startRetryTimeout));
 
