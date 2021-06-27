@@ -153,7 +153,8 @@ export class DeployRegistryController {
 		
 		// stop dangeling versions
 		if (oldVersion) {
-			this.registry.instances.stop(application, oldVersion, env);
+			// no version will stop all containers running older versions
+			this.registry.instances.stop(application, null, env);
 		}
 	}
 }
