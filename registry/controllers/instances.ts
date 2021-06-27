@@ -110,19 +110,17 @@ export class InstancesRegistryController {
                             // start new instance
                             await this.start(application, instance.version, instance.env);
                             
-                            if (instance.running) {
-                                // we don't need to wait for the instance to stop, this can happen in the background
-                                this.stopInstance(application, instance.version, instance.env, instance);
-                            }
-                            
-                            // update gateways
-                            await this.registry.route.updateGateways();
+                            // we don't need to wait for the instance to stop, this can happen in the background
+                            this.stopInstance(application, instance.version, instance.env, instance);
 
                             count++;
                         }
                     }
                 }
             }
+
+            // update gateways
+            await this.registry.route.updateGateways();
 
             return count;
         });
