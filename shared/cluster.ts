@@ -54,6 +54,10 @@ export class Cluster {
 		return path.join(this.rootDirectory, "cluster.json");
 	}
 
+	static get activeClusterFileLocation() {
+		return path.join(this.rootDirectory, "active-cluster.json");
+	}
+
 	static get registryConfiguration() {
 		return path.join(this.rootDirectory, "registry.json");
 	}

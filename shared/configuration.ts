@@ -1,4 +1,4 @@
-import { copyFile, existsSync, readFileSync, writeFileSync } from "fs";
+import { copyFile, existsSync, readFile, readFileSync, writeFileSync } from "fs";
 import { ClientConfiguration } from "../client/configuration";
 import { GatewayConfiguration } from "../gateway/configuration";
 import { RegistryConfiguration } from "../registry/configuration";
@@ -38,6 +38,8 @@ export class Configuration {
             workers: [...config.workers, ...this.workers.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
             clients: [...config.clients, ...this.clients.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i)
         }));
+
+        writeFileSync(Cluster.activeClusterFileLocation, JSON.stringify(this.activeCluster));
     }
 
     static load() {
@@ -59,6 +61,10 @@ export class Configuration {
             for (let client of config.clients) {
                 this.clients.push(JSON.parse(readFileSync(Cluster.clientConfiguration(client)).toString()));
             }
+        }
+
+        if (existsSync(Cluster.activeClusterFileLocation)) {
+            this.activeCluster = JSON.parse(readFileSync(Cluster.activeClusterFileLocation).toString());
         }
     }
 }
