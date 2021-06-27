@@ -37,8 +37,8 @@ export class Configuration {
         writeFileSync(Cluster.configurationFileLocation, JSON.stringify({
             registry: !!this.registry || config.registry,
             gateways: [...config.gateways, ...this.gateways.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
-            workers: [...config.gateways, this.workers.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
-            clients: [...config.gateways, this.clients.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i)
+            workers: [...config.workers, ...this.workers.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i),
+            clients: [...config.clients, ...this.clients.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i)
         }));
     }
 
