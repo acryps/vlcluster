@@ -180,6 +180,8 @@ export class InstancesRegistryController {
                 }>();
 
             instance.port = startRequest.port;
+            instance.running = true;
+
             Configuration.save();
         } catch (error) {
             this.logger.warn("start of ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name), " failed! ", error);
