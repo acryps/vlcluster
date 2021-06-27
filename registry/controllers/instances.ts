@@ -210,19 +210,19 @@ export class InstancesRegistryController {
     // stop all instances of ave
     // all outdated version instances will be stopped if version is null
     async stop(application: Application, version: Version | null, env: Environnement) {
-		this.logger.log("shutting down ", this.logger.aev(application.name, version.name, env.name));
+		this.logger.log("shutting down ", this.logger.aev(application.name, version ? version.name : `!${env.latestVersion}`, env.name));
 
         const promises = [];
 
         for (let instance of application.instances) {
             if (version ? instance.version == version : instance.version != env.latestVersion) {
-                promises.push(this.stopInstance(application, version, env, instance));
+                promises.push(this.stopInstance(application, instance.version, env, instance));
             }
         }
 
         await Promise.all(promises);
 
-		this.logger.log("shut down ", this.logger.aev(application.name, version.name, env.name));
+		this.logger.log("shut down ", this.logger.aev(application.name, version ? version.name : `!${env.latestVersion}`, env.name));
 	}
 
     // stop single instance
