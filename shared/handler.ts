@@ -14,7 +14,7 @@ export class Handler {
 
                 res.json({ data: result });
             } catch (e) {
-                res.json({ error: e.message });
+                res.json({ error: e + "" });
             }
         });
     }
