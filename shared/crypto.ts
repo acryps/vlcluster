@@ -7,7 +7,7 @@ export class Crypto {
 		return Array(128).fill(0).map(e => Math.random().toString(36)[3]).map(s => Math.random() > 0.5 ? s.toUpperCase() : s).join("");
 	}
 
-	static createId(...hints) {
+	static createId(...hints: string[]) {
 		return `${hints.length ? `${hints.map(h => (h || "").replace(/[^a-z]/, "").padEnd(16, "-").substring(0, Math.floor(16 / hints.length))).join("")}-` : ""}${Array(hints.length ? 16 : 32).fill(0).map(e => Math.random().toString(16)[3]).join("")}`;
 	}
 

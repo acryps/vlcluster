@@ -155,7 +155,7 @@ export class InstancesRegistryController {
         }
 
         const instance: Instance = {
-            name: Crypto.createId(application, version, env),
+            name: Crypto.createId(application.name, version.name, env.name),
             version,
             env,
             worker,
