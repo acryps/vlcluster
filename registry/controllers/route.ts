@@ -93,7 +93,7 @@ export class RouteRegistryController {
 				const instances: RoutedInstance[] = [];
 
 				for (let instance of application.instances) {
-					if (instance.running && instance.env.name == env.name) {
+					if (instance.running && instance.env.name == env.name && instance.version.name == env.latestVersion.name) {
 						instances.push({
 							name: instance.name,
 							worker: instance.worker.name,
