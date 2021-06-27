@@ -69,6 +69,8 @@ export class RegistryServer {
 				}
 			}
 
+			await this.route.updateGateways();
+
 			this.logger.log(`started ${count} instances. cluster `, this.logger.c(this.configuration.name), " ready");
 		}, Cluster.startupTime);
 	}
