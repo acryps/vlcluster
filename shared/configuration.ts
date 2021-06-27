@@ -40,7 +40,7 @@ export class Configuration {
         }
 
         for (let client of this.clients) {
-            writeFileSync(Cluster.gatewayConfiguration(client.name), JSON.stringify(client));
+            writeFileSync(Cluster.clientConfiguration(client.name), JSON.stringify(client));
         }
 
         if (!existsSync(Cluster.rootDirectory)) {
