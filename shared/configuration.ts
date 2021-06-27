@@ -39,7 +39,7 @@ export class Configuration {
             clients: [...config.clients, ...this.clients.map(c => c.name)].filter((c, i, a) => a.indexOf(c) == i)
         }));
 
-        writeFileSync(Cluster.activeClusterFileLocation, JSON.stringify(this.activeCluster));
+        writeFileSync(Cluster.activeClusterFileLocation, JSON.stringify(this.activeCluster || null));
     }
 
     static load() {
