@@ -9,18 +9,34 @@ export class Configuration {
     static activeCluster: string;
 
     static registry?: RegistryConfiguration;
-    static gateways: GatewayConfiguration[];
-    static workers: WorkerConfiguration[];
-    static clients: ClientConfiguration[];
+    static gateways: GatewayConfiguration[] = [];
+    static workers: WorkerConfiguration[] = [];
+    static clients: ClientConfiguration[] = [];
 
     static save() {
         console.log("SAVE CONFIG");
 
+        if (this.registry) {
+            writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
+        }
+
+        for (let gateway of this.gateways) {
+            writeFileSync(Cluster.gatewayConfiguration(gateway.name), JSON.stringify(gateway));
+        }
+
+        for (let worker of this.workers) {
+            writeFileSync(Cluster.workerConfiguration(worker.name), JSON.stringify(worker));
+        }
+
+        for (let client of this.clients) {
+            writeFileSync(Cluster.gatewayConfiguration(client.name), JSON.stringify(client));
+        }
+
         writeFileSync(Cluster.configurationFileLocation, JSON.stringify({
-            registry: this.registry,
-            gateways: this.gateways,
-            workers: this.workers,
-            clients: this.clients
+            registry: !!this.registry,
+            gateways: this.gateways.map(c => c.name),
+            workers: this.workers.map(c => c.name),
+            clients: this.clients.map(c => c.name)
         }));
     }
 
@@ -28,16 +44,21 @@ export class Configuration {
         if (existsSync(Cluster.configurationFileLocation)) {
             const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
 
-            this.registry = config.registry;
-            this.gateways = config.gateways;
-            this.workers = config.workers;
-            this.clients = config.clients;
+            if (config.registry) {
+                this.registry = JSON.parse(readFileSync(Cluster.registryConfiguration).toString());
+            }
 
-            return;
+            for (let gateway of config.gateways) {
+                this.gateways.push(JSON.parse(readFileSync(Cluster.gatewayConfiguration(gateway)).toString()));
+            }
+
+            for (let worker of config.workers) {
+                this.workers.push(JSON.parse(readFileSync(Cluster.workerConfiguration(worker)).toString()));
+            }
+
+            for (let client of config.clients) {
+                this.clients.push(JSON.parse(readFileSync(Cluster.clientConfiguration(client)).toString()));
+            }
         }
-
-        this.gateways = [];
-        this.workers = [];
-        this.clients = [];
     }
 }

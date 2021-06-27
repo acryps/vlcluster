@@ -39,12 +39,12 @@ export class Cluster {
 
 		worker: {
 			start: "/worker/start",
-			stop: "/stop"
+			stop: "/worker/stop"
 		},
 
 		gateway: {
-			reload: "/reload",
-			ssl: "/ssl"
+			reload: "/gateway/reload",
+			ssl: "/gateway/ssl"
 		}
 	}
 
@@ -52,6 +52,22 @@ export class Cluster {
 
 	static get configurationFileLocation() {
 		return path.join(this.rootDirectory, "cluster.json");
+	}
+
+	static get registryConfiguration() {
+		return path.join(this.rootDirectory, "registry.json");
+	}
+
+	static gatewayConfiguration(name: string) {
+		return path.join(this.rootDirectory, `gateway-${name}.json`);
+	}
+
+	static workerConfiguration(name: string) {
+		return path.join(this.rootDirectory, `worker-${name}.json`);
+	}
+
+	static clientConfiguration(name: string) {
+		return path.join(this.rootDirectory, `client-${name}.json`);
 	}
 
 	static get logo() {
