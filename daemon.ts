@@ -22,12 +22,6 @@ export class Daemon {
 		this.server = express();
 		this.server.use(express.json());
 
-		this.server.get("/up", (req, res) => {
-			res.json({
-				running: true
-			});
-		});
-
 		this.server.listen(Cluster.port, () => {
 			logger.log("daemon server started");
 		});
