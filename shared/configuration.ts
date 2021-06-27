@@ -1,4 +1,4 @@
-import { copyFile, existsSync, readFile, readFileSync, writeFileSync } from "fs";
+import { copyFile, existsSync, mkdirSync, readFile, readFileSync, writeFileSync } from "fs";
 import { ClientConfiguration } from "../client/configuration";
 import { GatewayConfiguration } from "../gateway/configuration";
 import { RegistryConfiguration } from "../registry/configuration";
@@ -14,7 +14,18 @@ export class Configuration {
     static clients: ClientConfiguration[] = [];
 
     static save() {
-        const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
+        let config: StoredConfiguration;
+        
+        if (existsSync(Cluster.configurationFileLocation)) {
+            config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
+        } else {
+            config = {
+                registry: false,
+                gateways: [],
+                workers: [],
+                clients: []
+            }
+        }
 
         if (this.registry) {
             writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
@@ -30,6 +41,10 @@ export class Configuration {
 
         for (let client of this.clients) {
             writeFileSync(Cluster.gatewayConfiguration(client.name), JSON.stringify(client));
+        }
+
+        if (!existsSync(Cluster.rootDirectory)) {
+            mkdirSync(Cluster.rootDirectory);
         }
 
         writeFileSync(Cluster.configurationFileLocation, JSON.stringify({
@@ -67,4 +82,11 @@ export class Configuration {
             this.activeCluster = JSON.parse(readFileSync(Cluster.activeClusterFileLocation).toString());
         }
     }
+}
+
+export class StoredConfiguration {
+    registry: boolean;
+    gateways: string[];
+    workers: string[];
+    clients: string[];
 }
