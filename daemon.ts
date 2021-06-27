@@ -72,7 +72,7 @@ export class Daemon {
 		const executeable = process.argv[1];
 
 		try {
-			fs.writeFileSync("/etc/systemd/system/vlcluster.service", `[Unit]
+			fs.writeFileSync("/etc/systemd/system/vlc2.service", `[Unit]
 Description=vlcluster daemon server
 After=network.target
 		
@@ -96,7 +96,7 @@ WantedBy=multi-user.target`);
 
 	startSystemdService() {
 		return new Promise((done, reject) => {
-			const systemctl = spawn("systemctl", ["start", "vlcluster"]);
+			const systemctl = spawn("systemctl", ["start", "vlc2"]);
 
 			systemctl.on("exit", code => {
 				if (code) {
@@ -110,7 +110,7 @@ WantedBy=multi-user.target`);
 
 	enableSystemdService() {
 		return new Promise((done, reject) => {
-			const systemctl = spawn("systemctl", ["enable", "vlcluster"]);
+			const systemctl = spawn("systemctl", ["enable", "vlc2"]);
 
 			systemctl.on("exit", code => {
 				if (code) {
