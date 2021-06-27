@@ -29,7 +29,7 @@ export class GatewayServer {
 			name: name,
 
 			clusterHost: clusterHost,
-			clusterKey: clusterKey,
+			clusterKey: response.key,
 
 			endpointHost: endpointHost
 		});

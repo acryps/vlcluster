@@ -11,7 +11,6 @@ import { RegistryConfiguration } from "./configuration";
 import { Cluster } from "../shared/cluster";
 
 export class RegistryServer {
-	key: string;
 	logger: Logger = new Logger("registry");
 
 	create = new CreateRegistryController(this);

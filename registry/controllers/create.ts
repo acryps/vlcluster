@@ -33,7 +33,7 @@ export class CreateRegistryController {
 
 	register(app) {
 		new Handler(app, Cluster.api.registry.create.worker, async params => {
-			if (this.registry.key != params.key) {
+			if (this.registry.configuration.key != params.key) {
 				throw new Error("invalid key login attepted");
 			}
 
@@ -44,7 +44,7 @@ export class CreateRegistryController {
 		});
 
 		new Handler(app, Cluster.api.registry.create.client, async params => {
-			if (this.registry.key != params.key) {
+			if (this.registry.configuration.key != params.key) {
 				throw new Error("invalid key login attepted");
 			}
 
@@ -55,7 +55,7 @@ export class CreateRegistryController {
 		});
 
 		new Handler(app, Cluster.api.registry.create.gateway, async params => {
-			if (this.registry.key != params.key) {
+			if (this.registry.configuration.key != params.key) {
 				throw new Error("invalid key login attepted");
 			}
 
