@@ -105,7 +105,7 @@ export class InstancesRegistryController {
 
             for (let application of this.registry.configuration.applications) {
                 if (!applicationName || application.name == applicationName) {
-                    for (let instance of application.instances) {
+                    for (let instance of [...application.instances]) {
                         if (!envName || instance.env.name == envName) {
                             // start new instance
                             await this.start(application, instance.version, instance.env);
