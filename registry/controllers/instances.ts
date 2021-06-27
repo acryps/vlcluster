@@ -110,8 +110,9 @@ export class InstancesRegistryController {
                             // start new instance
                             await this.start(application, instance.version, instance.env);
                             
-                            // we don't need to wait for the instance to stop, this can happen in the background
-                            this.stopInstance(application, instance.version, instance.env, instance);
+                            if (instance.running) {
+                                await this.stopInstance(application, instance.version, instance.env, instance);
+                            }
 
                             count++;
                         }
