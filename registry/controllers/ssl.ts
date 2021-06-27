@@ -38,12 +38,14 @@ export class SSLRegistryController {
                             Configuration.save();
 
                             await this.registry.route.updateGateways();
+
+                            return;
                         }
                     }
                 }
             }
 
-            throw new Error(`route '${host}' on port ${port} not found!`);
+            throw new Error(`route '${host}' not found!`);
         });
     }
 }
