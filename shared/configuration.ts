@@ -13,6 +13,8 @@ export class Configuration {
     static workers: WorkerConfiguration[] = [];
     static clients: ClientConfiguration[] = [];
 
+    static loadedRegistryConfiguration: string;
+
     static save() {
         let config: StoredConfiguration;
         
@@ -28,7 +30,9 @@ export class Configuration {
         }
 
         if (this.registry) {
-            writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
+            if (!existsSync(Cluster.registryConfiguration) || (this.loadedRegistryConfiguration == readFileSync(Cluster.registryConfiguration).toString())) {
+                writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
+            }
         }
 
         for (let gateway of this.gateways) {
@@ -62,7 +66,10 @@ export class Configuration {
             const config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
 
             if (config.registry) {
-                this.registry = JSON.parse(readFileSync(Cluster.registryConfiguration).toString());
+                const config = readFileSync(Cluster.registryConfiguration).toString();
+                this.loadedRegistryConfiguration = config;
+
+                this.registry = JSON.parse(config);
             }
 
             for (let gateway of config.gateways) {
