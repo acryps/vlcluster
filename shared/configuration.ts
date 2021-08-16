@@ -31,7 +31,11 @@ export class Configuration {
 
         if (this.registry) {
             if (!existsSync(Cluster.registryConfiguration) || (this.loadedRegistryConfiguration == readFileSync(Cluster.registryConfiguration).toString())) {
-                writeFileSync(Cluster.registryConfiguration, JSON.stringify(this.registry));
+                const serialized = JSON.stringify(this.registry);
+
+                writeFileSync(Cluster.registryConfiguration, serialized);
+
+                this.loadedRegistryConfiguration = serialized;
             }
         }
 
