@@ -124,7 +124,10 @@ export class GatewayServer {
             }
 			
 			// create proxy to upstream
-			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};\n\tserver_name ${route.host};`;
+			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]`;
+			configuration += `\nserver {`;
+			configuration += `\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};`;
+			configuration += `\n\tserver_name ${route.host};`;
 
 			if (route.ssl) {
 				// ssl config from https://ssl-config.mozilla.org/
@@ -139,10 +142,27 @@ export class GatewayServer {
 			}
 
             for (let socket of route.sockets) {
-                configuration += `\n\n\t# socket proxy\n\tlocation ${socket} {\n\t\tproxy_pass http://${upstream};\n\t\tproxy_http_version 1.1;\n\t\tproxy_set_header Upgrade $http_upgrade;\n\t\tproxy_set_header Connection "Upgrade";\n\t\t\n\t\t# disable socket timeout\n\t\tproxy_connect_timeout 7d;\n\t\tproxy_send_timeout 7d;\n\t\tproxy_read_timeout 7d;\n\t}`;
+                configuration += `\n\n\t# socket proxy`;
+				configuration += `\n\tlocation ${socket} {`;
+				configuration += `\n\t\tproxy_pass http://${upstream};`;
+				configuration += `\n\t\tproxy_http_version 1.1;`;
+				configuration += `\n\t\tproxy_set_header Upgrade $http_upgrade;`;
+				configuration += `\n\t\tproxy_set_header Connection "Upgrade";\n\t\t`;
+				configuration += `\n\t\t# disable socket timeout`;
+				configuration += `\n\t\tproxy_connect_timeout 7d;`;
+				configuration += `\n\t\tproxy_send_timeout 7d;`;
+				configuration += `\n\t\tproxy_read_timeout 7d;`;
+				configuration += `\n\t}`;
 			}
 
-			configuration += `\n\n\t# custom include file (will not be overwritten)\n\tinclude ${GatewayServer.nginxIncludeFile(this.configuration.name)};\n\n\t# default proxy\n\tlocation / {\n\t\tproxy_pass http://${upstream};\n\t}\n}\n\n`;
+			configuration += `\n\n\t# custom include file (will not be overwritten)`;
+			configuration += `\n\tinclude ${GatewayServer.nginxIncludeFile(this.configuration.name)};`;
+			configuration += `\n\n\t# default proxy`;
+			configuration += `\n\tlocation / {`;
+			configuration += `\n\t\tproxy_pass http://${upstream};`;
+			configuration += `\n\t\tproxy_set_header gateway-source-address $remote_addr;`;
+			configuration += `\n\t\tproxy_set_header gateway-name ${JSON.stringify(this.configuration.name)};`;
+			configuration += `\n\t}\n}\n\n`;
 			
 			if (route.ssl) {
 				configuration += `# http to https upgrade for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\treturn 301 https://$host$request_uri;\n}\n\n`;
