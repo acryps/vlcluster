@@ -17,6 +17,10 @@ export class Configuration {
 
     static save() {
         let config: StoredConfiguration;
+
+        if (!existsSync(Cluster.rootDirectory)) {
+            mkdirSync(Cluster.rootDirectory);
+        }
         
         if (existsSync(Cluster.configurationFileLocation)) {
             config = JSON.parse(readFileSync(Cluster.configurationFileLocation).toString());
@@ -49,10 +53,6 @@ export class Configuration {
 
         for (let client of this.clients) {
             writeFileSync(Cluster.clientConfiguration(client.name), JSON.stringify(client));
-        }
-
-        if (!existsSync(Cluster.rootDirectory)) {
-            mkdirSync(Cluster.rootDirectory);
         }
 
         writeFileSync(Cluster.configurationFileLocation, JSON.stringify({

@@ -281,7 +281,7 @@ export async function main() {
 			}
 		}
 	} catch (e) {
-		process.stderr.write(`\x1b[48;5;160m\x1b[38;5;231m${e + ""}\x1b[0m`);
+		process.stderr.write(`\x1b[48;5;160m\x1b[38;5;231m${e.message}\x1b[0m\n\x1b[38;5;160m${e.stack}\x1b[0m\n`);
 
 		process.exit(1);
 	}
