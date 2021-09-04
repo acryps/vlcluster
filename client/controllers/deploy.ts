@@ -118,11 +118,11 @@ export class DeployClientController {
 			finished("upgraded ", logger.aev(application, env, version));
 
 			for (let instance of info.started) {
-				logger.log("started ", logger.wi(instance.name, instance.worker));
+				logger.log("started ", logger.wi(instance.name, instance.worker.name));
 			}
 
 			for (let instance of info.stopped) {
-				logger.log("stopped ", logger.wi(instance.name, instance.worker));
+				logger.log("stopped ", logger.wi(instance.name, instance.worker.name));
 			}
 		});
 	}
