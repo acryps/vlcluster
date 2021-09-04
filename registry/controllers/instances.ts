@@ -218,7 +218,7 @@ export class InstancesRegistryController {
         const instances = [];
 
         for (let instance of application.instances) {
-            if (version ? instance.version == version : instance.version != env.latestVersion) {
+            if (instance.env.name == env.name && (version ? instance.version == version : instance.version != env.latestVersion)) {
                 instances.push(instance);
                 promises.push(this.stopInstance(application, instance.version, env, instance));
             }

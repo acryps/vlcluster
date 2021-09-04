@@ -9,13 +9,6 @@
 			"type": "shell",
 			"command": "npm version ${input:version-type} && npm publish",
 			"problemMatcher": []
-		},
-		{
-			"label": "Create Version (WSREQ)",
-			"detail": "Publish vlcluster to npm",
-			"type": "shell",
-			"command": "npm version ${input:version-type} && npm publish -t wsreq",
-			"problemMatcher": []
 		}
 	],
 	"inputs": [
