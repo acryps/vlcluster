@@ -107,7 +107,7 @@ export class DeployClientController {
 		const logger = new Logger("upgrade");
 		
 		await logger.process(["upgrading ", logger.aev(application, env, version), "..."], async finished => {
-			await new Request(this.client.configuration.host, Cluster.api.registry.upgrade)
+			const info = await new Request(this.client.configuration.host, Cluster.api.registry.upgrade)
 				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("application", application)
 				.append("version", version)
@@ -116,6 +116,14 @@ export class DeployClientController {
 				.send();
 
 			finished("upgraded ", logger.aev(application, env, version));
+
+			for (let instance of info.started) {
+				logger.log("started ", logger.wi(instance.name, instance.worker));
+			}
+
+			for (let instance of info.stopped) {
+				logger.log("stopped ", logger.wi(instance.name, instance.worker));
+			}
 		});
 	}
 

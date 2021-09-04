@@ -145,7 +145,7 @@ export class InstancesRegistryController {
     // start instance
     // set source if you want to update the instance object instead of creating a new instance object
     // set backupOf if you want the instance to automatically close when the original worker goes back online
-    async start(application: Application, version: Version, env: Environnement, source: Instance = null, backupOf: Instance = null) {
+    async start(application: Application, version: Version, env: Environnement, source: Instance = null, backupOf: Instance = null): Promise<Instance> {
 		const worker = this.pickWorker();
 
         // wait for a worker if none are available
@@ -196,6 +196,8 @@ export class InstancesRegistryController {
             instance.running = true;
 
             Configuration.save();
+
+            return instance;
         } catch (error) {
             this.logger.warn("start of ", this.logger.aevi(application.name, env.name, version.name, instance.name), " on ", this.logger.w(worker.name), " failed! ", error);
             
@@ -209,13 +211,15 @@ export class InstancesRegistryController {
 
     // stop all instances of ave
     // all outdated version instances will be stopped if version is null
-    async stop(application: Application, version: Version | null, env: Environnement) {
+    async stop(application: Application, version: Version | null, env: Environnement): Promise<Instance[]> {
 		this.logger.log("shutting down ", this.logger.aev(application.name, version ? version.name : `!${env.latestVersion.name}`, env.name));
 
         const promises = [];
+        const instances = [];
 
         for (let instance of application.instances) {
             if (version ? instance.version == version : instance.version != env.latestVersion) {
+                instances.push(instance);
                 promises.push(this.stopInstance(application, instance.version, env, instance));
             }
         }
@@ -223,6 +227,8 @@ export class InstancesRegistryController {
         await Promise.all(promises);
 
 		this.logger.log("shut down ", this.logger.aev(application.name, version ? version.name : `!${env.latestVersion.name}`, env.name));
+
+        return instances;
 	}
 
     // stop single instance

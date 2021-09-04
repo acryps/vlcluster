@@ -8,6 +8,7 @@ import { Configuration } from "../../shared/configuration";
 import { Version } from "../../shared/models/version";
 import { Application } from "../../shared/models/application";
 import { Environnement } from "../../shared/models/environnement";
+import { Instance } from "../../shared/models/instance";
 
 export class DeployRegistryController {
     logger = new Logger("deploy");
@@ -91,7 +92,7 @@ export class DeployRegistryController {
 
             this.logger.log("upgrading to ", this.logger.av(applicationName, versionName));
 
-            await this.upgrade(application, version, env, instances);
+            return (await this.upgrade(application, version, env, instances));
         });
 
         // use native route to return streamed body
@@ -138,10 +139,15 @@ export class DeployRegistryController {
 
 		const oldVersion = env.latestVersion;
 
+		const info = {
+			started: new Array<Instance>(),
+			stopped: new Array<Instance>()
+		};
+
 		// install applications on new worker
 		for (let i = 0; i < instances; i++) {
 			// the gateways will automatically be reloaded whenever an application starts
-			await this.registry.instances.start(application, version, env);
+			info.started.push(await this.registry.instances.start(application, version, env));
 		}
 
 		// write current version file
@@ -154,7 +160,9 @@ export class DeployRegistryController {
 		// stop dangeling versions
 		if (oldVersion) {
 			// no version will stop all containers running older versions
-			this.registry.instances.stop(application, null, env);
+			info.stopped.push(...await this.registry.instances.stop(application, null, env));
 		}
+
+		return info;
 	}
 }
