@@ -162,6 +162,9 @@ export class GatewayServer {
 			configuration += `\n\t\tproxy_pass http://${upstream};`;
 			configuration += `\n\t\tproxy_set_header gateway-source-address $remote_addr;`;
 			configuration += `\n\t\tproxy_set_header gateway-name ${JSON.stringify(this.configuration.name)};`;
+			configuration += `\n\t\tadd_header cluster ${JSON.stringify(`vlcluster-${Cluster.version}`)};`;
+			configuration += `\n\t\tadd_header cluster-gateway ${JSON.stringify(this.configuration.name)};`;
+			configuration += `\n\t\tadd_header cluster-worker $upstream_addr;`;
 			configuration += `\n\t}\n}\n\n`;
 			
 			if (route.ssl) {
