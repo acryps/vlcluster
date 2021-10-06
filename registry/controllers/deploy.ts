@@ -19,7 +19,6 @@ export class DeployRegistryController {
         new Handler(app, Cluster.api.registry.push, async (params, req) => {
             const applicationName = params.application;
 			const versionName = params.version;
-			const imageName = params["image-name"];
 
             this.logger.log("push ", this.logger.av(applicationName, versionName));
 

@@ -180,6 +180,7 @@ export class WorkerServer {
 		const runProcess = spawn("docker", [
 			"run",
 			...variableArguments,
+			"--restart", "unless-stopped", // docker loves to just restart. this will automatically restart the containers after a restart or a server reboot
 			"--expose", internalPort.toString(), // export container port to docker interface
 			"-p", `${externalPort}:${internalPort}`, // export port from docker interface to network
 			"--name", instance, // tag container
