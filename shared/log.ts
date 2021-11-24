@@ -139,4 +139,24 @@ export class Logger {
     wi(worker: string, instance: string) {
         return `\u001b[1m<${worker}>(${instance.substr(0, 20) + (instance.length > 20 ? "…" : "")})\u001b[0m`;
     }
+
+    size(bytes: number) {
+        if (!bytes) {
+            return "0B";
+        }
+
+        const units = {
+            TB: 1e12,
+            GB: 1e9,
+            MB: 1e6,
+            kB: 1e3,
+            B: 1
+        };
+
+        for (let unit in units) {
+            if (bytes >= units[unit]) {
+                return `${(bytes / units[unit]).toFixed(unit == "B" ? 0 : 2)}${unit}`;
+            }
+        }
+    }
 }

@@ -72,9 +72,40 @@ export class DeployClientController {
 
 	async push(application: string, version: string) {
 		const logger = new Logger("push");
-		await logger.process(["pushing ", logger.av(application, version), "..."], async finished => {
-			const imageName = `${application}:${version}`;
-			
+
+		const imageName = `${application}:${version}`;
+
+		let meta;
+
+		await logger.process(["fetching metadata", logger.av(application, version), "..."], async finished => {
+			const inspectProcess = spawn("docker", ["inspect", imageName], {
+				stdio: [
+					"ignore",
+					"pipe",
+					process.stderr
+				]
+			});
+
+			let output = "";
+
+			inspectProcess.stdout.on("data", data => {
+				output += data;
+			});
+
+			inspectProcess.on("exit", code => {
+				if (code) {
+					throw new Error(`Can't fetch metadata of '${imageName}'.`);
+				}
+
+				meta = JSON.parse(output)[0];
+			});
+
+			finished("fetched metadata");
+		});
+
+		const size = meta.Size;
+
+		await logger.process(["pushing ", logger.av(application, version), " (", logger.size(size), ")..."], async finished => {
 			const saveProcess = spawn("docker", ["save", imageName], {
 				stdio: [
 					"ignore",
