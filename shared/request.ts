@@ -36,8 +36,6 @@ export class Request {
     }
 
     private constructRequest() {
-        console.log(this.data);
-
         return fetch(`http://${this.endpoint}:${Cluster.port}${this.api}`, {
             method: "POST", 
             headers: this.data,
