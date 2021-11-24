@@ -90,7 +90,7 @@ export class Logger {
 
         text = Array.isArray(text) ? text.join("") : text;
 
-        process.stdout.write(`[ ${" ".repeat(length + 1)} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text}\r[ `);
+        process.stdout.write(`[ ${" ".repeat(length + 1)} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text} [[[${bars.length}]]]  \r[ `);
 
         try {
             let result;
