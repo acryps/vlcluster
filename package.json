@@ -1,6 +1,6 @@
 {
 	"name": "vlc2",
-	"version": "1.5.10",
+	"version": "1.5.11",
 	"description": "vlcluster 2",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
