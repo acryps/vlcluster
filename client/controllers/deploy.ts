@@ -78,9 +78,7 @@ export class DeployClientController {
 		let meta;
 
 		await logger.process(["fetching metadata ", logger.av(application, version), "..."], async finished => {
-			const inspectProcess = spawn("docker", ["inspect", imageName], {
-				stdio: "pipe"
-			});
+			const inspectProcess = spawn("docker", ["inspect", imageName]);
 
 			let output = "";
 
