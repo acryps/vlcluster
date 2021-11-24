@@ -71,6 +71,9 @@ export class DeployRegistryController {
 			const application = this.registry.configuration.applications.find(a => a.name == applicationName);
 			const version = application.versions.find(v => v.name == versionName);
 
+			this.logger.log("APPLICATION", applicationName, this.registry.configuration.applications.map(app => app.name).join(", "));
+			this.logger.log("VERSION", versionName, application?.versions.map(ver => ver.name).join(", "));
+
             if (!application || !version) {
                 throw new Error("application or version does not exist!");
             }
