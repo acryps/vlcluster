@@ -106,7 +106,7 @@ export class Logger {
                         bar += percentage[i - 1];
                     } else {
                         if (i == field - 1) {
-                            bar += Math.floor((current % (total / length) / (total / length)) * bars.length);
+                            bar += bars[Math.floor(current % (total / length) / (total / length) * bars.length)];
                         } else {
                             bar += " ";
                         }
