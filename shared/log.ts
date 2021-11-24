@@ -108,19 +108,19 @@ export class Logger {
                         if (i == field) {
                             bar += "!";
                         } else {
-                            bar += " ";
+                            bar += i % 10;
                         }
                     }
                 }
 
-                bar = bar.substring(0, field - 1) + "\x1b[27m" + bar.substring(field);
+                bar = bar.substring(0, field - 2) + "\x1b[27m" + bar.substring(field - 1);
 
                 process.stdout.write(` \x1b[7m${bar}\x1b[27m \r[ `);
             }, (...text) => {
                 result = text;
             });
 
-            process.stdout.write(`\r[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
+            process.stdout.write(`\r\x1b[27m[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
         } catch (e) {
             process.stdout.write(`[✗\n`);
 
