@@ -96,7 +96,7 @@ export class Logger {
             let result;
 
             await handler((current, total) => {
-                const field = Math.min(length, Math.max(0, length / total * current));
+                const field = Math.floor(Math.min(length, Math.max(0, length / total * current)));
                 const percentage = `${Math.min(100, 100 / total * current).toFixed(0).padStart(3, ' ')}%`;
 
                 let bar = "";
@@ -115,7 +115,7 @@ export class Logger {
 
                 bar = bar.substring(0, field - 1) + "\x1b[27m" + bar.substring(field);
 
-                process.stdout.write(` \x1b[7m${bar} \r[ `);
+                process.stdout.write(` \x1b[7m${bar}\x1b[27m \r[ `);
             }, (...text) => {
                 result = text;
             });
