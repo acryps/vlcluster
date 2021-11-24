@@ -97,6 +97,8 @@ export class DeployClientController {
 					throw new Error(`Can't fetch metadata of '${imageName}'.`);
 				}
 
+				console.log("output", output);
+
 				meta = JSON.parse(output)[0];
 			});
 
