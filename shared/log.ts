@@ -113,7 +113,7 @@ export class Logger {
                     }
                 }
 
-                bar = bar.substring(0, field - 2) + "\x1b[27m" + bar.substring(field - 1);
+                bar = bar.substring(0, field - 1) + "\x1b[27m" + bar.substring(field - 1);
 
                 process.stdout.write(` \x1b[7m${bar}\x1b[27m \r[ `);
             }, (...text) => {
