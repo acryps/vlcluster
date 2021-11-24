@@ -105,7 +105,7 @@ export class DeployClientController {
 
 		const size = meta.Size;
 
-		await logger.process(["pushing ", logger.av(application, version), " (", logger.size(size), ")..."], async finished => {
+		await logger.progressBar(["pushing ", logger.av(application, version), " (", logger.size(size), ")..."], async (advance, finished) => {
 			const saveProcess = spawn("docker", ["save", imageName], {
 				stdio: [
 					"ignore",
@@ -121,6 +121,14 @@ export class DeployClientController {
 				.append("image-name", imageName)
 				.appendBody(saveProcess.stdout)
 				.send();
+
+			let passedData = 0;
+
+			saveProcess.stdout.on("data", data => {
+				passedData += data.length;
+
+				advance(passedData, size);
+			});
 
 			await new Promise<void>((done, reject) => {
 				request.catch(error => reject(error));

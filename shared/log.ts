@@ -63,7 +63,7 @@ export class Logger {
 
         const interval = setInterval(() => {
             process.stdout.write(`[${Logger.loadingFrames[i++ % (Logger.loadingFrames.length - 1)]}\r`);
-        }, 100);
+        }, 50);
         
         try {
             let result;
@@ -78,6 +78,48 @@ export class Logger {
         } catch (e) {
             clearInterval(interval);
 
+            process.stdout.write(`[✗\n`);
+
+            throw e;
+        }
+    }
+
+    async progressBar(text: string[] | string, handler: (progress: (current, total) => void, finished: (...text: string[]) => void) => {}) {
+        const length = 20;
+        const bars = "▉ ▊ ▋ ▌ ▍ ▎ ▏";
+
+        text = Array.isArray(text) ? text.join("") : text;
+
+        process.stdout.write(`[ ${" ".repeat(length)} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text}\r`);
+
+        try {
+            let result;
+
+            await handler((current, total) => {
+                const fields = Math.min(length, Math.max(0, (length * bars.length) / total * current));
+                const percentage = `${(100 / total * current).toFixed(0)}%`;
+
+                let bar = "";
+
+                for (let i = 0; i < length; i++) {
+                    if (i >= 1 && i <= 4) {
+                        bar += percentage[i - 1];
+                    } else {
+                        if (i * bars.length > fields) {
+                            bar += " ";
+                        } else if (i * bars.length < fields) {
+                            bar += "!";
+                        }
+                    }
+                }
+
+                process.stdout.write(`[ ${bar} \r`);
+            }, (...text) => {
+                result = text;
+            });
+
+            process.stdout.write(`[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
+        } catch (e) {
             process.stdout.write(`[✗\n`);
 
             throw e;
