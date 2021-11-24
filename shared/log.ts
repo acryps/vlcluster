@@ -96,8 +96,8 @@ export class Logger {
             let result;
 
             await handler((current, total) => {
-                const fields = Math.min(length * bars.length, Math.max(0, (length * bars.length) / total * current));
-                const percentage = `${(100 / total * current).toFixed(0).padStart(3, ' ')}%`;
+                const field = Math.min(length, Math.max(0, length / total * current));
+                const percentage = `${Math.min(100, 100 / total * current).toFixed(0).padStart(3, ' ')}%`;
 
                 let bar = "";
 
@@ -105,7 +105,7 @@ export class Logger {
                     if (i >= 1 && i <= 4 && percentage[i - 1] != " ") {
                         bar += percentage[i - 1];
                     } else {
-                        if (i = Math.floor(fields / bars.length)) {
+                        if (i == field) {
                             bar += "!";
                         } else {
                             bar += " ";
@@ -113,7 +113,7 @@ export class Logger {
                     }
                 }
 
-                bar = bar.substring(0, Math.floor(fields / bars.length) - 1) + "\x1b[27m" + bar.substring(Math.floor(fields / bars.length));
+                bar = bar.substring(0, field - 1) + "\x1b[27m" + bar.substring(field);
 
                 process.stdout.write(` \x1b[7m${bar} \r[ `);
             }, (...text) => {
