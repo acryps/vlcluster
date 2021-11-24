@@ -105,8 +105,8 @@ export class Logger {
                     if (i >= 1 && i <= 4 && percentage[i - 1] != " ") {
                         bar += percentage[i - 1];
                     } else {
-                        if (i == field) {
-                            bar += bars[Math.floor((current % (length / total)) * bars.length)];
+                        if (i == field - 1) {
+                            bar += Math.floor((current % (length / total)) * bars.length);
                         } else {
                             bar += " ";
                         }
