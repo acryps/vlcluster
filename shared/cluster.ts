@@ -26,7 +26,8 @@ export class Cluster {
 			},
 			instances: {
 				list: "/registry/instances/list",
-				restart: "/registry/instances/restart"
+				restart: "/registry/instances/restart",
+				scale: "/registry/instances/scale"
 			},
 			variables: {
 				set: "/registry/variables/set",

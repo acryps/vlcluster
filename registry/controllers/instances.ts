@@ -126,6 +126,57 @@ export class InstancesRegistryController {
 
             return count;
         });
+
+        new Handler(app, Cluster.api.registry.instances.scale, async params => {
+            const applicationName = params.application;
+            const envName = params.env;
+            const count = +params.count;
+
+            const application = this.registry.configuration.applications.find(application => application.name == applicationName);
+
+            if (!application) {
+                throw new Error(`application '${applicationName}' does not exist`);
+            }
+
+            const env = application.environnements.find(env => env.name == envName);
+
+            if (!env) {
+                throw new Error(`environnement '${envName}' in '${applicationName}' does not exist`);
+            }
+
+            let instances = application.instances.filter(instance => instance.env.name == env.name);
+
+            if (instances.length == count) {
+                return 0;
+            } 
+            
+            if (instances.length > count) {
+                const tasks = [];
+
+                instances = instances.sort(() => Math.random() - 0.5);
+
+                for (let i = 0; i < instances.length - count; i++) {
+                    const instance = instances[i];
+
+                    tasks.push(this.stopInstance(application, instance.version, env, instance));
+                }
+
+                await Promise.all(tasks);
+            } else {
+                const tasks = [];
+
+                for (let i = 0; i < count - instances.length; i++) {
+                    tasks.push(this.start(application, env.latestVersion, env));
+                }
+
+                await Promise.all(tasks);
+            }
+
+            // update gateways
+            await this.registry.route.updateGateways();
+
+            return count - instances.length;
+        });
     }
 
     // pick worker with the most cpu available

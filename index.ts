@@ -14,6 +14,7 @@ import { Logger } from "./shared/log";
 import { DeployClientController } from "./client/controllers/deploy";
 import { CreateRegistryController } from "./registry/controllers/create";
 import { Configuration } from "./shared/configuration";
+import { count } from "console";
 
 export async function main() {
 	let parameters = process.argv.slice(2);
@@ -173,6 +174,29 @@ export async function main() {
 							const count = await client.instances.restart(application, env);
 
 							done("restarted ", count, " instances of ", logger.ae(application || "*", env || "*"));
+						});
+
+						return process.exit();
+					}
+
+					case "scale": {
+						const client = await Client.getActiveClient();
+						const application = await CLI.getArgument(["-a", "--application"], "Application");
+						const env = await CLI.getArgument(["-e", "--env"], "Environnement");
+						const count = +(await CLI.getArgument(["-i", "--instances"], "Number of instances"));
+
+						const logger = new Logger("scale");
+
+						await logger.process(["scaling ", logger.ae(application, env)], async done => {
+							const difference = await client.instances.scale(application, env, count);
+
+							if (difference > 0) {
+								done("started ", count.toString(), " instances of ", logger.ae(application, env));
+							} else if (difference < 0) {
+								done("stopped ", count.toString(), " instances of ", logger.ae(application, env)); 
+							} else {
+								done("no instances removed or added, already running ", count.toString(), " instances of ", logger.ae(application, env));
+							}
 						});
 
 						return process.exit();

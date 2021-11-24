@@ -49,4 +49,13 @@ export class InstancesClientController {
             .append("env", env)
             .send<number>();
     }
+
+    async scale(application: string, env: string, count: number) {
+        return await new Request(this.client.configuration.host, Cluster.api.registry.instances.scale)
+            .auth(this.client.configuration.name, this.client.configuration.key)
+            .append("application", application)
+            .append("env", env)
+            .append("count", count)
+            .send<number>();
+    }
 }
