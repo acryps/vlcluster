@@ -86,7 +86,7 @@ export class Logger {
 
     async progressBar(text: string[] | string, handler: (progress: (current, total) => void, finished: (...text: string[]) => void) => {}) {
         const length = 20;
-        const bars = "▉▊▋▌▍▎▏";
+        const bars = "▏▎▍▌▋▊▉";
 
         text = Array.isArray(text) ? text.join("") : text;
 
