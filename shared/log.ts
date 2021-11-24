@@ -96,7 +96,7 @@ export class Logger {
             let result;
 
             await handler((current, total) => {
-                const fields = Math.min(length, Math.max(0, (length * bars.length) / total * current));
+                const fields = Math.min(length * bars.length, Math.max(0, (length * bars.length) / total * current));
                 const percentage = `${(100 / total * current).toFixed(0).padStart(3, ' ')}%`;
 
                 let bar = "";
@@ -105,20 +105,22 @@ export class Logger {
                     if (i >= 1 && i <= 4 && percentage[i - 1] != " ") {
                         bar += percentage[i - 1];
                     } else {
-                        if (i * bars.length > fields) {
-                            bar += " ";
-                        } else if (i * bars.length < fields) {
+                        if (i = Math.floor(fields / bars.length)) {
                             bar += "!";
+                        } else {
+                            bar += " ";
                         }
                     }
                 }
 
-                process.stdout.write(` ${bar} \r[ `);
+                bar = bar.substring(0, Math.floor(fields / bars.length) - 1) + "\x1b[27m" + bar.substring(Math.floor(fields / bars.length));
+
+                process.stdout.write(` \x1b[7m${bar} \r[ `);
             }, (...text) => {
                 result = text;
             });
 
-            process.stdout.write(`[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
+            process.stdout.write(`\r[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
         } catch (e) {
             process.stdout.write(`[✗\n`);
 
