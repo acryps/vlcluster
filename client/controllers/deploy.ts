@@ -79,7 +79,9 @@ export class DeployClientController {
 
 		await logger.process(["fetching metadata ", logger.av(application, version), "..."], async finished => {
 			await new Promise<void>((done, reject) => {
-				const inspectProcess = spawn("docker", ["inspect", imageName]);
+				const inspectProcess = spawn("docker", ["inspect", imageName], {
+					stdio: ["ignore", "pipe", "inherit"]
+				});
 
 				let output = "";
 
@@ -95,7 +97,7 @@ export class DeployClientController {
 					meta = JSON.parse(output)[0];
 
 					finished("fetched metadata");
-					
+
 					done();
 				});
 			});
