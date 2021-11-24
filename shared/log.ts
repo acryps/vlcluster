@@ -120,7 +120,7 @@ export class Logger {
                 result = text;
             });
 
-            process.stdout.write(`\r\x1b\r${" ".repeat(text.length + length)}\r[27m[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
+            process.stdout.write(`\r${" ".repeat(text.length + length)}\r\x1b[27m[✔${result ? ` \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${result.join("").padEnd(text.length + length)}` : ""}\n`);
         } catch (e) {
             process.stdout.write(`[✗\n`);
 
