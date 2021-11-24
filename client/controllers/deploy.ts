@@ -78,22 +78,26 @@ export class DeployClientController {
 		let meta;
 
 		await logger.process(["fetching metadata ", logger.av(application, version), "..."], async finished => {
-			const inspectProcess = spawn("docker", ["inspect", imageName]);
+			await new Promise<void>((done, reject) => {
+				const inspectProcess = spawn("docker", ["inspect", imageName]);
 
-			let output = "";
+				let output = "";
 
-			inspectProcess.stdout.on("data", data => {
-				output += data;
-			});
+				inspectProcess.stdout.on("data", data => {
+					output += data;
+				});
 
-			inspectProcess.on("close", code => {
-				if (code) {
-					throw new Error(`Can't fetch metadata of '${imageName}'.`);
-				}
+				inspectProcess.on("close", code => {
+					if (code) {
+						throw new Error(`Can't fetch metadata of '${imageName}'.`);
+					}
 
-				meta = JSON.parse(output)[0];
+					meta = JSON.parse(output)[0];
 
-				finished("fetched metadata");
+					finished("fetched metadata");
+					
+					done();
+				});
 			});
 		});
 
