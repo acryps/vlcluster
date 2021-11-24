@@ -97,12 +97,12 @@ export class Logger {
 
             await handler((current, total) => {
                 const fields = Math.min(length, Math.max(0, (length * bars.length) / total * current));
-                const percentage = `${(100 / total * current).toFixed(0)}%`;
+                const percentage = `${(100 / total * current).toFixed(0).padStart(3, ' ')}%`;
 
                 let bar = "";
 
                 for (let i = 0; i < length; i++) {
-                    if (i >= 1 && i <= 4) {
+                    if (i >= 1 && i <= 4 && percentage[i - 1] != " ") {
                         bar += percentage[i - 1];
                     } else {
                         if (i * bars.length > fields) {
