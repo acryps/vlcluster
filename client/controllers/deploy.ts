@@ -134,6 +134,10 @@ export class DeployClientController {
 				request.catch(error => reject(error));
 
 				saveProcess.on("close", async () => {
+					advance(1, 1);
+				});
+
+				request.then(() => {
 					finished(logger.av(application, version), " pushed");
 
 					done();
