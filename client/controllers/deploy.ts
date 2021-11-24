@@ -113,6 +113,12 @@ export class DeployClientController {
 					process.stderr
 				]
 			});
+			
+			saveProcess.stdout.addListener("data", data => {
+				passedData += data.length;
+
+				advance(passedData, size);
+			});
 
 			const request = new Request(this.client.configuration.host, Cluster.api.registry.push)
 				.auth(this.client.configuration.name, this.client.configuration.key)
@@ -123,12 +129,6 @@ export class DeployClientController {
 				.send();
 
 			let passedData = 0;
-
-			saveProcess.stdout.on("data", data => {
-				passedData += data.length;
-
-				advance(passedData, size);
-			});
 
 			await new Promise<void>((done, reject) => {
 				request.catch(error => reject(error));
