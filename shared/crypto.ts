@@ -8,7 +8,19 @@ export class Crypto {
 	}
 
 	static createId(...hints: string[]) {
-		return `${hints.length ? `${hints.map(h => (h || "").replace(/[^a-z]/, "").padEnd(16, "-").substring(0, Math.floor(16 / hints.length))).join("")}-` : ""}${Array(hints.length ? 16 : 32).fill(0).map(e => Math.random().toString(16)[3]).join("")}`;
+		let id = "";
+
+		for (let i = 0; i < hints.length; i++) {
+			id = `${hints[hints.length - i - 1].replace(/[^a-z0-9\.]/g, "").substring(0, 16)}-${id}`;
+		}
+
+		const length = Math.max(0, 24 - id.length) + 8;
+
+		for (let i = 0; i < length; i++) {
+			id += Math.random().toString(16)[3];
+		}
+
+		return id;
 	}
 
 	static nameHash(...name: string[]) {
