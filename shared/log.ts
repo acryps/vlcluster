@@ -94,8 +94,13 @@ export class Logger {
 
         try {
             let result;
+            let lastDraw;
 
             await handler((current, total) => {
+                if (lastDraw && +new Date() - lastDraw < 100) {
+                    return;
+                }
+
                 const field = Math.floor(Math.min(length, Math.max(0, length / total * current)));
                 const percentage = `${Math.min(100, 100 / total * current).toFixed(0).padStart(3, ' ')}%`;
 
@@ -116,6 +121,8 @@ export class Logger {
                 bar = bar.substring(0, field - 1) + "\x1b[27m" + bar.substring(field - 1);
 
                 process.stdout.write(` \x1b[7m${bar}\x1b[27m \r[ `);
+
+                lastDraw = new Date();
             }, (...text) => {
                 result = text;
             });
