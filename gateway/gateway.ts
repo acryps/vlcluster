@@ -174,7 +174,7 @@ export class GatewayServer {
 					configuration += `# http to https upgrade for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\treturn 301 https://$host$request_uri;\n}\n\n`;
 				}
 			} else {
-				this.logger.warn("no instances ready for", this.logger.ae(route.application, route.env));
+				this.logger.warn("no instances ready for ", this.logger.ae(route.application, route.env));
 			}
         }
 
