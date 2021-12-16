@@ -104,71 +104,77 @@ export class GatewayServer {
         this.logger.log("updating routes...");
 
         for (let route of this.routes) {
-			this.logger.log(
-				"routing ", 
-				this.logger.hp(route.host, route.port), 
-				" → ", 
-				this.logger.ae(route.application, route.env), 
-				` (${route.ssl ? "SSL, " : ""}${route.instances.length} instances [${
-					route.instances.map(i => this.logger.hp(i.endpoint, i.port)).join(", ")
-				}]${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
-			);
+			const readyInstances = route.instances.filter(instance => instance.port);
 
-            // create upstream
-            const upstream = `stream_${sha512(JSON.stringify(route))}`;
-			configuration += `# upstreams for ${route.application}[${route.env}]:\nupstream ${upstream} {`;
-            
-            // add instances
-            for (let instance of route.instances) {
-                configuration += `\n\tserver ${instance.endpoint}:${instance.port}; # upstream to instance ${instance.name} on ${instance.worker}`;
-            }
-			
-			// create proxy to upstream
-			configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]`;
-			configuration += `\nserver {`;
-			configuration += `\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};`;
-			configuration += `\n\tserver_name ${route.host};`;
+			if (readyInstances.length) {
+				this.logger.log(
+					"routing ", 
+					this.logger.hp(route.host, route.port), 
+					" → ", 
+					this.logger.ae(route.application, route.env), 
+					` (${route.ssl ? "SSL, " : ""}${readyInstances.length} instances [${
+						readyInstances.map(i => this.logger.hp(i.endpoint, i.port)).join(", ")
+					}]${route.sockets.length ? `, ${route.sockets.length} websockets` : ""})`
+				);
 
-			if (route.ssl) {
-				// ssl config from https://ssl-config.mozilla.org/
-				configuration += `\n\n\t# ssl configuration`
-				configuration += `\n\tssl_certificate ${GatewayServer.letsencryptFullchain(route.host)};`;
-				configuration += `\n\tssl_certificate_key ${GatewayServer.letsencryptPrivateKey(route.host)};`;
-				configuration += `\n\tssl_session_cache shared:vlcluster_ssl:10m;`;
-				configuration += `\n\tssl_session_timeout 1d;`;
-				configuration += `\n\tssl_session_tickets off;`;
-				configuration += `\n\tssl_protocols TLSv1.3;`;
-				configuration += `\n\tssl_prefer_server_ciphers off;`;
-			}
+				// create upstream
+				const upstream = `stream_${sha512(JSON.stringify(route))}`;
+				configuration += `# upstreams for ${route.application}[${route.env}]:\nupstream ${upstream} {`;
+				
+				// add instances
+				for (let instance of readyInstances) {
+					configuration += `\n\tserver ${instance.endpoint}:${instance.port}; # upstream to instance ${instance.name} on ${instance.worker}`;
+				}
+				
+				// create proxy to upstream
+				configuration += `\n}\n\n# ${route.ssl ? "ssl protected " : ""}server for ${route.application}[${route.env}]`;
+				configuration += `\nserver {`;
+				configuration += `\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};`;
+				configuration += `\n\tserver_name ${route.host};`;
 
-            for (let socket of route.sockets) {
-                configuration += `\n\n\t# socket proxy`;
-				configuration += `\n\tlocation ${socket} {`;
+				if (route.ssl) {
+					// ssl config from https://ssl-config.mozilla.org/
+					configuration += `\n\n\t# ssl configuration`
+					configuration += `\n\tssl_certificate ${GatewayServer.letsencryptFullchain(route.host)};`;
+					configuration += `\n\tssl_certificate_key ${GatewayServer.letsencryptPrivateKey(route.host)};`;
+					configuration += `\n\tssl_session_cache shared:vlcluster_ssl:10m;`;
+					configuration += `\n\tssl_session_timeout 1d;`;
+					configuration += `\n\tssl_session_tickets off;`;
+					configuration += `\n\tssl_protocols TLSv1.3;`;
+					configuration += `\n\tssl_prefer_server_ciphers off;`;
+				}
+
+				for (let socket of route.sockets) {
+					configuration += `\n\n\t# socket proxy`;
+					configuration += `\n\tlocation ${socket} {`;
+					configuration += `\n\t\tproxy_pass http://${upstream};`;
+					configuration += `\n\t\tproxy_http_version 1.1;`;
+					configuration += `\n\t\tproxy_set_header Upgrade $http_upgrade;`;
+					configuration += `\n\t\tproxy_set_header Connection "Upgrade";\n\t\t`;
+					configuration += `\n\t\t# disable socket timeout`;
+					configuration += `\n\t\tproxy_connect_timeout 7d;`;
+					configuration += `\n\t\tproxy_send_timeout 7d;`;
+					configuration += `\n\t\tproxy_read_timeout 7d;`;
+					configuration += `\n\t}`;
+				}
+
+				configuration += `\n\n\t# custom include file (will not be overwritten)`;
+				configuration += `\n\tinclude ${GatewayServer.nginxIncludeFile(this.configuration.name)};`;
+				configuration += `\n\n\t# default proxy`;
+				configuration += `\n\tlocation / {`;
 				configuration += `\n\t\tproxy_pass http://${upstream};`;
-				configuration += `\n\t\tproxy_http_version 1.1;`;
-				configuration += `\n\t\tproxy_set_header Upgrade $http_upgrade;`;
-				configuration += `\n\t\tproxy_set_header Connection "Upgrade";\n\t\t`;
-				configuration += `\n\t\t# disable socket timeout`;
-				configuration += `\n\t\tproxy_connect_timeout 7d;`;
-				configuration += `\n\t\tproxy_send_timeout 7d;`;
-				configuration += `\n\t\tproxy_read_timeout 7d;`;
-				configuration += `\n\t}`;
-			}
-
-			configuration += `\n\n\t# custom include file (will not be overwritten)`;
-			configuration += `\n\tinclude ${GatewayServer.nginxIncludeFile(this.configuration.name)};`;
-			configuration += `\n\n\t# default proxy`;
-			configuration += `\n\tlocation / {`;
-			configuration += `\n\t\tproxy_pass http://${upstream};`;
-			configuration += `\n\t\tproxy_set_header gateway-source-address $remote_addr;`;
-			configuration += `\n\t\tproxy_set_header gateway-name ${JSON.stringify(this.configuration.name)};`;
-			configuration += `\n\t\tadd_header cluster ${JSON.stringify(`vlcluster-${Cluster.version}`)};`;
-			configuration += `\n\t\tadd_header cluster-gateway ${JSON.stringify(this.configuration.name)};`;
-			configuration += `\n\t\tadd_header cluster-worker $upstream_addr;`;
-			configuration += `\n\t}\n}\n\n`;
-			
-			if (route.ssl) {
-				configuration += `# http to https upgrade for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\treturn 301 https://$host$request_uri;\n}\n\n`;
+				configuration += `\n\t\tproxy_set_header gateway-source-address $remote_addr;`;
+				configuration += `\n\t\tproxy_set_header gateway-name ${JSON.stringify(this.configuration.name)};`;
+				configuration += `\n\t\tadd_header cluster ${JSON.stringify(`vlcluster-${Cluster.version}`)};`;
+				configuration += `\n\t\tadd_header cluster-gateway ${JSON.stringify(this.configuration.name)};`;
+				configuration += `\n\t\tadd_header cluster-worker $upstream_addr;`;
+				configuration += `\n\t}\n}\n\n`;
+				
+				if (route.ssl) {
+					configuration += `# http to https upgrade for ${route.application}[${route.env}]\nserver {\n\tlisten ${route.port};\n\tserver_name ${route.host};\n\treturn 301 https://$host$request_uri;\n}\n\n`;
+				}
+			} else {
+				this.logger.warn("no instances ready for", this.logger.ae(route.application, route.env));
 			}
         }
 
