@@ -6,6 +6,7 @@ export class Route {
 	instances: RoutedInstance[];
 	ssl?: number;
     sockets: string[];
+    version: string;
 }
 
 export class RoutedInstance {

@@ -131,6 +131,10 @@ export class GatewayServer {
 				configuration += `\nserver {`;
 				configuration += `\n\tlisten ${route.ssl ? `${route.ssl} ssl` : route.port};`;
 				configuration += `\n\tserver_name ${route.host};`;
+				configuration += `\n\t\tadd_header cluster-application ${JSON.stringify(route.application)};`;
+				configuration += `\n\t\tadd_header cluster-environment ${JSON.stringify(route.env)};`;
+				configuration += `\n\t\tadd_header cluster-version ${JSON.stringify(route.version)};`;
+				
 
 				if (route.ssl) {
 					// ssl config from https://ssl-config.mozilla.org/

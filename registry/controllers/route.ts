@@ -111,7 +111,8 @@ export class RouteRegistryController {
 							host: domain.host,
 							port: domain.port,
 							instances,
-							sockets: domain.webSockets.map(s => s.path)
+							sockets: domain.webSockets.map(s => s.path),
+							version: env.latestVersion.name
 						};
 
 						if (domain.ssl) {
