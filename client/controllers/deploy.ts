@@ -170,10 +170,13 @@ export class DeployClientController {
 		});
 	}
 
-	async deploy(directory: string, env: string, instances: number) {
+	async deploy(directory: string, envs: string[], instances: number) {
 		const app = await DeployClientController.build(directory);
 
 		await this.push(app.application, app.version);
-		await this.upgrade(app.application, app.version, env, instances);
+
+		for (let env of envs) {
+			await this.upgrade(app.application, app.version, env, instances);
+		}
 	}
 }

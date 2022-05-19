@@ -119,7 +119,7 @@ export async function main() {
 			case "deploy": {
 				await (await Client.getActiveClient()).deploy.deploy(
 					await CLI.getArgument([2, "-p", "--project-path"]) || ".", 
-					await CLI.getArgument([1, "-e", "--env"], "Environnement"),
+					(await CLI.getArgument([1, "-e", "--env"], "Environnement")).split(';'),
 					+(await CLI.getArgument(["-i", "--instances"]) || 1)
 				);
 
@@ -131,7 +131,7 @@ export async function main() {
 					case "set": {
 						await (await Client.getActiveClient()).variables.set(
 							await CLI.getArgument([2, "-n", "--name"], "Variable name"),
-							await CLI.getArgument([3, "-v", "--value"], "Variable name"),
+							await CLI.getArgument([3, "-v", "--value"], "Variable value"),
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
 							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
 						);
