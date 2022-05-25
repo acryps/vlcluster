@@ -9,6 +9,10 @@ export class RouteClientController {
     constructor(public client: Client) {}
 
     async domain(host: string, port: number, application: string, env: string) {
+		if (!(/^[\x00-\x7F]*$/.test(host))) {
+			throw 'domain names cannot contain non-ACII characters. Use punicode instead! [https://www.punycoder.com/]';
+		}
+
 		await this.logger.process(["routing domain ", this.logger.hp(host, port), " to ", this.logger.ae(application, env), "..."], async finished => {
 			await new Request(this.client.configuration.host, Cluster.api.registry.route.domain)
 				.auth(this.client.configuration.name, this.client.configuration.key)
