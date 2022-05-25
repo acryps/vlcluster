@@ -1,6 +1,6 @@
 import { Cluster } from "../shared/cluster";
-import { createConnection } from "net";
 import { cpuUsage } from "os-utils";
+import * as fetch from "node-fetch";
 import { spawn } from "child_process";
 import { Crypto } from "../shared/crypto";
 import { WorkerInstance } from "./instance-state";
@@ -329,19 +329,30 @@ export class WorkerServer {
 		});
 	}
 
-	waitForPortToOpen(port: number) {
+	async waitForPortToOpen(port: number) {
 		return new Promise(done => {
-			const timer = setTimeout(async () => {
-				socket.end();
+			let finished = false;
 
-				done(await this.waitForPortToOpen(port));
-			}, 100);
+			setTimeout(async () => {
+				if (!finished) {
+					finished = true;
 
-			const socket = createConnection(port, null, () => {
-				socket.end();
+					done(await this.waitForPortToOpen(port));
+				}
+			}, 5000);
 
-				clearTimeout(timer);
-				done(true);
+			fetch(`localhost:${port}`).then(res => res.text()).then(() => {
+				if (!finished) {
+					finished = true;
+
+					done(true);
+				}
+			}).catch(async () => {
+				if (!finished) {
+					finished = true;
+
+					done(await this.waitForPortToOpen(port));
+				}
 			});
 		});
 	}
