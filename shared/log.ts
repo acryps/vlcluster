@@ -12,11 +12,11 @@ export class Logger {
     }
 
     log(...text: string[]) {
-        process.stdout.write(`[  \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
+        process.stdout.write(`[  ${this.date} \x1b[38;5;${this.color}m${this.unit}\x1b[0m ]\t${text.join("")}\n`);
     }
 
     warn(...text: string[]) {
-        process.stdout.write(`\x1b[48;5;190m\x1b[1;30m[! ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
+        process.stdout.write(`\x1b[48;5;190m\x1b[1;30m[! ${this.date} ${this.unit} ]\x1b[0m \t${text.join("")}\n`);
     }
 
     table(data: any[]) {
@@ -209,5 +209,9 @@ export class Logger {
                 return `${(bytes / units[unit]).toFixed(unit == "B" ? 0 : 2)}${unit}`;
             }
         }
+    }
+
+    private get date() {
+        return new Date().toISOString().replace('T', ' ').replace('Z', '');
     }
 }
