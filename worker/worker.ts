@@ -1,5 +1,5 @@
 import { Cluster } from "../shared/cluster";
-import * as fs from "fs";
+import { createConnection } from "net";
 import { cpuUsage } from "os-utils";
 import { spawn } from "child_process";
 import { Crypto } from "../shared/crypto";
@@ -196,14 +196,18 @@ export class WorkerServer {
 
 		await new Promise(done => {
 			runProcess.on("exit", async () => {
-				this.logger.log("started ", this.logger.aevi(application, env, version, instance));
+				this.logger.log("started ", this.logger.aevi(application, env, version, instance), " waiting for ", this.logger.p(externalPort), "...");
 
-				state.externalPort = externalPort;
-				state.internalPort = internalPort;
+				this.waitForPortToOpen(externalPort).then(() => {
+					this.logger.log("port ", this.logger.p(externalPort), " opened for ", this.logger.aevi(application, env, version, instance), ". instance is ready");
 
-				state.running = true;
+					state.externalPort = externalPort;
+					state.internalPort = internalPort;
 
-				done(null);
+					state.running = true;
+
+					done(null);
+				});
 			});
 		});
 
@@ -321,6 +325,23 @@ export class WorkerServer {
 				this.logger.log("stopped ", this.logger.i(instance));
 	
 				done(null);
+			});
+		});
+	}
+
+	waitForPortToOpen(port: number) {
+		return new Promise(done => {
+			const timer = setTimeout(async () => {
+				socket.end();
+
+				done(await this.waitForPortToOpen(port));
+			}, 100);
+
+			const socket = createConnection(port, null, () => {
+				socket.end();
+
+				clearTimeout(timer);
+				done(true);
 			});
 		});
 	}
