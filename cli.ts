@@ -96,7 +96,9 @@ export class CLI {
     }
 
     static setActiveCluster(cluster: string) {
-        Configuration.activeCluster = cluster;
-        Configuration.save();
+        if (cluster) {
+            Configuration.activeCluster = cluster;
+            Configuration.save();
+        }
     }
 }
