@@ -211,6 +211,15 @@ export async function main() {
 
 			case "route": {
 				switch (parameters.shift()) {
+					case "list": {
+						await (await Client.getActiveClient()).route.list(
+							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
+							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
+						);
+
+						return process.exit(0);
+					}
+
 					case "domain": {
 						await (await Client.getActiveClient()).route.domain(
 							await CLI.getArgument(["-h", "--host"], "Host"),
