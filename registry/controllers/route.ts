@@ -62,6 +62,11 @@ export class RouteRegistryController {
     async domain(host: string, port: number, application: Application, env: Environnement) {
 		const id = Crypto.createId(host);
 
+		// skip if the route already exists
+		if (env.routes.find(route => route.host == host && route.port == port)) {
+			return;
+		}
+
 		const route: DomainRoute = {
 			host,
 			port,
