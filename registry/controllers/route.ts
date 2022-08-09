@@ -80,9 +80,14 @@ export class RouteRegistryController {
 	}
 
 	async webSocket(domain: DomainRoute, path: string) {
+		if (domain.webSockets.find(socket => socket.path == path)) {
+			return;
+		}
+
 		domain.webSockets.push({
 			path
 		});
+
 		Configuration.save();
 
 		await this.updateGateways();
