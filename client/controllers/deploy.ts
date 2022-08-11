@@ -102,47 +102,39 @@ export class DeployClientController {
 				});
 			});
 		});
-
+		
 		const size = meta.Size;
 
-		await logger.progressBar(["pushing ", logger.av(application, version), " (", logger.size(size), ")..."], async (advance, finished) => {
-			const saveProcess = spawn("docker", ["save", imageName], {
+		const tmpName = `.${Math.random().toString(16).substring(2)}`;
+
+		await logger.progressBar(["exporting ", logger.av(application, version), " (", logger.size(size), ")..."], async (advance, finished) => {
+			const saveProcess = spawn("docker", ["save", imageName, "--output", tmpName], {
 				stdio: [
 					"ignore",
-					"pipe",
+					"ignore",
 					process.stderr
 				]
 			});
-			
-			saveProcess.stdout.addListener("data", data => {
-				passedData += data.length;
-
-				advance(passedData, size);
-			});
-
-			const request = new Request(this.client.configuration.host, Cluster.api.registry.push)
-				.auth(this.client.configuration.name, this.client.configuration.key)
-				.append("application", application)
-				.append("version", version)
-				.append("image-name", imageName)
-				.appendBody(saveProcess.stdout)
-				.send();
-
-			let passedData = 0;
 
 			await new Promise<void>((done, reject) => {
-				request.catch(error => reject(error));
-
 				saveProcess.on("close", async () => {
 					advance(1, 1);
-				});
-
-				request.then(() => {
-					finished(logger.av(application, version), " pushed");
 
 					done();
 				});
 			});
+		});
+
+		await logger.progressBar(["uploading ", logger.av(application, version), " (", logger.size(size), ")..."], async (advance, finished) => {
+			await new Request(this.client.configuration.host, Cluster.api.registry.push)
+				.auth(this.client.configuration.name, this.client.configuration.key)
+				.append("application", application)
+				.append("version", version)
+				.append("image-name", imageName)
+				.appendBody(fs.createReadStream(tmpName))
+				.send();
+
+			finished(logger.av(application, version), " pushed");
 		});
 	}
 
