@@ -21,6 +21,7 @@ export class Cluster {
 			ping: "/registry/ping",
 			pull: "/registry/pull",
 			route: {
+				list: "/registry/route/list",
 				domain: "/registry/route/domain",
 				webSocket: "/registry/route/ws"
 			},

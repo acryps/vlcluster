@@ -8,6 +8,22 @@ export class RouteClientController {
     
     constructor(public client: Client) {}
 
+	async list(application: string, env: string) {
+        let routes = await new Request(this.client.configuration.host, Cluster.api.registry.route.list)
+            .auth(this.client.configuration.name, this.client.configuration.key)
+            .send<{ host, port, application, env, ssl }[]>();
+
+        if (application && application != "*") {
+            routes = routes.filter(i => i.application == application);
+        }
+
+        if (env && env != "*") {
+            routes = routes.filter(i => i.env == env);
+        }
+
+        return routes;
+    }
+
     async domain(host: string, port: number, application: string, env: string) {
 		if (!(/^[\x00-\x7F]*$/.test(host))) {
 			throw new Error('domain names cannot contain non-ACII characters. Use punicode instead! [https://www.punycoder.com/]');

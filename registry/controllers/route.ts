@@ -9,7 +9,6 @@ import { DomainRoute } from "../../shared/models/routes/domain";
 import { Application } from "../../shared/models/application";
 import { Environnement } from "../../shared/models/environnement";
 import { Configuration } from "../../shared/configuration";
-import { env } from "process";
 import { Route, RoutedInstance } from "../../gateway/route";
 
 export class RouteRegistryController {
@@ -18,6 +17,26 @@ export class RouteRegistryController {
     constructor(private registry: RegistryServer) {}
 
     register(app) {
+		new Handler(app, Cluster.api.registry.route.list, async params => {
+            const routes = [];
+    
+            for (let application of this.registry.configuration.applications) {
+                for (let env of application.environnements) {
+					for (let route of env.routes) {
+						routes.push({
+							host: route.host,
+							port: route.port,
+							application: application.name,
+							env: env.name,
+							ssl: route.ssl
+						});
+					}
+                }
+            }
+
+            return routes;
+        });
+
         new Handler(app, Cluster.api.registry.route.domain, async params => {
 			const host = params.host;
 			const port = params.port;
