@@ -329,37 +329,31 @@ export class WorkerServer {
 		});
 	}
 
-	waitForPortToOpen(port: number) {
+	async waitForPortToOpen(port: number) {
 		return new Promise(done => {
-			setTimeout(() => {
-				let finished = false;
+			let finished = false;
 
-				setTimeout(async () => {
-					if (!finished) {
-						this.logger.warn("HTTP ping to ", this.logger.p(port), " timed out... retrying");
+			setTimeout(async () => {
+				if (!finished) {
+					finished = true;
 
-						finished = true;
+					done(await this.waitForPortToOpen(port));
+				}
+			}, 5000);
 
-						done(await this.waitForPortToOpen(port));
-					}
-				}, 5000);
+			fetch(`localhost:${port}`).then(res => res.text()).then(() => {
+				if (!finished) {
+					finished = true;
 
-				fetch(`http://localhost:${port}/`).then(res => res.text()).then(() => {
-					if (!finished) {
-						finished = true;
+					done(true);
+				}
+			}).catch(async () => {
+				if (!finished) {
+					finished = true;
 
-						done(true);
-					}
-				}).catch(async () => {
-					if (!finished) {
-						this.logger.warn("HTTP ping to ", this.logger.p(port), " failed... retrying");
-
-						finished = true;
-
-						done(await this.waitForPortToOpen(port));
-					}
-				});
-			}, 1000);
+					done(await this.waitForPortToOpen(port));
+				}
+			});
 		});
 	}
 }
