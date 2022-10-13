@@ -196,18 +196,14 @@ export class WorkerServer {
 
 		await new Promise(done => {
 			runProcess.on("exit", async () => {
-				this.logger.log("started ", this.logger.aevi(application, env, version, instance), " waiting for ", this.logger.p(externalPort), "...");
+				this.logger.log("port ", this.logger.p(externalPort), " opened for ", this.logger.aevi(application, env, version, instance), ". instance is ready");
 
-				this.waitForPortToOpen(externalPort).then(() => {
-					this.logger.log("port ", this.logger.p(externalPort), " opened for ", this.logger.aevi(application, env, version, instance), ". instance is ready");
+				state.externalPort = externalPort;
+				state.internalPort = internalPort;
 
-					state.externalPort = externalPort;
-					state.internalPort = internalPort;
+				state.running = true;
 
-					state.running = true;
-
-					done(null);
-				});
+				done(null);
 			});
 		});
 
@@ -325,34 +321,6 @@ export class WorkerServer {
 				this.logger.log("stopped ", this.logger.i(instance));
 	
 				done(null);
-			});
-		});
-	}
-
-	async waitForPortToOpen(port: number) {
-		return new Promise(done => {
-			let finished = false;
-
-			setTimeout(async () => {
-				if (!finished) {
-					finished = true;
-
-					done(await this.waitForPortToOpen(port));
-				}
-			}, 5000);
-
-			fetch(`localhost:${port}`).then(res => res.text()).then(() => {
-				if (!finished) {
-					finished = true;
-
-					done(true);
-				}
-			}).catch(async () => {
-				if (!finished) {
-					finished = true;
-
-					done(await this.waitForPortToOpen(port));
-				}
 			});
 		});
 	}
