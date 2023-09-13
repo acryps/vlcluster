@@ -139,6 +139,17 @@ export async function main() {
 						return process.exit(0);
 					}
 
+					case "read": {
+						await (await Client.getActiveClient()).variables.set(
+							await CLI.getArgument([2, "-n", "--name"], "Variable name"),
+							fs.readFileSync(await CLI.getArgument([3, "-s", "--source"], "Variable value source location")).toString(),
+							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),
+							await CLI.getArgument(["-e", "--env"], ["Environnement", "*", "all envs", null]),
+						);
+		
+						return process.exit(0);
+					}
+
 					case "list": {
 						const vars = await (await Client.getActiveClient()).variables.list(
 							await CLI.getArgument(["-a", "--application"], ["Application", "*", "all applications", null]),

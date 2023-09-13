@@ -155,6 +155,7 @@ vlcluster deploy [-c | --cluster <registry hostname>] [[ -e | --env ] <environne
 ## Variables
 ```
 vlcluster var set [-c | --cluster <registry hostname>] [[ -n | --name ] <name>] [[ -v | --value ] <value>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
+vlcluster var read [-c | --cluster <registry hostname>] [[ -s | --source ] <path>] [[ -v | --value ] <value>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 vlcluster var list [-c | --cluster <registry hostname>] [-a | --application [ <application> ]] [-e | --env [ <environnement> ]]
 ```
 
