@@ -17,7 +17,7 @@ export class VariablesRegistryController {
     register(app) {
         new Handler(app, Cluster.api.registry.variables.set, async params => {
 			const name = params.name;
-			const value = params.value;
+			const value = JSON.parse(params.value);
 			const application = params.application;
 			const env = params.env;
 

@@ -21,7 +21,7 @@ export class VariablesClientController {
 			await new Request(this.client.configuration.host, Cluster.api.registry.variables.set)
 				.auth(this.client.configuration.name, this.client.configuration.key)
 				.append("name", name)
-				.append("value", value)
+				.append("value", JSON.stringify(value))
 				.append("application", application)
 				.append("env", env)
 				.send();
